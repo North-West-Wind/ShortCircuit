@@ -1,0 +1,9 @@
+{
+  "block.short_circuit.circuit": "Circuit",
+
+  "item.short_circuit.poking_stick": "Poking Stick",
+
+  "tooltip.short_circuit.circuit": "UUID: %s",
+
+  "itemGroup.short_circuit": "Short Circuit"
+}

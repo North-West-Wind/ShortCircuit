@@ -14,7 +14,16 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 
 public class Blocks {
     public static final DeferredRegister.Blocks BLOCKS = DeferredRegister.createBlocks(ShortCircuit.MOD_ID);
-    public static final DeferredBlock<Block> CIRCUIT = BLOCKS.registerBlock("circuit", CircuitBlock::new, BlockBehaviour.Properties.of().instabreak().sound(SoundType.STONE).pushReaction(PushReaction.DESTROY).noLootTable());
+    public static final DeferredBlock<Block> CIRCUIT = BLOCKS.registerBlock(
+            "circuit", CircuitBlock::new,
+            BlockBehaviour.Properties.of()
+                    .instabreak()
+                    .sound(SoundType.STONE)
+                    .pushReaction(PushReaction.DESTROY)
+                    .noLootTable()
+                    .noOcclusion()
+                    .isValidSpawn(net.minecraft.world.level.block.Blocks::never)
+    );
     //public static final DeferredBlock<Block> CIRCUIT_BOARD = BLOCKS.registerBlock("circuit_board", CircuitBoardBlock::new, BlockBehaviour.Properties.of().mapColor(MapColor.DIAMOND));
 
     public static void registerBlocks(IEventBus modEventBus) {

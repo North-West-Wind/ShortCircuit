@@ -1,6 +1,7 @@
 package in.northwestw.shortcircuit.registries.blocks;
 
 import com.mojang.serialization.MapCodec;
+import in.northwestw.shortcircuit.registries.BlockEntities;
 import in.northwestw.shortcircuit.registries.Blocks;
 import in.northwestw.shortcircuit.registries.DataComponents;
 import in.northwestw.shortcircuit.registries.blockentities.CircuitBlockEntity;
@@ -17,16 +18,20 @@ import net.minecraft.world.item.component.ItemContainerContents;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.EntityBlock;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.level.block.RepeaterBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityTicker;
+import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class CircuitBlock extends HorizontalDirectionalBlock {
+public class CircuitBlock extends HorizontalDirectionalBlock implements EntityBlock {
     public static final MapCodec<RepeaterBlock> CODEC = simpleCodec(RepeaterBlock::new);
 
     public CircuitBlock(BlockBehaviour.Properties properties) {
@@ -74,20 +79,14 @@ public class CircuitBlock extends HorizontalDirectionalBlock {
         }
     }
 
-    public enum SideUse implements StringRepresentable {
-        NONE("none"),
-        INPUT("input"),
-        OUTPUT("output");
+    @Override
+    public @Nullable BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
+        return new CircuitBlockEntity(pos, state);
+    }
 
-        final String name;
-
-        SideUse(String name) {
-            this.name = name;
-        }
-
-        @Override
-        public String getSerializedName() {
-            return this.name;
-        }
+    @SuppressWarnings("unchecked")
+    @Override
+    public @Nullable <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
+        return type == BlockEntities.CIRCUIT_BLOCK.get() ? CircuitBlockEntity::tick : null;
     }
 }

@@ -1,0 +1,13 @@
+{
+  "variants": {
+    "annotated=false,mode=none": { "model": "short_circuit:block/circuit_board" },
+    "mode=input": { "model": "short_circuit:block/circuit_board_in" },
+    "mode=output": { "model": "short_circuit:block/circuit_board_out" },
+    "annotated=true,rel_dir=up": { "model": "short_circuit:block/circuit_board_up" },
+    "annotated=true,rel_dir=down": { "model": "short_circuit:block/circuit_board_down" },
+    "annotated=true,rel_dir=left": { "model": "short_circuit:block/circuit_board_left" },
+    "annotated=true,rel_dir=right": { "model": "short_circuit:block/circuit_board_right" },
+    "annotated=true,rel_dir=front": { "model": "short_circuit:block/circuit_board_front" },
+    "annotated=true,rel_dir=back": { "model": "short_circuit:block/circuit_board_back" }
+  }
+}

@@ -24,7 +24,7 @@ public class Blocks {
                     .noOcclusion()
                     .isValidSpawn(net.minecraft.world.level.block.Blocks::never)
     );
-    //public static final DeferredBlock<Block> CIRCUIT_BOARD = BLOCKS.registerBlock("circuit_board", CircuitBoardBlock::new, BlockBehaviour.Properties.of().mapColor(MapColor.DIAMOND));
+    public static final DeferredBlock<Block> CIRCUIT_BOARD = BLOCKS.registerBlock("circuit_board", CircuitBoardBlock::new, BlockBehaviour.Properties.of().mapColor(MapColor.DIAMOND).lightLevel(state -> 7));
 
     public static void registerBlocks(IEventBus modEventBus) {
         BLOCKS.register(modEventBus);

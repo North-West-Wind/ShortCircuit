@@ -12,10 +12,9 @@ import net.minecraft.world.level.block.state.properties.EnumProperty;
 import net.minecraft.world.level.block.state.properties.IntegerProperty;
 
 public class CircuitBoardBlock extends Block {
-    public static final EnumProperty<RelativeDirection> DIRECTION = EnumProperty.create("rel_dir", RelativeDirection.class, Lists.newArrayList());
+    public static final EnumProperty<RelativeDirection> DIRECTION = EnumProperty.create("rel_dir", RelativeDirection.class);
     public static final BooleanProperty ANNOTATED = BooleanProperty.create("annotated");
-    public static final BooleanProperty INPUT = BooleanProperty.create("input");
-    public static final BooleanProperty OUTPUT = BooleanProperty.create("output");
+    public static final EnumProperty<Mode> MODE = EnumProperty.create("mode", Mode.class);
     public static final IntegerProperty POWER = BlockStateProperties.POWER;
 
     public CircuitBoardBlock(BlockBehaviour.Properties properties) {
@@ -29,15 +28,14 @@ public class CircuitBoardBlock extends Block {
                         .any()
                         .setValue(DIRECTION, direction)
                         .setValue(ANNOTATED, annotated)
-                        .setValue(INPUT, false)
-                        .setValue(OUTPUT, false)
+                        .setValue(MODE, Mode.NONE)
                         .setValue(POWER, 0)
         );
     }
 
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(DIRECTION, ANNOTATED, INPUT, OUTPUT, POWER);
+        builder.add(DIRECTION, ANNOTATED, MODE, POWER);
     }
 
     public enum RelativeDirection implements StringRepresentable {
@@ -57,6 +55,36 @@ public class CircuitBoardBlock extends Block {
         @Override
         public String getSerializedName() {
             return this.name;
+        }
+    }
+
+    public enum Mode implements StringRepresentable {
+        NONE("none"),
+        INPUT("input"),
+        OUTPUT("output");
+
+        final String name;
+        Mode(String name) {
+            this.name = name;
+        }
+
+        @Override
+        public String getSerializedName() {
+            return this.name;
+        }
+
+        public Mode nextMode() {
+            switch (this) {
+                case NONE -> {
+                    return INPUT;
+                }
+                case INPUT -> {
+                    return OUTPUT;
+                }
+                default -> {
+                    return NONE;
+                }
+            }
         }
     }
 }

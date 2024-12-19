@@ -38,7 +38,7 @@ public class Octolet {
     }
 
     public Octolet load(CompoundTag tag) {
-        this.blockSize = tag.getShort("size");
+        this.blockSize = tag.getShort("value");
         for (Tag t : tag.getList("occupied", Tag.TAG_INT))
             occupied.add(((IntTag) t).getAsInt());
         for (Tag t : tag.getList("blocks", Tag.TAG_COMPOUND)) {
@@ -49,7 +49,7 @@ public class Octolet {
     }
 
     public CompoundTag save(CompoundTag tag) {
-        tag.putShort("size", this.blockSize);
+        tag.putShort("value", this.blockSize);
         ListTag list = new ListTag();
         occupied.forEach(s -> list.add(IntTag.valueOf(s)));
         tag.put("occupied", list);
@@ -64,11 +64,10 @@ public class Octolet {
         return tag;
     }
 
-    public BlockPos getStartingPos(int outerIndex, UUID uuid) {
-        if (!this.blocks.containsKey(uuid)) return null;
+    public static BlockPos getOctoletPos(int outerIndex) {
         // dry running with 2 rings. assume outerIndex is in range [4, 11]
         int diameter = (((int) Math.sqrt(outerIndex)) / 2 + 1) * 2; // sqrt returns either 2 or 3. diameter is 4 (side length)
-        int quadrantSize = (diameter * diameter - (diameter - 2) * (diameter - 2)) / 4; // ring size / 4. 16 - 4 = 12. 12 / 4 = 3
+        int quadrantSize = (diameter * diameter - (diameter - 2) * (diameter - 2)) / 4; // ring value / 4. 16 - 4 = 12. 12 / 4 = 3
         int ringIndex = outerIndex - (diameter - 2) * (diameter - 2); // index minus inner square. -= 4, new range [0, 11]
         byte quadrant = (byte) (ringIndex / quadrantSize); // 2d plane quadrant. [0, 3], [0, 2] -> 0, [3, 5] -> 1 ...
         int awayFromCorner = (ringIndex % quadrantSize) - quadrantSize / 2; // offset from corner block
@@ -103,5 +102,30 @@ public class Octolet {
                 octoletPos = null;
         }
         return octoletPos;
+    }
+
+    public BlockPos getStartingPos(int outerIndex, UUID uuid) {
+        if (!this.blocks.containsKey(uuid)) return null;
+        BlockPos octoletPos = Octolet.getOctoletPos(outerIndex);
+        int index = this.blocks.get(uuid);
+        int sideLength = MAX_SIZE / this.blockSize;
+        int x = index % sideLength;
+        int y = (index / sideLength) % sideLength;
+        int z = (index / (sideLength * sideLength)) % sideLength;
+        return octoletPos.offset(x * this.blockSize, y * this.blockSize, z * this.blockSize);
+    }
+
+    public void insertNewBlock(UUID uuid) {
+        if (this.blocks.containsKey(uuid)) return;
+        for (int ii = 0; ii < this.occupied.size(); ii++) {
+            if (!this.occupied.contains(ii)) {
+                this.blocks.put(uuid, ii);
+                this.occupied.add(ii);
+                return;
+            }
+        }
+        int nextIndex = this.occupied.size();
+        this.blocks.put(uuid, nextIndex);
+        this.occupied.add(nextIndex);
     }
 }

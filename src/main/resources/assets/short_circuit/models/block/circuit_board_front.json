@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:block/cube_all",
+  "textures": {
+    "all": "short_circuit:block/circuit_board_front"
+  }
+}

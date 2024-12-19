@@ -7,4 +7,5 @@ import net.minecraft.world.level.Level;
 
 public class Constants {
     public static final ResourceKey<Level> CIRCUIT_BOARD_DIMENSION = ResourceKey.create(Registries.DIMENSION, ResourceLocation.fromNamespaceAndPath(ShortCircuit.MOD_ID, "circuit_board"));
+    public static final ResourceKey<Level> RUNTIME_DIMENSION = ResourceKey.create(Registries.DIMENSION, ResourceLocation.fromNamespaceAndPath(ShortCircuit.MOD_ID, "runtime"));
 }

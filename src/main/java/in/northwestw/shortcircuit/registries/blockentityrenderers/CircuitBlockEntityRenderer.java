@@ -10,6 +10,7 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
+import org.joml.Quaternionf;
 
 import java.util.Map;
 
@@ -25,11 +26,19 @@ public class CircuitBlockEntityRenderer implements BlockEntityRenderer<CircuitBl
     @Override
     public void render(CircuitBlockEntity blockEntity, float partialTick, PoseStack poseStack, MultiBufferSource bufferSource, int packedLight, int packedOverlay) {
         poseStack.pushPose();
+        // direction handling. move to the center and rotate, then move back
+        poseStack.translate(0.5, 0.5, 0.5);
+        switch (blockEntity.getBlockState().getValue(HorizontalDirectionalBlock.FACING)) {
+            case EAST -> poseStack.mulPose(new Quaternionf(0, 0.7071068, 0, 0.7071068));
+            case SOUTH -> poseStack.mulPose(new Quaternionf(0, 1, 0, 0));
+            case WEST -> poseStack.mulPose(new Quaternionf(0, 0.7071068, 0, -0.7071068));
+        }
+        poseStack.translate(-0.5, -0.5, -0.5);
         if (blockEntity.isHidden()) {
             poseStack.scale(HIDDEN_SCALE, HIDDEN_SCALE, HIDDEN_SCALE);
             poseStack.translate(HIDDEN_TRANSLATE, HIDDEN_TRANSLATE, HIDDEN_TRANSLATE);
             this.blockRenderDispatcher.renderSingleBlock(
-                    Blocks.COMPARATOR.defaultBlockState().setValue(HorizontalDirectionalBlock.FACING, blockEntity.getBlockState().getValue(HorizontalDirectionalBlock.FACING)),
+                    Blocks.COMPARATOR.defaultBlockState(),
                     poseStack, bufferSource, packedLight, packedOverlay
             );
         } else {

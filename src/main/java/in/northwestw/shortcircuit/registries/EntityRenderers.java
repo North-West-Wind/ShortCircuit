@@ -11,7 +11,7 @@ public class EntityRenderers {
     @SubscribeEvent
     public static void registerEntityRenderers(EntityRenderersEvent.RegisterRenderers event) {
         event.registerBlockEntityRenderer(
-                BlockEntities.CIRCUIT_BLOCK.get(),
+                BlockEntities.CIRCUIT.get(),
                 CircuitBlockEntityRenderer::new
         );
     }

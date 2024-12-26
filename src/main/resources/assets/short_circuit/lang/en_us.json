@@ -5,6 +5,7 @@
 
   "tooltip.short_circuit.circuit": "UUID: %s",
   "action.poking_stick.change": "Block size: %d",
+  "action.circuit.reload": "Reloading circuit in runtime...",
 
   "itemGroup.short_circuit": "Short Circuit"
 }

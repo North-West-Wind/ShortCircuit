@@ -150,7 +150,6 @@ public class PokingStickItem extends Item {
         UUID uuid = UUID.randomUUID();
         data.addCircuit(uuid, octoletIndex);
         blockEntity.setUuid(uuid);
-        data.setDirty();
         // create the space in circuit board
         BlockPos startingPos = data.getCircuitStartingPos(uuid);
         int halfBlockSize = blockSize / 2;

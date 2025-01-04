@@ -4,7 +4,9 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.*;
+import net.minecraft.world.level.ChunkPos;
 
+import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -65,54 +67,85 @@ public class Octolet {
     }
 
     public static BlockPos getOctoletPos(int outerIndex) {
-        // dry running with 2 rings. assume outerIndex is in range [4, 11]
-        int diameter = (((int) Math.sqrt(outerIndex)) / 2 + 1) * 2; // sqrt returns either 2 or 3. diameter is 4 (side length)
-        int quadrantSize = (diameter * diameter - (diameter - 2) * (diameter - 2)) / 4; // ring value / 4. 16 - 4 = 12. 12 / 4 = 3
-        int ringIndex = outerIndex - (diameter - 2) * (diameter - 2); // index minus inner square. -= 4, new range [0, 11]
-        byte quadrant = (byte) (ringIndex / quadrantSize); // 2d plane quadrant. [0, 3], [0, 2] -> 0, [3, 5] -> 1 ...
-        int awayFromCorner = (ringIndex % quadrantSize) - quadrantSize / 2; // offset from corner block
-        BlockPos quadrantCorner, octoletPos;
-        switch (quadrant) {
-            case 0: // + +
-                quadrantCorner = new BlockPos(MAX_SIZE * diameter, 0, MAX_SIZE * diameter);
-                // if offset is +, it's to the left of corner
-                // if offset is -, it's to the down of corner
-                octoletPos = quadrantCorner.offset(MAX_SIZE * -Math.max(0, awayFromCorner), 0, MAX_SIZE * Math.min(0, awayFromCorner));
-                break;
-            case 1: // - +
-                quadrantCorner = new BlockPos(MAX_SIZE * -(diameter + 1), 0, MAX_SIZE * diameter);
-                // if offset is +, it's to the down of corner
-                // if offset is -, it's to the right of corner
-                octoletPos = quadrantCorner.offset(MAX_SIZE * -Math.min(0, awayFromCorner), 0, MAX_SIZE * Math.max(0, awayFromCorner));
-                break;
-            case 2: // - -
-                quadrantCorner = new BlockPos(MAX_SIZE * -(diameter + 1), 0, MAX_SIZE * -(diameter + 1));
-                // if offset is +, it's to the right of corner
-                // if offset is -, it's to the up of corner
-                octoletPos = quadrantCorner.offset(MAX_SIZE * Math.max(0, awayFromCorner), 0, MAX_SIZE * -Math.min(0, awayFromCorner));
-                break;
-            case 3: // + -
-                quadrantCorner = new BlockPos(MAX_SIZE * diameter, 0, MAX_SIZE * -(diameter + 1));
-                // if offset is +, it's to the up of corner
-                // if offset is -, it's to the left of corner
-                octoletPos = quadrantCorner.offset(MAX_SIZE * Math.min(0, awayFromCorner), 0, MAX_SIZE * Math.max(0, awayFromCorner));
-                break;
-            default:
-                // this should not be possible. something is wrong with the math
-                octoletPos = null;
+        int quadrant = outerIndex % 4;
+        outerIndex /= 4;
+        int side = (int) Math.sqrt(outerIndex);
+        int index = outerIndex - side * side;
+        int ringSize = (side + 1) * (side + 1) - side * side; // must be odd
+        int x, z;
+        if (index < ringSize / 2) {
+            x = index;
+            z = side;
+        } else if (index > ringSize / 2 + 1) {
+            index -= ringSize / 2 + 1;
+            x = side;
+            z = index;
+        } else {
+            x = z = side;
         }
-        return octoletPos;
+
+        return switch (quadrant) {
+            case 0 -> new BlockPos(x * MAX_SIZE, 0, z * MAX_SIZE);
+            case 1 -> new BlockPos(-(x + 1) * MAX_SIZE, 0, z * MAX_SIZE);
+            case 2 -> new BlockPos(-(x + 1) * MAX_SIZE, 0, -(z + 1) * MAX_SIZE);
+            case 3 -> new BlockPos(x * MAX_SIZE, 0, -(z + 1) * MAX_SIZE);
+            default -> null;
+        };
     }
 
     public BlockPos getStartingPos(int outerIndex, UUID uuid) {
         if (!this.blocks.containsKey(uuid)) return null;
         BlockPos octoletPos = Octolet.getOctoletPos(outerIndex);
         int index = this.blocks.get(uuid);
-        int sideLength = MAX_SIZE / this.blockSize;
-        int x = index % sideLength;
-        int y = (index / sideLength) % sideLength;
-        int z = (index / (sideLength * sideLength)) % sideLength;
-        return octoletPos.offset(x * this.blockSize, y * this.blockSize, z * this.blockSize);
+        int verticalBlocks = 256 / this.blockSize;
+        if (this.blockSize > 16) {
+            int chunkPerBlock = this.blockSize / 16;
+            int chunkIndex = index / verticalBlocks;
+            int sideLength = MAX_SIZE / 16;
+            int chunkX = chunkIndex % sideLength;
+            int chunkZ = (chunkIndex / sideLength) % sideLength;
+            return octoletPos.offset(chunkX * chunkPerBlock * 16, (index % verticalBlocks) * this.blockSize, chunkZ * chunkPerBlock * 16);
+        } else {
+            int chunkBlocks = (16 / this.blockSize) * (16 / this.blockSize) * 256 / this.blockSize;
+            int blockPerChunk = 16 / this.blockSize;
+            int chunkIndex = index / chunkBlocks;
+            int sideLength = MAX_SIZE / 16;
+            int chunkX = chunkIndex % sideLength;
+            int chunkZ = (chunkIndex / sideLength) % sideLength;
+            int innerIndex = index % chunkBlocks;
+            int x = innerIndex % blockPerChunk;
+            int z = (innerIndex / blockPerChunk) % blockPerChunk;
+            int y = (innerIndex / (blockPerChunk * blockPerChunk)) % blockPerChunk;
+            return octoletPos.offset(chunkX * 16 + x * this.blockSize, y * this.blockSize, chunkZ * 16 + z * this.blockSize);
+        }
+    }
+
+    public Set<ChunkPos> getLoadedChunks() {
+        Set<ChunkPos> set = Sets.newHashSet();
+        for (int index : this.occupied) set.addAll(this.getBlockChunk(index));
+        return set;
+    }
+
+    public Set<ChunkPos> getBlockChunk(int index) {
+        Set<ChunkPos> set = Sets.newHashSet();
+        int sideLength = MAX_SIZE / 16;
+        if (this.blockSize > 16) {
+            int verticalBlocks = 256 / this.blockSize;
+            int chunkPerBlock = this.blockSize / 16;
+            index /= verticalBlocks;
+            int x = index % sideLength;
+            int z = (index / sideLength) % sideLength;
+            for (int ii = 0; ii < this.blockSize / 16; ii++)
+                for (int jj = 0; jj < this.blockSize / 16; jj++)
+                    set.add(new ChunkPos(x * chunkPerBlock + ii, z * chunkPerBlock + jj));
+        } else {
+            int chunkBlocks = (16 / this.blockSize) * (16 / this.blockSize) * 256 / this.blockSize;
+            index /= chunkBlocks;
+            int x = index % sideLength;
+            int z = (index / sideLength) % sideLength;
+            set.add(new ChunkPos(x, z));
+        }
+        return set;
     }
 
     public void insertNewBlock(UUID uuid) {
@@ -127,5 +160,11 @@ public class Octolet {
         int nextIndex = this.occupied.size();
         this.blocks.put(uuid, nextIndex);
         this.occupied.add(nextIndex);
+    }
+
+    public void removeBlock(UUID uuid) {
+        if (!this.blocks.containsKey(uuid)) return;
+        this.blocks.remove(uuid);
+        // no clean up needed. next copy runtime will overwrite it
     }
 }

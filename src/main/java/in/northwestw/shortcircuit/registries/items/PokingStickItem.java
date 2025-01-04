@@ -75,6 +75,7 @@ public class PokingStickItem extends Item {
             UUID uuid = blockEntity.getUuid();
             stack.set(DataComponents.LAST_POS, new LastPosDataComponent(level.dimension().location(), player.position()));
             if (uuid == null) {
+                blockEntity.setBlockSize(this.getBlockSize(stack));
                 transition = this.getNewDimensionTransition(this.getBlockSize(stack), level, blockEntity);
             } else {
                 transition = this.getDimensionTransition(uuid, level);
@@ -152,7 +153,6 @@ public class PokingStickItem extends Item {
         blockEntity.setUuid(uuid);
         // create the space in circuit board
         BlockPos startingPos = data.getCircuitStartingPos(uuid);
-        int halfBlockSize = blockSize / 2;
         for (int ii = 0; ii < blockSize; ii++) {
             for (int jj = 0; jj < blockSize; jj++) {
                 for (int kk = 0; kk < blockSize; kk++) {
@@ -162,15 +162,25 @@ public class PokingStickItem extends Item {
                     else if (jj == blockSize - 1) state = state.setValue(CircuitBoardBlock.DIRECTION, CircuitBoardBlock.RelativeDirection.UP);
                     else if (ii == 0) state = state.setValue(CircuitBoardBlock.DIRECTION, CircuitBoardBlock.RelativeDirection.FRONT);
                     else if (ii == blockSize - 1) state = state.setValue(CircuitBoardBlock.DIRECTION, CircuitBoardBlock.RelativeDirection.BACK);
-                    else if (kk == 0) state = state.setValue(CircuitBoardBlock.DIRECTION, CircuitBoardBlock.RelativeDirection.LEFT);
-                    else if (kk == blockSize - 1) state = state.setValue(CircuitBoardBlock.DIRECTION, CircuitBoardBlock.RelativeDirection.RIGHT);
+                    else if (kk == 0) state = state.setValue(CircuitBoardBlock.DIRECTION, CircuitBoardBlock.RelativeDirection.RIGHT);
+                    else if (kk == blockSize - 1) state = state.setValue(CircuitBoardBlock.DIRECTION, CircuitBoardBlock.RelativeDirection.LEFT);
                     // annotate middle 4
-                    if (Math.abs((ii + 0.5) - halfBlockSize) == 0.5 || Math.abs((jj + 0.5) - halfBlockSize) == 0.5 || Math.abs((kk + 0.5) - halfBlockSize) == 0.5)
-                        state = state.setValue(CircuitBoardBlock.ANNOTATED, true);
+                    if (this.isMiddleFour(ii, jj, kk, blockSize)) state = state.setValue(CircuitBoardBlock.ANNOTATED, true);
                     circuitBoardLevel.setBlock(startingPos.offset(ii, jj, kk), state, 3);
                 }
             }
         }
         return new DimensionTransition(circuitBoardLevel, startingPos.offset(1, 1, 1).getCenter(), Vec3.ZERO, 0, 0, DimensionTransition.DO_NOTHING);
+    }
+
+    private boolean isMiddleFour(int ii, int jj, int kk, short blockSize) {
+        int halfBlockSize = blockSize / 2;
+        boolean iiHalf = Math.abs((ii + 0.5) - halfBlockSize) == 0.5;
+        boolean jjHalf = Math.abs((jj + 0.5) - halfBlockSize) == 0.5;
+        boolean kkHalf = Math.abs((kk + 0.5) - halfBlockSize) == 0.5;
+        return
+                (iiHalf && jjHalf) && (kk == 0 || kk == blockSize - 1) ||
+                (jjHalf && kkHalf) && (ii == 0 || ii == blockSize - 1) ||
+                (kkHalf && iiHalf) && (jj == 0 || jj == blockSize - 1);
     }
 }

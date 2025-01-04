@@ -2,6 +2,8 @@ package in.northwestw.shortcircuit.registries.blockentities;
 
 import com.google.common.collect.Lists;
 import in.northwestw.shortcircuit.registries.BlockEntities;
+import in.northwestw.shortcircuit.registries.blocks.CircuitBlock;
+import in.northwestw.shortcircuit.registries.blocks.CircuitBoardBlock;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.Registries;
@@ -13,7 +15,6 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.block.state.properties.IntegerProperty;
 
 import java.util.UUID;
 
@@ -52,7 +53,7 @@ public class CircuitBoardBlockEntity extends BlockEntity {
         this.setChanged();
     }
 
-    public void updateCircuitBlock(int signal, IntegerProperty property) {
+    public void updateCircuitBlock(int signal, CircuitBoardBlock.RelativeDirection direction) {
         if (this.dimension == null || this.pos == null || this.runtimeUuid == null) return;
         MinecraftServer server = this.level.getServer();
         if (server == null) return;
@@ -60,7 +61,7 @@ public class CircuitBoardBlockEntity extends BlockEntity {
         if (level == null) return;
         BlockEntity be = level.getBlockEntity(this.pos);
         if (!(be instanceof CircuitBlockEntity blockEntity) || !blockEntity.matchRuntimeUuid(this.runtimeUuid)) return;
-        BlockState state = level.getBlockState(pos);
-        state.setValue(property, signal);
+        blockEntity.setPower(signal, direction);
+        level.updateNeighborsAt(this.pos, level.getBlockState(this.pos).getBlock());
     }
 }

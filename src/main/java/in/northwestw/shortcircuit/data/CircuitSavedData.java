@@ -3,6 +3,7 @@ package in.northwestw.shortcircuit.data;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import in.northwestw.shortcircuit.Constants;
+import in.northwestw.shortcircuit.ShortCircuit;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
@@ -53,6 +54,7 @@ public class CircuitSavedData extends SavedData {
         if (!this.circuits.containsKey(uuid)) return null;
         int outerIndex = this.circuits.get(uuid);
         Octolet octolet = this.octolets.get(outerIndex);
+        //ShortCircuit.LOGGER.debug("Octolet {} starts at {}", outerIndex, Octolet.getOctoletPos(outerIndex));
         return octolet.getStartingPos(outerIndex, uuid);
     }
 
@@ -68,6 +70,13 @@ public class CircuitSavedData extends SavedData {
         octolet.insertNewBlock(uuid);
         this.circuits.put(uuid, octoletIndex);
         this.setDirty();
+    }
+
+    public void removeCircuit(UUID uuid) {
+        if (!this.circuits.containsKey(uuid)) return;
+        int outerIndex = this.circuits.get(uuid);
+        Octolet octolet = this.octolets.get(outerIndex);
+        octolet.removeBlock(uuid);
     }
 
     public static CircuitSavedData load(CompoundTag tag, HolderLookup.Provider lookupProvider) {
@@ -99,7 +108,7 @@ public class CircuitSavedData extends SavedData {
             CompoundTag pair = new CompoundTag();
             pair.putUUID("key", uuid);
             pair.putInt("value", index);
-            list.add(pair);
+            circuitList.add(pair);
         });
         tag.put("circuits", circuitList);
         return tag;
@@ -112,8 +121,8 @@ public class CircuitSavedData extends SavedData {
     }
 
     public static CircuitSavedData getRuntimeData(ServerLevel level) {
-        ServerLevel circuitBoardLevel = level.getServer().getLevel(Constants.RUNTIME_DIMENSION);
-        DimensionDataStorage storage = circuitBoardLevel.getDataStorage();
+        ServerLevel runtimeLevel = level.getServer().getLevel(Constants.RUNTIME_DIMENSION);
+        DimensionDataStorage storage = runtimeLevel.getDataStorage();
         return storage.computeIfAbsent(new SavedData.Factory<>(CircuitSavedData::new, CircuitSavedData::load), "circuit_pos");
     }
 }

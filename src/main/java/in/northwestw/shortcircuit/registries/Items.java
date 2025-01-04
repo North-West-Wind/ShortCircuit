@@ -12,6 +12,7 @@ public class Items {
     private static final DeferredRegister.Items ITEMS = DeferredRegister.createItems(ShortCircuit.MOD_ID);
 
     public static final DeferredItem<BlockItem> CIRCUIT = ITEMS.registerSimpleBlockItem(Blocks.CIRCUIT, new Item.Properties());
+    public static final DeferredItem<BlockItem> CIRCUIT_BOARD = ITEMS.registerSimpleBlockItem(Blocks.CIRCUIT_BOARD, new Item.Properties());
 
     public static final DeferredItem<Item> POKING_STICK = ITEMS.registerItem("poking_stick", PokingStickItem::new);
 

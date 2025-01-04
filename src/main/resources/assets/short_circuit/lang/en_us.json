@@ -4,6 +4,7 @@
   "item.short_circuit.poking_stick": "Poking Stick",
 
   "tooltip.short_circuit.circuit": "UUID: %s",
+  "tooltip.short_circuit.circuit_board": "You should not be able to obtain this",
   "action.poking_stick.change": "Block size: %d",
   "action.circuit.reload": "Reloading circuit in runtime...",
 

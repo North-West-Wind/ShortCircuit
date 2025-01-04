@@ -1,13 +1,25 @@
 {
   "variants": {
     "annotated=false,mode=none": { "model": "short_circuit:block/circuit_board" },
-    "mode=input": { "model": "short_circuit:block/circuit_board_in" },
-    "mode=output": { "model": "short_circuit:block/circuit_board_out" },
-    "annotated=true,rel_dir=up": { "model": "short_circuit:block/circuit_board_up" },
-    "annotated=true,rel_dir=down": { "model": "short_circuit:block/circuit_board_down" },
-    "annotated=true,rel_dir=left": { "model": "short_circuit:block/circuit_board_left" },
-    "annotated=true,rel_dir=right": { "model": "short_circuit:block/circuit_board_right" },
-    "annotated=true,rel_dir=front": { "model": "short_circuit:block/circuit_board_front" },
-    "annotated=true,rel_dir=back": { "model": "short_circuit:block/circuit_board_back" }
+    "annotated=false,mode=input": { "model": "short_circuit:block/circuit_board_in" },
+    "annotated=false,mode=output": { "model": "short_circuit:block/circuit_board_out" },
+    "annotated=true,rel_dir=up,mode=none": { "model": "short_circuit:block/circuit_board_up" },
+    "annotated=true,rel_dir=down,mode=none": { "model": "short_circuit:block/circuit_board_down" },
+    "annotated=true,rel_dir=left,mode=none": { "model": "short_circuit:block/circuit_board_left" },
+    "annotated=true,rel_dir=right,mode=none": { "model": "short_circuit:block/circuit_board_right" },
+    "annotated=true,rel_dir=front,mode=none": { "model": "short_circuit:block/circuit_board_front" },
+    "annotated=true,rel_dir=back,mode=none": { "model": "short_circuit:block/circuit_board_back" },
+    "annotated=true,rel_dir=up,mode=input": { "model": "short_circuit:block/circuit_board_in" },
+    "annotated=true,rel_dir=down,mode=input": { "model": "short_circuit:block/circuit_board_in" },
+    "annotated=true,rel_dir=left,mode=input": { "model": "short_circuit:block/circuit_board_in" },
+    "annotated=true,rel_dir=right,mode=input": { "model": "short_circuit:block/circuit_board_in" },
+    "annotated=true,rel_dir=front,mode=input": { "model": "short_circuit:block/circuit_board_in" },
+    "annotated=true,rel_dir=back,mode=input": { "model": "short_circuit:block/circuit_board_in" },
+    "annotated=true,rel_dir=up,mode=output": { "model": "short_circuit:block/circuit_board_out" },
+    "annotated=true,rel_dir=down,mode=output": { "model": "short_circuit:block/circuit_board_out" },
+    "annotated=true,rel_dir=left,mode=output": { "model": "short_circuit:block/circuit_board_out" },
+    "annotated=true,rel_dir=right,mode=output": { "model": "short_circuit:block/circuit_board_out" },
+    "annotated=true,rel_dir=front,mode=output": { "model": "short_circuit:block/circuit_board_out" },
+    "annotated=true,rel_dir=back,mode=output": { "model": "short_circuit:block/circuit_board_out" }
   }
 }

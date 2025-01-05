@@ -4,6 +4,7 @@ import in.northwestw.shortcircuit.Constants;
 import in.northwestw.shortcircuit.ShortCircuit;
 import in.northwestw.shortcircuit.data.CircuitSavedData;
 import in.northwestw.shortcircuit.data.Octolet;
+import in.northwestw.shortcircuit.properties.RelativeDirection;
 import in.northwestw.shortcircuit.registries.Blocks;
 import in.northwestw.shortcircuit.registries.DataComponents;
 import in.northwestw.shortcircuit.registries.blockentities.CircuitBlockEntity;
@@ -158,12 +159,12 @@ public class PokingStickItem extends Item {
                 for (int kk = 0; kk < blockSize; kk++) {
                     if ((ii != 0 && ii != blockSize - 1) && (jj != 0 && jj != blockSize - 1) && (kk != 0 && kk != blockSize - 1)) continue;
                     BlockState state = Blocks.CIRCUIT_BOARD.get().defaultBlockState();
-                    if (jj == 0) state = state.setValue(CircuitBoardBlock.DIRECTION, CircuitBoardBlock.RelativeDirection.DOWN);
-                    else if (jj == blockSize - 1) state = state.setValue(CircuitBoardBlock.DIRECTION, CircuitBoardBlock.RelativeDirection.UP);
-                    else if (ii == 0) state = state.setValue(CircuitBoardBlock.DIRECTION, CircuitBoardBlock.RelativeDirection.FRONT);
-                    else if (ii == blockSize - 1) state = state.setValue(CircuitBoardBlock.DIRECTION, CircuitBoardBlock.RelativeDirection.BACK);
-                    else if (kk == 0) state = state.setValue(CircuitBoardBlock.DIRECTION, CircuitBoardBlock.RelativeDirection.RIGHT);
-                    else if (kk == blockSize - 1) state = state.setValue(CircuitBoardBlock.DIRECTION, CircuitBoardBlock.RelativeDirection.LEFT);
+                    if (jj == 0) state = state.setValue(CircuitBoardBlock.DIRECTION, RelativeDirection.DOWN);
+                    else if (jj == blockSize - 1) state = state.setValue(CircuitBoardBlock.DIRECTION, RelativeDirection.UP);
+                    else if (ii == 0) state = state.setValue(CircuitBoardBlock.DIRECTION, RelativeDirection.FRONT);
+                    else if (ii == blockSize - 1) state = state.setValue(CircuitBoardBlock.DIRECTION, RelativeDirection.BACK);
+                    else if (kk == 0) state = state.setValue(CircuitBoardBlock.DIRECTION, RelativeDirection.RIGHT);
+                    else if (kk == blockSize - 1) state = state.setValue(CircuitBoardBlock.DIRECTION, RelativeDirection.LEFT);
                     // annotate middle 4
                     if (this.isMiddleFour(ii, jj, kk, blockSize)) state = state.setValue(CircuitBoardBlock.ANNOTATED, true);
                     circuitBoardLevel.setBlock(startingPos.offset(ii, jj, kk), state, 3);

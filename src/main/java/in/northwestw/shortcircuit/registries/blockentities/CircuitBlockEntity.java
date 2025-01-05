@@ -6,6 +6,7 @@ import in.northwestw.shortcircuit.Constants;
 import in.northwestw.shortcircuit.ShortCircuit;
 import in.northwestw.shortcircuit.data.CircuitSavedData;
 import in.northwestw.shortcircuit.data.Octolet;
+import in.northwestw.shortcircuit.properties.RelativeDirection;
 import in.northwestw.shortcircuit.registries.BlockEntities;
 import in.northwestw.shortcircuit.registries.Blocks;
 import in.northwestw.shortcircuit.registries.DataComponents;
@@ -21,6 +22,7 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.NbtUtils;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.Connection;
 import net.minecraft.network.protocol.Packet;
@@ -50,7 +52,7 @@ public class CircuitBlockEntity extends BlockEntity {
     private short ticks, blockSize;
     private boolean hidden;
     private byte[] powers;
-    public final Map<Vec3i, BlockState> blocks; // 8x8x8
+    public Map<BlockPos, BlockState> blocks; // 8x8x8
 
     public CircuitBlockEntity(BlockPos pos, BlockState state) {
         super(BlockEntities.CIRCUIT.get(), pos, state);
@@ -80,11 +82,12 @@ public class CircuitBlockEntity extends BlockEntity {
                     BlockState blockState = runtimeLevel.getBlockState(startingPos.offset(ii, jj, kk));
                     if (!blockState.isEmpty()) {
                         // ShortCircuit.LOGGER.debug("{} at {}, {}, {}", blockState, ii, jj, kk);
-                        blockEntity.blocks.put(new Vec3i(ii, jj, kk), blockState);
+                        blockEntity.blocks.put(new BlockPos(ii, jj, kk), blockState);
                     }
                 }
             }
         }
+        level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
     }
 
     public boolean shouldTick() {
@@ -139,11 +142,10 @@ public class CircuitBlockEntity extends BlockEntity {
                 }
             }
         }
-        ShortCircuit.LOGGER.info("Copied from circuit board {} to runtime {}", boardPos, runtimePos);
         this.ticks = 0;
     }
 
-    public void updateRuntimeBlock(int signal, CircuitBoardBlock.RelativeDirection direction) {
+    public void updateRuntimeBlock(int signal, RelativeDirection direction) {
         if (this.runtimeUuid == null) return;
         MinecraftServer server = level.getServer();
         if (server == null) return;
@@ -165,7 +167,6 @@ public class CircuitBlockEntity extends BlockEntity {
                 }
             }
         }
-        ShortCircuit.LOGGER.debug("Updated {} blocks direction {} to power {}", count, direction.getSerializedName(), signal);
     }
 
     public void removeRuntime() {
@@ -188,7 +189,7 @@ public class CircuitBlockEntity extends BlockEntity {
         }
     }
 
-    private BlockPos twoDimensionalRelativeDirectionOffset(BlockPos pos, int ii, int jj, CircuitBoardBlock.RelativeDirection direction) {
+    private BlockPos twoDimensionalRelativeDirectionOffset(BlockPos pos, int ii, int jj, RelativeDirection direction) {
         return switch (direction) {
             case UP -> pos.offset(ii, this.blockSize - 1, jj);
             case DOWN -> pos.offset(ii, 0, jj);
@@ -224,29 +225,10 @@ public class CircuitBlockEntity extends BlockEntity {
         CompoundTag tag = new CompoundTag();
         this.saveAdditional(tag, registries);
         ListTag list = new ListTag();
-        for (Map.Entry<Vec3i, BlockState> entry : this.blocks.entrySet()) {
+        for (Map.Entry<BlockPos, BlockState> entry : this.blocks.entrySet()) {
             CompoundTag tuple = new CompoundTag();
-            Vec3i pos = entry.getKey();
-            BlockState state = entry.getValue();
-            tuple.putIntArray("pos", Lists.newArrayList(pos.getX(), pos.getY(), pos.getZ()));
-            tuple.putString("block", BuiltInRegistries.BLOCK.getKey(state.getBlock()).toString());
-            CompoundTag prop = new CompoundTag();
-            for (Property<?> property : state.getProperties()) {
-                CompoundTag innerProp = new CompoundTag();
-                if (property instanceof BooleanProperty boolProp) {
-                    innerProp.putByte("type", (byte) 0);
-                    innerProp.putBoolean("value", state.getValue(boolProp));
-                } else if (property instanceof IntegerProperty intProp) {
-                    innerProp.putByte("type", (byte) 1);
-                    Collection<Integer> collection = intProp.getPossibleValues();
-                    int min = Integer.MAX_VALUE;
-                    for (int val : collection)
-                        if (val < min) min = val;
-                    innerProp.putIntArray("value", Lists.newArrayList(state.getValue(intProp), min, min + collection.size() - 1));
-                }
-                prop.put(property.getName(), innerProp);
-            }
-            tuple.put("properties", prop);
+            tuple.put("pos", NbtUtils.writeBlockPos(entry.getKey()));
+            tuple.put("block", NbtUtils.writeBlockState(entry.getValue()));
             list.add(tuple);
         }
         tag.put("blocks", list);
@@ -256,26 +238,18 @@ public class CircuitBlockEntity extends BlockEntity {
     @Override
     public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket pkt, HolderLookup.Provider lookupProvider) {
         super.onDataPacket(net, pkt, lookupProvider);
+        if (this.level == null) return;
         CompoundTag tag = pkt.getTag();
-        this.blocks.clear();
+        Map<BlockPos, BlockState> blocks = Maps.newHashMap();
         for (Tag t : tag.getList("blocks", Tag.TAG_COMPOUND)) {
             CompoundTag tuple = (CompoundTag) t;
-            int[] arr = tuple.getIntArray("pos");
-            Vec3i pos = new Vec3i(arr[0], arr[1], arr[2]);
-            Block block = BuiltInRegistries.BLOCK.get(ResourceLocation.parse(tuple.getString("block")));
-            BlockState state = block.defaultBlockState();
-            CompoundTag properties = tuple.getCompound("properties");
-            for (String prop : properties.getAllKeys()) {
-                CompoundTag tt = properties.getCompound(prop);
-                byte type = tt.getByte("type");
-                if (type == 0) state = state.setValue(BooleanProperty.create(prop), tt.getBoolean("value"));
-                else if (type == 1) {
-                    int[] propArr = tt.getIntArray("value");
-                    state = state.setValue(IntegerProperty.create(prop, propArr[1], propArr[2]), propArr[0]);
-                }
-            }
-            this.blocks.put(pos, state);
+            Optional<BlockPos> opt = NbtUtils.readBlockPos(tuple, "pos");
+            if (opt.isEmpty()) continue;
+            BlockPos pos = opt.get();
+            BlockState state = NbtUtils.readBlockState(this.level.holderLookup(Registries.BLOCK), tuple.getCompound("block"));
+            blocks.put(pos, state);
         }
+        this.blocks = blocks;
     }
 
     @Override
@@ -320,7 +294,7 @@ public class CircuitBlockEntity extends BlockEntity {
         return this.runtimeUuid.equals(uuid);
     }
 
-    public void setPower(int power, CircuitBoardBlock.RelativeDirection direction) {
+    public void setPower(int power, RelativeDirection direction) {
         this.powers[direction.getId()] = (byte) power;
         BlockState state = this.getBlockState();
         boolean powered = false;
@@ -337,17 +311,17 @@ public class CircuitBlockEntity extends BlockEntity {
 
     public int getPower(Direction direction) {
         switch (direction) {
-            case UP: return this.powers[CircuitBoardBlock.RelativeDirection.UP.getId()];
-            case DOWN: return this.powers[CircuitBoardBlock.RelativeDirection.DOWN.getId()];
+            case UP: return this.powers[RelativeDirection.UP.getId()];
+            case DOWN: return this.powers[RelativeDirection.DOWN.getId()];
         }
         int data2d = this.getBlockState().getValue(HorizontalDirectionalBlock.FACING).get2DDataValue();
         int offset = direction.get2DDataValue() - data2d;
         if (offset < 0) offset += 4;
         return switch (offset) {
-            case 0 -> this.powers[CircuitBoardBlock.RelativeDirection.BACK.getId()];
-            case 1 -> this.powers[CircuitBoardBlock.RelativeDirection.LEFT.getId()];
-            case 2 -> this.powers[CircuitBoardBlock.RelativeDirection.FRONT.getId()];
-            case 3 -> this.powers[CircuitBoardBlock.RelativeDirection.RIGHT.getId()];
+            case 0 -> this.powers[RelativeDirection.BACK.getId()];
+            case 1 -> this.powers[RelativeDirection.LEFT.getId()];
+            case 2 -> this.powers[RelativeDirection.FRONT.getId()];
+            case 3 -> this.powers[RelativeDirection.RIGHT.getId()];
             default -> 0;
         };
     }

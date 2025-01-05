@@ -1,6 +1,7 @@
 package in.northwestw.shortcircuit.registries.blockentities;
 
 import com.google.common.collect.Lists;
+import in.northwestw.shortcircuit.properties.RelativeDirection;
 import in.northwestw.shortcircuit.registries.BlockEntities;
 import in.northwestw.shortcircuit.registries.blocks.CircuitBlock;
 import in.northwestw.shortcircuit.registries.blocks.CircuitBoardBlock;
@@ -53,7 +54,7 @@ public class CircuitBoardBlockEntity extends BlockEntity {
         this.setChanged();
     }
 
-    public void updateCircuitBlock(int signal, CircuitBoardBlock.RelativeDirection direction) {
+    public void updateCircuitBlock(int signal, RelativeDirection direction) {
         if (this.dimension == null || this.pos == null || this.runtimeUuid == null) return;
         MinecraftServer server = this.level.getServer();
         if (server == null) return;

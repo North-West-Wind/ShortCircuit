@@ -1,6 +1,8 @@
 package in.northwestw.shortcircuit.registries.blocks;
 
 import in.northwestw.shortcircuit.ShortCircuit;
+import in.northwestw.shortcircuit.properties.DirectionHelper;
+import in.northwestw.shortcircuit.properties.RelativeDirection;
 import in.northwestw.shortcircuit.registries.Blocks;
 import in.northwestw.shortcircuit.registries.blockentities.CircuitBoardBlockEntity;
 import net.minecraft.core.BlockPos;
@@ -29,7 +31,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public class CircuitBoardBlock extends Block implements EntityBlock {
-    public static final EnumProperty<RelativeDirection> DIRECTION = EnumProperty.create("rel_dir", RelativeDirection.class);
+    public static final EnumProperty<RelativeDirection> DIRECTION = RelativeDirection.REL_DIRECTION;
     public static final BooleanProperty ANNOTATED = BooleanProperty.create("annotated");
     public static final EnumProperty<Mode> MODE = EnumProperty.create("mode", Mode.class);
     public static final IntegerProperty POWER = BlockStateProperties.POWER;
@@ -76,8 +78,8 @@ public class CircuitBoardBlock extends Block implements EntityBlock {
         if (!state.getValue(MODE).equals(Mode.OUTPUT)) return;
         if (neighborBlock != Blocks.CIRCUIT_BOARD.get()) {
             CircuitBoardBlockEntity blockEntity = (CircuitBoardBlockEntity) level.getBlockEntity(pos);
-            int signal = level.getSignal(neighborPos, this.getDirectionFromPosToPos(pos, neighborPos));
-            ShortCircuit.LOGGER.debug("neighbor {}, direction {}, signal {}", neighborPos, this.getDirectionFromPosToPos(neighborPos, pos), signal);
+            int signal = level.getSignal(neighborPos, DirectionHelper.getDirectionFromPosToPos(pos, neighborPos));
+            //ShortCircuit.LOGGER.debug("neighbor {}, direction {}, signal {}", neighborPos, DirectionHelper.getDirectionFromPosToPos(neighborPos, pos), signal);
             blockEntity.updateCircuitBlock(signal, state.getValue(DIRECTION));
         }
     }
@@ -88,41 +90,9 @@ public class CircuitBoardBlock extends Block implements EntityBlock {
         super.appendHoverText(stack, context, components, flag);
     }
 
-    private Direction getDirectionFromPosToPos(BlockPos a, BlockPos b) {
-        if (a.getX() != b.getX()) return a.getX() - b.getX() > 0 ? Direction.WEST : Direction.EAST;
-        if (a.getY() != b.getY()) return a.getY() - b.getY() > 0 ? Direction.DOWN : Direction.UP;
-        return a.getZ() - b.getZ() > 0 ? Direction.NORTH : Direction.SOUTH;
-    }
-
     @Override
     public @Nullable BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
         return new CircuitBoardBlockEntity(pos, state);
-    }
-
-    public enum RelativeDirection implements StringRepresentable {
-        UP("up", 0),
-        DOWN("down", 1),
-        LEFT("left", 2),
-        RIGHT("right", 3),
-        FRONT("front", 4),
-        BACK("back", 5);
-
-        final String name;
-        final byte id;
-
-        RelativeDirection(String name, int id) {
-            this.name = name;
-            this.id = (byte) id;
-        }
-
-        @Override
-        public String getSerializedName() {
-            return this.name;
-        }
-
-        public byte getId() {
-            return id;
-        }
     }
 
     public enum Mode implements StringRepresentable {

@@ -2,6 +2,8 @@ package in.northwestw.shortcircuit.registries.blocks;
 
 import com.mojang.serialization.MapCodec;
 import in.northwestw.shortcircuit.ShortCircuit;
+import in.northwestw.shortcircuit.properties.DirectionHelper;
+import in.northwestw.shortcircuit.properties.RelativeDirection;
 import in.northwestw.shortcircuit.registries.BlockEntities;
 import in.northwestw.shortcircuit.registries.Blocks;
 import in.northwestw.shortcircuit.registries.DataComponents;
@@ -87,7 +89,7 @@ public class CircuitBlock extends HorizontalDirectionalBlock implements EntityBl
     public void appendHoverText(ItemStack stack, Item.TooltipContext ctx, List<Component> components, TooltipFlag flag) {
         super.appendHoverText(stack, ctx, components, flag);
         if (stack.has(DataComponents.UUID)) {
-            components.add(Component.translatable("tooltip.short_circuit.circuit", stack.get(DataComponents.UUID).uuid()));
+            components.add(Component.translatable("tooltip.short_circuit.circuit", stack.get(DataComponents.UUID).uuid().toString()));
         }
     }
 
@@ -134,28 +136,11 @@ public class CircuitBlock extends HorizontalDirectionalBlock implements EntityBl
     @Override
     protected void neighborChanged(BlockState state, Level level, BlockPos pos, Block neighborBlock, BlockPos neighborPos, boolean movedByPiston) {
         super.neighborChanged(state, level, pos, neighborBlock, neighborPos, movedByPiston);
-        Direction direction = this.getDirectionFromPosToPos(pos, neighborPos);
+        Direction direction = DirectionHelper.getDirectionFromPosToPos(pos, neighborPos);
+        RelativeDirection relDir = DirectionHelper.directionToRelativeDirection(state.getValue(FACING), direction);
+        ShortCircuit.LOGGER.debug("Block {} on direction {} changed, updating rel_dir {} facing {}", neighborBlock, direction, relDir, state.getValue(FACING));
         int signal = level.getSignal(neighborPos, direction);
-        ((CircuitBlockEntity) level.getBlockEntity(pos)).updateRuntimeBlock(signal, this.directionToRelativeDirection(state.getValue(FACING), direction));
-    }
-
-    private Direction getDirectionFromPosToPos(BlockPos a, BlockPos b) {
-        if (a.getX() != b.getX()) return a.getX() - b.getX() == 1 ? Direction.WEST : Direction.EAST;
-        if (a.getY() != b.getY()) return a.getY() - b.getY() == 1 ? Direction.DOWN : Direction.UP;
-        return a.getZ() - b.getZ() == 1 ? Direction.NORTH : Direction.SOUTH;
-    }
-
-    private CircuitBoardBlock.RelativeDirection directionToRelativeDirection(Direction facing, Direction direction) {
-        if (direction == Direction.UP) return CircuitBoardBlock.RelativeDirection.UP;
-        if (direction == Direction.DOWN) return CircuitBoardBlock.RelativeDirection.DOWN;
-        int offset = direction.get2DDataValue() - facing.get2DDataValue();
-        if (offset < 0) offset += 4;
-        return switch (offset) {
-            case 0 -> CircuitBoardBlock.RelativeDirection.FRONT;
-            case 1 -> CircuitBoardBlock.RelativeDirection.LEFT;
-            case 2 -> CircuitBoardBlock.RelativeDirection.BACK;
-            default ->  CircuitBoardBlock.RelativeDirection.RIGHT;
-        };
+        ((CircuitBlockEntity) level.getBlockEntity(pos)).updateRuntimeBlock(signal, relDir);
     }
 
     @Override
@@ -163,5 +148,12 @@ public class CircuitBlock extends HorizontalDirectionalBlock implements EntityBl
         if (state.hasBlockEntity() && level.getBlockEntity(pos) instanceof CircuitBlockEntity blockEntity)
             blockEntity.removeRuntime();
         super.onRemove(state, level, pos, newState, movedByPiston);
+    }
+
+    @Override
+    protected void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean movedByPiston) {
+        if (state.hasBlockEntity() && level.getBlockEntity(pos) instanceof CircuitBlockEntity blockEntity)
+            blockEntity.reloadRuntime();
+        super.onPlace(state, level, pos, oldState, movedByPiston);
     }
 }

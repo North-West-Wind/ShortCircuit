@@ -23,6 +23,7 @@ public class Blocks {
                     .noLootTable()
                     .noOcclusion()
                     .isValidSpawn(net.minecraft.world.level.block.Blocks::never)
+                    .isRedstoneConductor((state, level, pos) -> false)
     );
     public static final DeferredBlock<Block> CIRCUIT_BOARD = BLOCKS.registerBlock("circuit_board", CircuitBoardBlock::new, BlockBehaviour.Properties.of().mapColor(MapColor.DIAMOND).lightLevel(state -> 7));
 

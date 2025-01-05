@@ -25,7 +25,7 @@ public class Blocks {
                     .isValidSpawn(net.minecraft.world.level.block.Blocks::never)
                     .isRedstoneConductor((state, level, pos) -> false)
     );
-    public static final DeferredBlock<Block> CIRCUIT_BOARD = BLOCKS.registerBlock("circuit_board", CircuitBoardBlock::new, BlockBehaviour.Properties.of().mapColor(MapColor.DIAMOND).lightLevel(state -> 7));
+    public static final DeferredBlock<Block> CIRCUIT_BOARD = BLOCKS.registerBlock("circuit_board", CircuitBoardBlock::new, BlockBehaviour.Properties.of().mapColor(MapColor.DIAMOND).lightLevel(state -> 15));
 
     public static void registerBlocks(IEventBus modEventBus) {
         BLOCKS.register(modEventBus);

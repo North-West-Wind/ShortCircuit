@@ -68,8 +68,8 @@ public class CircuitBoardBlock extends Block implements EntityBlock {
     }
 
     @Override
-    protected int getDirectSignal(BlockState pState, BlockGetter pLevel, BlockPos pPos, Direction pDirection) {
-        return super.getSignal(pState, pLevel, pPos, pDirection);
+    protected int getDirectSignal(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
+        return state.getSignal(level, pos, direction);
     }
 
     @Override

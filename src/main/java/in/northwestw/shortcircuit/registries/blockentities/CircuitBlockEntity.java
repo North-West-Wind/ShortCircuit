@@ -82,7 +82,7 @@ public class CircuitBlockEntity extends BlockEntity {
                     BlockState blockState = runtimeLevel.getBlockState(startingPos.offset(ii, jj, kk));
                     if (!blockState.isEmpty()) {
                         // ShortCircuit.LOGGER.debug("{} at {}, {}, {}", blockState, ii, jj, kk);
-                        blockEntity.blocks.put(new BlockPos(ii, jj, kk), blockState);
+                        blockEntity.blocks.put(new BlockPos(ii - 1, jj - 1, kk - 1), blockState);
                     }
                 }
             }
@@ -114,15 +114,16 @@ public class CircuitBlockEntity extends BlockEntity {
         CircuitSavedData runtimeData = CircuitSavedData.getRuntimeData(runtimeLevel);
         BlockPos boardPos = boardData.getCircuitStartingPos(this.uuid);
         if (boardPos == null) return; // circuit doesn't exist yet. use the poking stick on it
-        if (runtimeData.getParentOctolet(this.runtimeUuid) == null) {
-            int octoletIndex = runtimeData.octoletIndexForSize(blockSize);
+        Octolet octolet = runtimeData.getParentOctolet(this.runtimeUuid);
+        int octoletIndex = runtimeData.octoletIndexForSize(blockSize);
+        if (octolet == null) {
             if (!runtimeData.octolets.containsKey(octoletIndex)) runtimeData.addOctolet(octoletIndex, new Octolet(this.blockSize));
             runtimeData.addCircuit(this.runtimeUuid, octoletIndex);
-            Octolet octolet = runtimeData.octolets.get(octoletIndex);
-            BlockPos start = Octolet.getOctoletPos(octoletIndex);
-            for (ChunkPos pos : octolet.getLoadedChunks())
-                runtimeLevel.setChunkForced(start.getX() / 16 + pos.x, start.getZ() / 16 + pos.z, true);
+            octolet = runtimeData.octolets.get(octoletIndex);
         }
+        BlockPos start = Octolet.getOctoletPos(octoletIndex);
+        for (ChunkPos pos : octolet.getLoadedChunks())
+            runtimeLevel.setChunkForced(start.getX() / 16 + pos.x, start.getZ() / 16 + pos.z, true);
         BlockPos runtimePos = runtimeData.getCircuitStartingPos(this.runtimeUuid);
         for (int ii = 0; ii < this.blockSize; ii++) {
             for (int jj = 0; jj < this.blockSize; jj++) {
@@ -167,6 +168,7 @@ public class CircuitBlockEntity extends BlockEntity {
                 }
             }
         }
+        ShortCircuit.LOGGER.debug("Updated {} blocks with rel_dir {}", count, direction);
     }
 
     public void removeRuntime() {

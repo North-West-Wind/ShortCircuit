@@ -44,24 +44,23 @@ public class CircuitBlockEntityRenderer implements BlockEntityRenderer<CircuitBl
         }
         poseStack.translate(-0.5, -0.5, -0.5);
 
-        poseStack.pushPose();
         poseStack.scale(HIDDEN_SCALE_CARPET, HIDDEN_SCALE_CARPET, HIDDEN_SCALE_CARPET);
         poseStack.translate(HIDDEN_TRANSLATE_CARPET, HIDDEN_TRANSLATE_CARPET, HIDDEN_TRANSLATE_CARPET);
         this.blockRenderDispatcher.renderSingleBlock(Blocks.WHITE_CARPET.defaultBlockState(), poseStack, bufferSource, packedLight, packedOverlay, ModelData.EMPTY, null);
-        poseStack.popPose();
+        poseStack.translate(0, 0.0625, 0);
 
         if (blockEntity.isHidden()) {
-            poseStack.scale(HIDDEN_SCALE, HIDDEN_SCALE, HIDDEN_SCALE);
-            poseStack.translate(HIDDEN_TRANSLATE, HIDDEN_TRANSLATE, HIDDEN_TRANSLATE);
+            //poseStack.scale(HIDDEN_SCALE, HIDDEN_SCALE, HIDDEN_SCALE);
+            //poseStack.translate(HIDDEN_TRANSLATE, HIDDEN_TRANSLATE, HIDDEN_TRANSLATE);
             this.blockRenderDispatcher.renderSingleBlock(
                     Blocks.COMPARATOR.defaultBlockState().setValue(HorizontalDirectionalBlock.FACING, Direction.EAST).setValue(BlockStateProperties.POWERED, blockEntity.getBlockState().getValue(BlockStateProperties.POWERED)),
                     poseStack, bufferSource, packedLight, packedOverlay, ModelData.EMPTY, null
             );
         } else {
-            float scale = 1f / blockEntity.getBlockSize();
+            float scale = 1f / (blockEntity.getBlockSize() - 2);
             poseStack.scale(scale, scale, scale);
             for (Map.Entry<BlockPos, BlockState> entry : blockEntity.blocks.entrySet()) {
-                Vec3i vec = entry.getKey();
+                BlockPos vec = entry.getKey();
                 poseStack.translate(vec.getX(), vec.getY(), vec.getZ());
                 this.blockRenderDispatcher.renderSingleBlock(entry.getValue(), poseStack, bufferSource, packedLight, packedOverlay, ModelData.EMPTY, null);
                 poseStack.translate(-vec.getX(), -vec.getY(), -vec.getZ());

@@ -125,7 +125,7 @@ public class CircuitBlock extends HorizontalDirectionalBlock implements EntityBl
     @Override
     protected int getSignal(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
         if (!(level.getBlockEntity(pos) instanceof CircuitBlockEntity blockEntity)) return 0;
-        return blockEntity.getPower(direction);
+        return blockEntity.getPower(direction.getOpposite());
     }
 
     @Override
@@ -138,8 +138,8 @@ public class CircuitBlock extends HorizontalDirectionalBlock implements EntityBl
         super.neighborChanged(state, level, pos, neighborBlock, neighborPos, movedByPiston);
         Direction direction = DirectionHelper.getDirectionFromPosToPos(pos, neighborPos);
         RelativeDirection relDir = DirectionHelper.directionToRelativeDirection(state.getValue(FACING), direction);
-        ShortCircuit.LOGGER.debug("Block {} on direction {} changed, updating rel_dir {} facing {}", neighborBlock, direction, relDir, state.getValue(FACING));
         int signal = level.getSignal(neighborPos, direction);
+        ShortCircuit.LOGGER.debug("{} on direction {} gives signal {}, updating rel_dir {} facing {}", neighborBlock, direction, signal, relDir, state.getValue(FACING));
         ((CircuitBlockEntity) level.getBlockEntity(pos)).updateRuntimeBlock(signal, relDir);
     }
 

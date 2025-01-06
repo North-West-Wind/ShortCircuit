@@ -59,12 +59,12 @@ public class CircuitBoardBlock extends Block implements EntityBlock {
 
     @Override
     protected boolean isSignalSource(BlockState state) {
-        return state.getValue(MODE).equals(Mode.INPUT);
+        return state.getValue(MODE) == Mode.INPUT;
     }
 
     @Override
     protected int getSignal(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
-        return state.getValue(MODE).equals(Mode.INPUT) ? state.getValue(POWER) : 0;
+        return state.getValue(MODE) == Mode.INPUT ? state.getValue(POWER) : 0;
     }
 
     @Override
@@ -75,7 +75,7 @@ public class CircuitBoardBlock extends Block implements EntityBlock {
     @Override
     protected void neighborChanged(BlockState state, Level level, BlockPos pos, Block neighborBlock, BlockPos neighborPos, boolean movedByPiston) {
         super.neighborChanged(state, level, pos, neighborBlock, neighborPos, movedByPiston);
-        if (!state.getValue(MODE).equals(Mode.OUTPUT)) return;
+        if (state.getValue(MODE) != Mode.OUTPUT) return;
         if (neighborBlock != Blocks.CIRCUIT_BOARD.get()) {
             CircuitBoardBlockEntity blockEntity = (CircuitBoardBlockEntity) level.getBlockEntity(pos);
             int signal = level.getSignal(neighborPos, DirectionHelper.getDirectionFromPosToPos(pos, neighborPos));

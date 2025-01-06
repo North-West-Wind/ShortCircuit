@@ -15,6 +15,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.ItemInteractionResult;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
@@ -125,7 +126,7 @@ public class CircuitBlock extends HorizontalDirectionalBlock implements EntityBl
     @Override
     protected int getSignal(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
         if (!(level.getBlockEntity(pos) instanceof CircuitBlockEntity blockEntity)) return 0;
-        return blockEntity.getPower(direction.getOpposite());
+        return blockEntity.getPower(direction);
     }
 
     @Override
@@ -151,9 +152,9 @@ public class CircuitBlock extends HorizontalDirectionalBlock implements EntityBl
     }
 
     @Override
-    protected void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean movedByPiston) {
+    public void setPlacedBy(Level level, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack stack) {
         if (state.hasBlockEntity() && level.getBlockEntity(pos) instanceof CircuitBlockEntity blockEntity)
             blockEntity.reloadRuntime();
-        super.onPlace(state, level, pos, oldState, movedByPiston);
+        super.setPlacedBy(level, pos, state, placer, stack);
     }
 }

@@ -64,7 +64,7 @@ public class CircuitBlockEntity extends BlockEntity {
 
     public static <T extends BlockEntity> void tick(Level level, BlockPos pos, BlockState state, T t) {
         CircuitBlockEntity blockEntity = (CircuitBlockEntity) t;
-        if (!blockEntity.shouldTick()) return;
+        if (blockEntity.hidden || !blockEntity.shouldTick()) return;
 
         // ticking to set up blocks for rendering
         MinecraftServer server = level.getServer();
@@ -291,6 +291,7 @@ public class CircuitBlockEntity extends BlockEntity {
     public void setHidden(boolean hidden) {
         this.hidden = hidden;
         this.setChanged();
+        if (!this.hidden && !this.level.isClientSide) this.level.sendBlockUpdated(this.getBlockPos(), this.getBlockState(), this.getBlockState(), Block.UPDATE_CLIENTS);
     }
 
     public boolean matchRuntimeUuid(UUID uuid) {
@@ -298,6 +299,8 @@ public class CircuitBlockEntity extends BlockEntity {
     }
 
     public void setPower(int power, RelativeDirection direction) {
+        byte oldPower = this.powers[direction.getId()];
+        if (oldPower == power) return;
         this.powers[direction.getId()] = (byte) power;
         BlockState state = this.getBlockState();
         boolean powered = false;
@@ -309,6 +312,7 @@ public class CircuitBlockEntity extends BlockEntity {
         }
         state = state.setValue(CircuitBlock.POWERED, powered);
         this.level.setBlockAndUpdate(this.getBlockPos(), state);
+        this.ticks = 0; // trigger client update
         this.setChanged();
     }
 

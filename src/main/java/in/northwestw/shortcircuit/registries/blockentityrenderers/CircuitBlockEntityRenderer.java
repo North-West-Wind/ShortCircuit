@@ -57,6 +57,9 @@ public class CircuitBlockEntityRenderer implements BlockEntityRenderer<CircuitBl
                     poseStack, bufferSource, packedLight, packedOverlay, ModelData.EMPTY, null
             );
         } else {
+            // intentional repeated scaling so blocks don't clip out
+            poseStack.scale(HIDDEN_SCALE, HIDDEN_SCALE, HIDDEN_SCALE);
+            poseStack.translate(HIDDEN_TRANSLATE, HIDDEN_TRANSLATE, HIDDEN_TRANSLATE);
             float scale = 1f / (blockEntity.getBlockSize() - 2);
             poseStack.scale(scale, scale, scale);
             for (Map.Entry<BlockPos, BlockState> entry : blockEntity.blocks.entrySet()) {

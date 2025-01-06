@@ -49,54 +49,51 @@ import java.util.*;
 
 public class CircuitBlockEntity extends BlockEntity {
     private UUID uuid, runtimeUuid;
-    private short ticks, blockSize;
+    private short blockSize, ticks;
     private boolean hidden;
     private byte[] powers;
     public Map<BlockPos, BlockState> blocks; // 8x8x8
 
     public CircuitBlockEntity(BlockPos pos, BlockState state) {
         super(BlockEntities.CIRCUIT.get(), pos, state);
-        this.ticks = 0;
         this.blocks = Maps.newHashMap();
         this.runtimeUuid = UUID.randomUUID();
         this.powers = new byte[6];
     }
 
     public static <T extends BlockEntity> void tick(Level level, BlockPos pos, BlockState state, T t) {
-        CircuitBlockEntity blockEntity = (CircuitBlockEntity) t;
-        if (blockEntity.hidden || !blockEntity.shouldTick()) return;
+        if (t instanceof CircuitBlockEntity blockEntity && blockEntity.shouldTick())
+            blockEntity.updateInnerBlocks();
+    }
 
-        // ticking to set up blocks for rendering
-        MinecraftServer server = level.getServer();
+    public boolean shouldTick() {
+        this.ticks = (short) ((this.ticks + 1) % 100);
+        return this.ticks == 1;
+    }
+
+    public void updateInnerBlocks() {
+        if (this.hidden) return;
+        MinecraftServer server = this.level.getServer();
         if (server == null) return;
-        ServerLevel runtimeLevel = level.getServer().getLevel(Constants.RUNTIME_DIMENSION);
+        ServerLevel runtimeLevel = this.level.getServer().getLevel(Constants.RUNTIME_DIMENSION);
         if (runtimeLevel == null) return;
         CircuitSavedData data = CircuitSavedData.getRuntimeData(runtimeLevel);
-        Octolet octolet = data.getParentOctolet(blockEntity.runtimeUuid);
+        Octolet octolet = data.getParentOctolet(this.runtimeUuid);
         if (octolet == null) return;
-        BlockPos startingPos = data.getCircuitStartingPos(blockEntity.runtimeUuid);
-        blockEntity.blocks.clear();
+        BlockPos startingPos = data.getCircuitStartingPos(this.runtimeUuid);
+        this.blocks.clear();
         for (int ii = 1; ii < octolet.blockSize - 1; ii++) {
             for (int jj = 1; jj < octolet.blockSize - 1; jj++) {
                 for (int kk = 1; kk < octolet.blockSize - 1; kk++) {
                     BlockState blockState = runtimeLevel.getBlockState(startingPos.offset(ii, jj, kk));
                     if (!blockState.isEmpty()) {
                         // ShortCircuit.LOGGER.debug("{} at {}, {}, {}", blockState, ii, jj, kk);
-                        blockEntity.blocks.put(new BlockPos(ii - 1, jj - 1, kk - 1), blockState);
+                        this.blocks.put(new BlockPos(ii - 1, jj - 1, kk - 1), blockState);
                     }
                 }
             }
         }
-        level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
-    }
-
-    public boolean shouldTick() {
-        if (this.hidden) {
-            this.ticks = 0;
-            return false;
-        }
-        this.ticks = (short) ((this.ticks + 1) % 100); // tick only every 5 seconds to reduce lag
-        return this.ticks == 1;
+        level.sendBlockUpdated(this.getBlockPos(), this.getBlockState(), this.getBlockState(), Block.UPDATE_CLIENTS);
     }
 
     public boolean isValid() {
@@ -143,7 +140,7 @@ public class CircuitBlockEntity extends BlockEntity {
                 }
             }
         }
-        this.ticks = 0;
+        this.updateInnerBlocks();
     }
 
     public void updateRuntimeBlock(int signal, RelativeDirection direction) {
@@ -157,19 +154,14 @@ public class CircuitBlockEntity extends BlockEntity {
         if (!data.octolets.containsKey(octoletIndex)) data.addOctolet(octoletIndex, new Octolet(blockSize));
         BlockPos startingPos = data.getCircuitStartingPos(this.runtimeUuid);
         if (startingPos == null) return;
-        int count = 0;
         for (int ii = 0; ii < this.blockSize; ii++) {
             for (int jj = 0; jj < this.blockSize; jj++) {
                 BlockPos pos = this.twoDimensionalRelativeDirectionOffset(startingPos, ii, jj, direction);
                 BlockState state = runtimeLevel.getBlockState(pos);
-                if (state.is(Blocks.CIRCUIT_BOARD) && state.getValue(CircuitBoardBlock.MODE) == CircuitBoardBlock.Mode.INPUT) {
-                    ShortCircuit.LOGGER.debug("Updating block with direction {}", state.getValue(CircuitBoardBlock.DIRECTION));
-                    count++;
+                if (state.is(Blocks.CIRCUIT_BOARD) && state.getValue(CircuitBoardBlock.MODE) == CircuitBoardBlock.Mode.INPUT)
                     runtimeLevel.setBlockAndUpdate(pos, state.setValue(CircuitBoardBlock.POWER, signal));
-                }
             }
         }
-        ShortCircuit.LOGGER.debug("Updated {} blocks with rel_dir {}", count, direction);
     }
 
     public void removeRuntime() {
@@ -312,14 +304,15 @@ public class CircuitBlockEntity extends BlockEntity {
         }
         state = state.setValue(CircuitBlock.POWERED, powered);
         this.level.setBlockAndUpdate(this.getBlockPos(), state);
-        this.ticks = 0; // trigger client update
         this.setChanged();
+        this.updateInnerBlocks();
     }
 
     public int getPower(Direction direction) {
         switch (direction) {
-            case UP: return this.powers[RelativeDirection.UP.getId()];
-            case DOWN: return this.powers[RelativeDirection.DOWN.getId()];
+            // this is so stupid. why is the direction of signals flipped!?
+            case UP: return this.powers[RelativeDirection.DOWN.getId()];
+            case DOWN: return this.powers[RelativeDirection.UP.getId()];
         }
         int data2d = this.getBlockState().getValue(HorizontalDirectionalBlock.FACING).get2DDataValue();
         int offset = direction.get2DDataValue() - data2d;

@@ -6,7 +6,7 @@
 
   "tooltip.short_circuit.circuit": "UUID: %s",
   "tooltip.short_circuit.circuit_board": "You should not be able to obtain this",
-  "action.poking_stick.change": "Block size: %d",
+  "action.poking_stick.change": "Exterior size: %d",
   "action.circuit.reload": "Reloading circuit in runtime...",
 
   "itemGroup.short_circuit": "Short Circuit"

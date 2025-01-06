@@ -140,7 +140,6 @@ public class CircuitBlock extends HorizontalDirectionalBlock implements EntityBl
         Direction direction = DirectionHelper.getDirectionFromPosToPos(pos, neighborPos);
         RelativeDirection relDir = DirectionHelper.directionToRelativeDirection(state.getValue(FACING), direction);
         int signal = level.getSignal(neighborPos, direction);
-        ShortCircuit.LOGGER.debug("{} on direction {} gives signal {}, updating rel_dir {} facing {}", neighborBlock, direction, signal, relDir, state.getValue(FACING));
         ((CircuitBlockEntity) level.getBlockEntity(pos)).updateRuntimeBlock(signal, relDir);
     }
 

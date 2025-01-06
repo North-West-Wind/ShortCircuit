@@ -163,6 +163,7 @@ public class CircuitBlockEntity extends BlockEntity {
                 BlockPos pos = this.twoDimensionalRelativeDirectionOffset(startingPos, ii, jj, direction);
                 BlockState state = runtimeLevel.getBlockState(pos);
                 if (state.is(Blocks.CIRCUIT_BOARD) && state.getValue(CircuitBoardBlock.MODE) == CircuitBoardBlock.Mode.INPUT) {
+                    ShortCircuit.LOGGER.debug("Updating block with direction {}", state.getValue(CircuitBoardBlock.DIRECTION));
                     count++;
                     runtimeLevel.setBlockAndUpdate(pos, state.setValue(CircuitBoardBlock.POWER, signal));
                 }
@@ -195,8 +196,8 @@ public class CircuitBlockEntity extends BlockEntity {
         return switch (direction) {
             case UP -> pos.offset(ii, this.blockSize - 1, jj);
             case DOWN -> pos.offset(ii, 0, jj);
-            case LEFT -> pos.offset(ii, jj, 0);
-            case RIGHT -> pos.offset(ii, jj, this.blockSize - 1);
+            case RIGHT -> pos.offset(ii, jj, 0);
+            case LEFT -> pos.offset(ii, jj, this.blockSize - 1);
             case FRONT -> pos.offset(0, ii, jj);
             case BACK -> pos.offset(this.blockSize - 1, ii, jj);
         };

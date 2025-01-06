@@ -12,9 +12,9 @@ public class DirectionHelper {
         if (offset < 0) offset += 4;
         return switch (offset) {
             case 0 -> RelativeDirection.FRONT;
-            case 1 -> RelativeDirection.LEFT;
+            case 1 -> RelativeDirection.RIGHT;
             case 2 -> RelativeDirection.BACK;
-            default ->  RelativeDirection.RIGHT;
+            default ->  RelativeDirection.LEFT;
         };
     }
 

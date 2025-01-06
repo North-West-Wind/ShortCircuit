@@ -111,6 +111,7 @@ public class CircuitBlockEntity extends BlockEntity {
         CircuitSavedData runtimeData = CircuitSavedData.getRuntimeData(runtimeLevel);
         BlockPos boardPos = boardData.getCircuitStartingPos(this.uuid);
         if (boardPos == null) return; // circuit doesn't exist yet. use the poking stick on it
+        this.blockSize = boardData.getParentOctolet(this.uuid).blockSize;
         Octolet octolet = runtimeData.getParentOctolet(this.runtimeUuid);
         int octoletIndex = runtimeData.octoletIndexForSize(blockSize);
         if (octolet == null) {

@@ -9,9 +9,11 @@ import in.northwestw.shortcircuit.registries.Blocks;
 import in.northwestw.shortcircuit.registries.DataComponents;
 import in.northwestw.shortcircuit.registries.Items;
 import in.northwestw.shortcircuit.registries.blockentities.CircuitBlockEntity;
+import in.northwestw.shortcircuit.registries.datacomponents.UUIDDataComponent;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
+import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.ItemInteractionResult;
@@ -115,6 +117,11 @@ public class CircuitBlock extends HorizontalDirectionalBlock implements EntityBl
     @Override
     protected ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult result) {
         if (stack.is(Items.POKING_STICK)) return ItemInteractionResult.SKIP_DEFAULT_BLOCK_INTERACTION; // handled by poking stick
+        else if (stack.is(Items.CIRCUIT) && level.getBlockEntity(pos) instanceof CircuitBlockEntity blockEntity && blockEntity.isValid()) {
+            stack.set(DataComponents.UUID, new UUIDDataComponent(blockEntity.getUuid()));
+            player.playSound(SoundEvents.BEACON_ACTIVATE, 0.5f, 1);
+            return ItemInteractionResult.SUCCESS;
+        }
         return super.useItemOn(stack, state, level, pos, player, hand, result);
     }
 
@@ -152,8 +159,23 @@ public class CircuitBlock extends HorizontalDirectionalBlock implements EntityBl
 
     @Override
     public void setPlacedBy(Level level, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack stack) {
-        if (state.hasBlockEntity() && level.getBlockEntity(pos) instanceof CircuitBlockEntity blockEntity)
-            blockEntity.reloadRuntime();
+        if (state.hasBlockEntity() && level.getBlockEntity(pos) instanceof CircuitBlockEntity blockEntity) {
+            if (stack.has(DataComponents.UUID)) {
+                blockEntity.setUuid(stack.get(DataComponents.UUID).uuid());
+                blockEntity.reloadRuntime();
+                this.getInputSignals(level, pos, state);
+            }
+        }
         super.setPlacedBy(level, pos, state, placer, stack);
+    }
+
+    private void getInputSignals(Level level, BlockPos pos, BlockState state) {
+        if (level.getBlockEntity(pos) instanceof CircuitBlockEntity blockEntity) {
+            for (Direction direction : Direction.values()) {
+                RelativeDirection relDir = DirectionHelper.directionToRelativeDirection(state.getValue(FACING), direction);
+                int signal = level.getSignal(pos.relative(direction), direction);
+                blockEntity.updateRuntimeBlock(signal, relDir);
+            }
+        }
     }
 }

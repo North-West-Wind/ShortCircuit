@@ -1,6 +1,7 @@
 package in.northwestw.shortcircuit.registries.blocks;
 
 import com.mojang.serialization.MapCodec;
+import in.northwestw.shortcircuit.Constants;
 import in.northwestw.shortcircuit.ShortCircuit;
 import in.northwestw.shortcircuit.properties.DirectionHelper;
 import in.northwestw.shortcircuit.properties.RelativeDirection;
@@ -13,6 +14,8 @@ import in.northwestw.shortcircuit.registries.datacomponents.UUIDDataComponent;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.Style;
+import net.minecraft.network.chat.TextColor;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -110,7 +113,10 @@ public class CircuitBlock extends HorizontalDirectionalBlock implements EntityBl
     @Override
     protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hitResult) {
         player.displayClientMessage(Component.translatable("action.circuit.reload"), true);
-        if (level.getBlockEntity(pos) instanceof CircuitBlockEntity blockEntity) blockEntity.reloadRuntime();
+        if (level.getBlockEntity(pos) instanceof CircuitBlockEntity blockEntity) {
+            CircuitBlockEntity.RuntimeReloadResult result = blockEntity.reloadRuntime();
+            player.displayClientMessage(Component.translatable(result.getTranslationKey()).withStyle(Style.EMPTY.withColor(result.isGood() ? 0x00ff00 : 0xff0000)), true);
+        }
         return InteractionResult.sidedSuccess(level.isClientSide);
     }
 
@@ -160,22 +166,15 @@ public class CircuitBlock extends HorizontalDirectionalBlock implements EntityBl
     @Override
     public void setPlacedBy(Level level, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack stack) {
         if (state.hasBlockEntity() && level.getBlockEntity(pos) instanceof CircuitBlockEntity blockEntity) {
-            if (stack.has(DataComponents.UUID)) {
+            if (level.dimension().equals(Constants.CIRCUIT_BOARD_DIMENSION)) {
+                if (placer instanceof Player player)
+                    player.displayClientMessage(Component.translatable("warning.circuit.place.circuit_board").withStyle(Style.EMPTY.withColor(0xffff00)), true);
+            } else if (stack.has(DataComponents.UUID)) {
                 blockEntity.setUuid(stack.get(DataComponents.UUID).uuid());
                 blockEntity.reloadRuntime();
-                this.getInputSignals(level, pos, state);
+                blockEntity.getInputSignals();
             }
         }
         super.setPlacedBy(level, pos, state, placer, stack);
-    }
-
-    private void getInputSignals(Level level, BlockPos pos, BlockState state) {
-        if (level.getBlockEntity(pos) instanceof CircuitBlockEntity blockEntity) {
-            for (Direction direction : Direction.values()) {
-                RelativeDirection relDir = DirectionHelper.directionToRelativeDirection(state.getValue(FACING), direction);
-                int signal = level.getSignal(pos.relative(direction), direction);
-                blockEntity.updateRuntimeBlock(signal, relDir);
-            }
-        }
     }
 }

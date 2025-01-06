@@ -6,6 +6,7 @@ import in.northwestw.shortcircuit.Constants;
 import in.northwestw.shortcircuit.ShortCircuit;
 import in.northwestw.shortcircuit.data.CircuitSavedData;
 import in.northwestw.shortcircuit.data.Octolet;
+import in.northwestw.shortcircuit.properties.DirectionHelper;
 import in.northwestw.shortcircuit.properties.RelativeDirection;
 import in.northwestw.shortcircuit.registries.BlockEntities;
 import in.northwestw.shortcircuit.registries.Blocks;
@@ -100,17 +101,21 @@ public class CircuitBlockEntity extends BlockEntity {
         return this.uuid != null;
     }
 
-    public void reloadRuntime() {
-        if (this.uuid == null) return;
+    public void resetRuntime() {
+        this.runtimeUuid = UUID.randomUUID();
+    }
+
+    public RuntimeReloadResult reloadRuntime() {
+        if (this.uuid == null) return RuntimeReloadResult.FAIL_NOT_EXIST;
         MinecraftServer server = this.level.getServer();
-        if (server == null) return;
+        if (server == null) return RuntimeReloadResult.FAIL_NO_SERVER;
         ServerLevel circuitBoardLevel = level.getServer().getLevel(Constants.CIRCUIT_BOARD_DIMENSION);
         ServerLevel runtimeLevel = level.getServer().getLevel(Constants.RUNTIME_DIMENSION);
-        if (circuitBoardLevel == null || runtimeLevel == null) return;
+        if (circuitBoardLevel == null || runtimeLevel == null) return RuntimeReloadResult.FAIL_NO_SERVER;
         CircuitSavedData boardData = CircuitSavedData.getCircuitBoardData(circuitBoardLevel);
         CircuitSavedData runtimeData = CircuitSavedData.getRuntimeData(runtimeLevel);
         BlockPos boardPos = boardData.getCircuitStartingPos(this.uuid);
-        if (boardPos == null) return; // circuit doesn't exist yet. use the poking stick on it
+        if (boardPos == null) return RuntimeReloadResult.FAIL_NOT_EXIST; // circuit doesn't exist yet. use the poking stick on it
         this.blockSize = boardData.getParentOctolet(this.uuid).blockSize;
         Octolet octolet = runtimeData.getParentOctolet(this.runtimeUuid);
         int octoletIndex = runtimeData.octoletIndexForSize(blockSize);
@@ -136,12 +141,26 @@ public class CircuitBlockEntity extends BlockEntity {
                         be.loadCustomOnly(save, runtimeLevel.registryAccess());
                         if (be instanceof CircuitBoardBlockEntity blockEntity) {
                             blockEntity.setConnection(this.level.dimension(), this.getBlockPos(), this.runtimeUuid);
+                        } else if (be instanceof CircuitBlockEntity blockEntity) {
+                            if (blockEntity.getUuid().equals(this.uuid)) {
+                                this.removeRuntime();
+                                return RuntimeReloadResult.FAIL_RECURRENCE;
+                            } else {
+                                blockEntity.resetRuntime();
+                                RuntimeReloadResult result = blockEntity.reloadRuntime();
+                                if (!result.isGood()) {
+                                    this.removeRuntime();
+                                    return result;
+                                }
+                            }
                         }
                     }
                 }
             }
         }
+        this.getInputSignals();
         this.updateInnerBlocks();
+        return RuntimeReloadResult.SUCCESS;
     }
 
     public void updateRuntimeBlock(int signal, RelativeDirection direction) {
@@ -325,5 +344,40 @@ public class CircuitBlockEntity extends BlockEntity {
             case 3 -> this.powers[RelativeDirection.RIGHT.getId()];
             default -> 0;
         };
+    }
+
+    public void getInputSignals() {
+        BlockPos pos = this.getBlockPos();
+        BlockState state = this.getBlockState();
+        if (this.level.getBlockEntity(pos) instanceof CircuitBlockEntity blockEntity) {
+            for (Direction direction : Direction.values()) {
+                RelativeDirection relDir = DirectionHelper.directionToRelativeDirection(state.getValue(HorizontalDirectionalBlock.FACING), direction);
+                int signal = level.getSignal(pos.relative(direction), direction);
+                blockEntity.updateRuntimeBlock(signal, relDir);
+            }
+        }
+    }
+
+    public enum RuntimeReloadResult {
+        SUCCESS("action.circuit.reload.success", true),
+        FAIL_NO_SERVER("action.circuit.reload.fail.no_server", false),
+        FAIL_NOT_EXIST("action.circuit.reload.fail.not_exist", false),
+        FAIL_RECURRENCE("action.circuit.reload.fail.recurrence", false);
+
+        final String translationKey;
+        final boolean good;
+
+        RuntimeReloadResult(String translationKey, boolean good) {
+            this.translationKey = translationKey;
+            this.good = good;
+        }
+
+        public String getTranslationKey() {
+            return translationKey;
+        }
+
+        public boolean isGood() {
+            return good;
+        }
     }
 }

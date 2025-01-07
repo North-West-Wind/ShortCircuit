@@ -1,0 +1,12 @@
+{
+  "parent": "minecraft:block/cube",
+  "textures": {
+    "down": "short_circuit:block/truth_assigner_bottom",
+    "up": "short_circuit:block/truth_assigner_top",
+    "north": "short_circuit:block/truth_assigner_front",
+    "south": "short_circuit:block/truth_assigner_back",
+    "west": "short_circuit:block/truth_assigner_side",
+    "east": "short_circuit:block/truth_assigner_side",
+    "particle": "#north"
+  }
+}

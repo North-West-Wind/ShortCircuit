@@ -1,6 +1,7 @@
 {
   "block.short_circuit.circuit": "Circuit",
   "block.short_circuit.circuit_board": "Circuit Board",
+  "block.short_circuit.truth_assigner": "Truth Assigner",
 
   "item.short_circuit.poking_stick": "Poking Stick",
 

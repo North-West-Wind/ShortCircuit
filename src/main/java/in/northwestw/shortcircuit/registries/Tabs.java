@@ -18,6 +18,7 @@ public class Tabs {
             .displayItems((parameters, output) -> {
                 output.accept(Items.CIRCUIT.get());
                 output.accept(Items.POKING_STICK.get());
+                output.accept(Items.TRUTH_ASSIGNER.get());
             }).build());
 
     public static void registerTabs(IEventBus modEventBus) {

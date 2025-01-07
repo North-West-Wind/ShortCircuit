@@ -5,6 +5,17 @@
 
   "item.short_circuit.poking_stick": "Poking Stick",
 
+  "container.short_circuit.truth_assigner": "Truth Assigner",
+  "container.short_circuit.truth_assigner.max_delay": "Max Delay",
+  "container.short_circuit.truth_assigner.max_delay.desc": "Maximum (game) ticks to wait for before determining the output of the circuit",
+  "container.short_circuit.truth_assigner.wait": "First Change",
+  "container.short_circuit.truth_assigner.wait.on": "Full Delay",
+  "container.short_circuit.truth_assigner.wait.desc": "Assign value by the first output change",
+  "container.short_circuit.truth_assigner.wait.on.desc": "Assign value by the output after max delay",
+  "container.short_circuit.truth_assigner.start": "Start",
+  "container.short_circuit.truth_assigner.start.desc": "Create a truth table for the circuit",
+  "menu.title.short_circuit.truth_assigner": "Truth Assigner",
+
   "tooltip.short_circuit.circuit": "UUID: %s",
   "tooltip.short_circuit.circuit_board": "You should not be able to obtain this.",
   "action.poking_stick.change": "Exterior size: %d",

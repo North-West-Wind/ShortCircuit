@@ -18,6 +18,8 @@ public class ShortCircuit {
         DataComponents.registerDataComponentTypes(modEventBus);
         EntityRenderers.registerEntityRenderers(modEventBus);
         Items.registerItems(modEventBus);
+        Menus.registerMenus(modEventBus);
+        MenuScreens.registerMenuScreens(modEventBus);
         Tabs.registerTabs(modEventBus);
     }
 }

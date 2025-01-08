@@ -28,7 +28,9 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Explosion;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.EntityBlock;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
@@ -86,9 +88,17 @@ public class CircuitBlock extends HorizontalDirectionalBlock implements EntityBl
                 itementity.setDefaultPickUpDelay();
                 level.addFreshEntity(itementity);
             }
+            circuitBlockEntity.removeRuntime();
         }
 
         return super.playerWillDestroy(level, pos, state, player);
+    }
+
+    @Override
+    public void onBlockExploded(BlockState state, Level level, BlockPos pos, Explosion explosion) {
+        if (level.getBlockEntity(pos) instanceof CircuitBlockEntity blockEntity)
+            blockEntity.removeRuntime();
+        super.onBlockExploded(state, level, pos, explosion);
     }
 
     @Override
@@ -157,22 +167,15 @@ public class CircuitBlock extends HorizontalDirectionalBlock implements EntityBl
     }
 
     @Override
-    protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston) {
-        if (state.hasBlockEntity() && level.getBlockEntity(pos) instanceof CircuitBlockEntity blockEntity)
-            blockEntity.removeRuntime();
-        super.onRemove(state, level, pos, newState, movedByPiston);
-    }
-
-    @Override
     public void setPlacedBy(Level level, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack stack) {
         if (state.hasBlockEntity() && level.getBlockEntity(pos) instanceof CircuitBlockEntity blockEntity) {
-            if (level.dimension().equals(Constants.CIRCUIT_BOARD_DIMENSION)) {
-                if (placer instanceof Player player)
-                    player.displayClientMessage(Component.translatable("warning.circuit.place.circuit_board").withStyle(Style.EMPTY.withColor(0xffff00)), true);
-            } else if (stack.has(DataComponents.UUID)) {
+            if (stack.has(DataComponents.UUID)) {
                 blockEntity.setUuid(stack.get(DataComponents.UUID).uuid());
-                blockEntity.reloadRuntime();
-                blockEntity.getInputSignals();
+                if (!level.dimension().equals(Constants.CIRCUIT_BOARD_DIMENSION)) {
+                    blockEntity.reloadRuntime();
+                    blockEntity.getInputSignals();
+                } else if (placer instanceof Player player)
+                    player.displayClientMessage(Component.translatable("warning.circuit.place.circuit_board").withStyle(Style.EMPTY.withColor(0xffff00)), true);
             }
         }
         super.setPlacedBy(level, pos, state, placer, stack);

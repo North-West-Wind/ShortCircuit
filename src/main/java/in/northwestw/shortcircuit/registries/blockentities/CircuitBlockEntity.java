@@ -2,6 +2,7 @@ package in.northwestw.shortcircuit.registries.blockentities;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import in.northwestw.shortcircuit.Constants;
 import in.northwestw.shortcircuit.ShortCircuit;
 import in.northwestw.shortcircuit.data.CircuitSavedData;
@@ -106,6 +107,10 @@ public class CircuitBlockEntity extends BlockEntity {
     }
 
     public RuntimeReloadResult reloadRuntime() {
+        return this.reloadRuntime(Sets.newHashSet());
+    }
+
+    public RuntimeReloadResult reloadRuntime(Set<UUID> recurrence) {
         if (this.uuid == null) return RuntimeReloadResult.FAIL_NOT_EXIST;
         MinecraftServer server = this.level.getServer();
         if (server == null) return RuntimeReloadResult.FAIL_NO_SERVER;
@@ -124,6 +129,7 @@ public class CircuitBlockEntity extends BlockEntity {
             runtimeData.addCircuit(this.runtimeUuid, octoletIndex);
             octolet = runtimeData.octolets.get(octoletIndex);
         }
+        recurrence.add(this.uuid);
         BlockPos start = Octolet.getOctoletPos(octoletIndex);
         for (ChunkPos pos : octolet.getLoadedChunks())
             runtimeLevel.setChunkForced(start.getX() / 16 + pos.x, start.getZ() / 16 + pos.z, true);
@@ -133,7 +139,7 @@ public class CircuitBlockEntity extends BlockEntity {
                 for (int kk = 0; kk < this.blockSize; kk++) {
                     BlockPos oldPos = boardPos.offset(ii, jj, kk);
                     BlockPos newPos = runtimePos.offset(ii, jj, kk);
-                    runtimeLevel.setBlockAndUpdate(newPos, circuitBoardLevel.getBlockState(oldPos));
+                    runtimeLevel.setBlock(newPos, circuitBoardLevel.getBlockState(oldPos), Block.UPDATE_KNOWN_SHAPE | Block.UPDATE_CLIENTS); // no neighbor update to prevent things from breaking
                     BlockEntity oldBlockEntity = circuitBoardLevel.getBlockEntity(oldPos);
                     if (oldBlockEntity != null) {
                         CompoundTag save = oldBlockEntity.saveCustomOnly(circuitBoardLevel.registryAccess());
@@ -142,12 +148,12 @@ public class CircuitBlockEntity extends BlockEntity {
                         if (be instanceof CircuitBoardBlockEntity blockEntity) {
                             blockEntity.setConnection(this.level.dimension(), this.getBlockPos(), this.runtimeUuid);
                         } else if (be instanceof CircuitBlockEntity blockEntity) {
-                            if (blockEntity.getUuid().equals(this.uuid)) {
+                            if (recurrence.contains(blockEntity.getUuid())) {
                                 this.removeRuntime();
                                 return RuntimeReloadResult.FAIL_RECURRENCE;
                             } else {
                                 blockEntity.resetRuntime();
-                                RuntimeReloadResult result = blockEntity.reloadRuntime();
+                                RuntimeReloadResult result = blockEntity.reloadRuntime(recurrence);
                                 if (!result.isGood()) {
                                     this.removeRuntime();
                                     return result;
@@ -191,11 +197,23 @@ public class CircuitBlockEntity extends BlockEntity {
         ServerLevel runtimeLevel = level.getServer().getLevel(Constants.RUNTIME_DIMENSION);
         if (runtimeLevel == null) return;
         CircuitSavedData runtimeData = CircuitSavedData.getRuntimeData(runtimeLevel);
-        Octolet octolet = runtimeData.getParentOctolet(this.uuid);
-        if (octolet != null && octolet.blocks.containsKey(this.uuid)) {
-            Set<ChunkPos> chunks = octolet.getBlockChunk(octolet.blocks.get(this.uuid));
-            BlockPos start = Octolet.getOctoletPos(runtimeData.circuits.get(this.uuid));
-            runtimeData.removeCircuit(this.uuid);
+        Octolet octolet = runtimeData.getParentOctolet(this.runtimeUuid);
+        if (octolet != null && octolet.blocks.containsKey(this.runtimeUuid)) {
+            // we need to remove all recurrence, so may as well remove the blocks
+            BlockPos runtimePos = runtimeData.getCircuitStartingPos(this.runtimeUuid);
+            for (int ii = 0; ii < this.blockSize; ii++) {
+                for (int jj = 0; jj < this.blockSize; jj++) {
+                    for (int kk = 0; kk < this.blockSize; kk++) {
+                        BlockPos pos = runtimePos.offset(ii, jj, kk);
+                        if (runtimeLevel.getBlockEntity(pos) instanceof CircuitBlockEntity blockEntity)
+                            blockEntity.removeRuntime();
+                        runtimeLevel.setBlock(pos, net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(), Block.UPDATE_KNOWN_SHAPE | Block.UPDATE_CLIENTS); // no neighbor update to prevent things from breaking
+                    }
+                }
+            }
+            Set<ChunkPos> chunks = octolet.getBlockChunk(octolet.blocks.get(this.runtimeUuid));
+            BlockPos start = Octolet.getOctoletPos(runtimeData.circuits.get(this.runtimeUuid));
+            runtimeData.removeCircuit(this.runtimeUuid);
             Set<ChunkPos> newChunks = octolet.getLoadedChunks();
             for (ChunkPos chunk : chunks) {
                 if (!newChunks.contains(chunk))

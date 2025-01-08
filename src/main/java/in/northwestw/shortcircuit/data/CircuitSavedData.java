@@ -77,6 +77,7 @@ public class CircuitSavedData extends SavedData {
         int outerIndex = this.circuits.get(uuid);
         Octolet octolet = this.octolets.get(outerIndex);
         octolet.removeBlock(uuid);
+        this.circuits.remove(uuid);
     }
 
     public static CircuitSavedData load(CompoundTag tag, HolderLookup.Provider lookupProvider) {

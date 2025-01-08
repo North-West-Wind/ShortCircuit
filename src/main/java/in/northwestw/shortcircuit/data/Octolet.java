@@ -164,7 +164,8 @@ public class Octolet {
 
     public void removeBlock(UUID uuid) {
         if (!this.blocks.containsKey(uuid)) return;
+        this.occupied.remove(this.blocks.get(uuid));
         this.blocks.remove(uuid);
-        // no clean up needed. next copy runtime will overwrite it
+
     }
 }

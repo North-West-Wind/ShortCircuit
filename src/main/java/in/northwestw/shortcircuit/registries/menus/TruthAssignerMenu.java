@@ -1,6 +1,8 @@
 package in.northwestw.shortcircuit.registries.menus;
 
+import in.northwestw.shortcircuit.ShortCircuit;
 import in.northwestw.shortcircuit.registries.Blocks;
+import in.northwestw.shortcircuit.registries.Items;
 import in.northwestw.shortcircuit.registries.Menus;
 import in.northwestw.shortcircuit.registries.blockentities.TruthAssignerBlockEntity;
 import net.minecraft.network.FriendlyByteBuf;
@@ -18,39 +20,45 @@ public class TruthAssignerMenu extends AbstractContainerMenu {
     private final Container container;
     private final ContainerData containerData;
 
-    public TruthAssignerMenu(int containerId, Inventory inventory, FriendlyByteBuf extraData) {
-        this(containerId, inventory, new SimpleContainer(2), new SimpleContainerData(3));
+    public TruthAssignerMenu(int containerId, Inventory inventory) {
+        this(containerId, inventory, ContainerLevelAccess.NULL, null, new SimpleContainerData(3));
     }
 
-    public TruthAssignerMenu(int containerId, Inventory inventory, Container container, ContainerData containerData) {
-        this(containerId, inventory, ContainerLevelAccess.NULL, container, containerData);
-    }
-
-    public TruthAssignerMenu(int containerId, Inventory inventory, ContainerLevelAccess access, Container container, ContainerData containerData) {
+    public TruthAssignerMenu(int containerId, Inventory inventory, ContainerLevelAccess access, @Nullable Container container, ContainerData containerData) {
         super(Menus.TRUTH_ASSIGNER.get(), containerId);
         this.access = access;
-        this.container = container;
+        if (container == null) this.container = this.createContainer(2);
+        else this.container = container;
         this.containerData = containerData;
 
-        this.addSlot(new Slot(this.container, 1, 14, 34));
-        this.addSlot(new Slot(this.container, 0, 72, 34) {
+        this.addSlot(new Slot(this.container, 0, 14, 34) {
+            @Override
+            public boolean mayPlace(ItemStack stack) {
+                return stack.is(Items.CIRCUIT);
+            }
+        });
+        this.addSlot(new Slot(this.container, 1, 72, 34) {
             @Override
             public boolean mayPlace(ItemStack stack) {
                 return false;
             }
         });
 
+        // hotbar goes from 2 to 10
+        for (int k = 0; k < 9; k++) {
+            this.addSlot(new Slot(inventory, k, 8 + k * 18, 142));
+        }
+
+        // inventory goes from 11 to 37
         for (int i = 0; i < 3; i++) {
             for (int j = 0; j < 9; j++) {
                 this.addSlot(new Slot(inventory, j + i * 9 + 9, 8 + j * 18, 84 + i * 18));
             }
         }
 
-        for (int k = 0; k < 9; k++) {
-            this.addSlot(new Slot(inventory, k, 8 + k * 18, 142));
-        }
-
         this.addDataSlots(this.containerData);
+        if (this.container instanceof TruthAssignerBlockEntity blockEntity)
+            this.addSlotListener(blockEntity);
     }
 
     // inventory has size 2
@@ -64,23 +72,23 @@ public class TruthAssignerMenu extends AbstractContainerMenu {
             stack = rawStack.copy();
 
             // data output slot
-            if (index == 0) {
+            if (index == 1) {
                 // move to inventory
                 if (!this.moveItemStackTo(rawStack, 2, 38, true))
                     return ItemStack.EMPTY;
                 slot.onQuickCraft(rawStack, stack);
             }
             // inv or bar
-            else if (index >= 2 && index < 37) {
+            else if (index >= 2 && index < 38) {
                 // move from inv/bar to in
-                if (!this.moveItemStackTo(rawStack, 1, 2, false)) {
+                if (!this.moveItemStackTo(rawStack, 0, 1, false)) {
                     // move from inv to bar
-                    if (index < 29) {
-                        if (this.moveItemStackTo(rawStack, 29, 38, false))
+                    if (index >= 11) {
+                        if (!this.moveItemStackTo(rawStack, 2, 11, false))
                             return ItemStack.EMPTY;
                     }
                     // move from bar to inv
-                    else if (!this.moveItemStackTo(rawStack, 2, 29, false))
+                    else if (!this.moveItemStackTo(rawStack, 11, 38, false))
                         return ItemStack.EMPTY;
                 }
             }
@@ -121,15 +129,29 @@ public class TruthAssignerMenu extends AbstractContainerMenu {
     }
 
     public void setWait(boolean val) {
-        this.containerData.set(1, val ? 1 : 0);
+        this.setData(1, val ? 1 : 0);
+        this.broadcastChanges();
     }
 
     public void setMaxDelay(int maxDelay) {
-        this.containerData.set(2, maxDelay);
+        this.setData(2, maxDelay);
+        this.broadcastChanges();
     }
 
     public void start() {
         if (this.isWorking()) return;
-        this.containerData.set(0, 1);
+        this.setData(0, 1);
+        this.broadcastChanges();
+    }
+
+    // copied from ItemCombinerMenu
+    private SimpleContainer createContainer(int size) {
+        return new SimpleContainer(size) {
+            @Override
+            public void setChanged() {
+                super.setChanged();
+                TruthAssignerMenu.this.slotsChanged(this);
+            }
+        };
     }
 }

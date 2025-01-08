@@ -15,7 +15,7 @@ public class Items {
     public static final DeferredItem<BlockItem> CIRCUIT_BOARD = ITEMS.registerSimpleBlockItem(Blocks.CIRCUIT_BOARD, new Item.Properties());
     public static final DeferredItem<BlockItem> TRUTH_ASSIGNER = ITEMS.registerSimpleBlockItem(Blocks.TRUTH_ASSIGNER, new Item.Properties());
 
-    public static final DeferredItem<Item> POKING_STICK = ITEMS.registerItem("poking_stick", PokingStickItem::new);
+    public static final DeferredItem<Item> POKING_STICK = ITEMS.registerItem("poking_stick", PokingStickItem::new, new Item.Properties().stacksTo(1));
 
     public static void registerItems(IEventBus modEventBus) {
         ITEMS.register(modEventBus);

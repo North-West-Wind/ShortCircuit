@@ -1,5 +1,6 @@
 package in.northwestw.shortcircuit.registries.blockentities;
 
+import in.northwestw.shortcircuit.ShortCircuit;
 import in.northwestw.shortcircuit.registries.BlockEntities;
 import in.northwestw.shortcircuit.registries.blocks.TruthAssignerBlock;
 import in.northwestw.shortcircuit.registries.menus.TruthAssignerMenu;
@@ -16,12 +17,14 @@ import net.minecraft.world.ContainerHelper;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ContainerData;
+import net.minecraft.world.inventory.ContainerLevelAccess;
+import net.minecraft.world.inventory.ContainerListener;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BaseContainerBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 
-public class TruthAssignerBlockEntity extends BaseContainerBlockEntity {
+public class TruthAssignerBlockEntity extends BaseContainerBlockEntity implements ContainerListener {
     public static final int SIZE = 2;
     private NonNullList<ItemStack> items = NonNullList.withSize(SIZE, ItemStack.EMPTY);
     private boolean working, wait;
@@ -46,9 +49,10 @@ public class TruthAssignerBlockEntity extends BaseContainerBlockEntity {
             public void set(int index, int value) {
                 switch (index) {
                     case 0:
+                        ShortCircuit.LOGGER.debug("working set to {}", value);
                         boolean oldWorking = working;
                         working = value != 0;
-                        if (value != 0 && !oldWorking)
+                        if (working && !oldWorking)
                             start();
                         break;
                     case 1:
@@ -94,7 +98,7 @@ public class TruthAssignerBlockEntity extends BaseContainerBlockEntity {
 
     @Override
     protected AbstractContainerMenu createMenu(int containerId, Inventory inventory) {
-        return new TruthAssignerMenu(containerId, inventory, this, this.containerData);
+        return new TruthAssignerMenu(containerId, inventory, this.level == null ? ContainerLevelAccess.NULL : ContainerLevelAccess.create(this.level, this.getBlockPos()), this, this.containerData);
     }
 
     @Override
@@ -130,6 +134,7 @@ public class TruthAssignerBlockEntity extends BaseContainerBlockEntity {
     }
 
     private void start() {
+        ShortCircuit.LOGGER.debug("block entity work started!");
         this.level.setBlockAndUpdate(getBlockPos(), getBlockState().setValue(TruthAssignerBlock.LIT, this.working));
     }
 
@@ -147,5 +152,15 @@ public class TruthAssignerBlockEntity extends BaseContainerBlockEntity {
             this.ticks = 0;
             this.stop();
         }
+    }
+
+    @Override
+    public void slotChanged(AbstractContainerMenu pContainerToSend, int pDataSlotIndex, ItemStack pStack) {
+
+    }
+
+    @Override
+    public void dataChanged(AbstractContainerMenu menu, int index, int value) {
+        this.containerData.set(index, value);
     }
 }

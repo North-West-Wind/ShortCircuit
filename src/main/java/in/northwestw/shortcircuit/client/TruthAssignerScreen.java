@@ -34,7 +34,7 @@ public class TruthAssignerScreen extends AbstractContainerScreen<TruthAssignerMe
         int i = (this.width - this.imageWidth) / 2;
         int j = (this.height - this.imageHeight) / 2;
         this.maxDelay = new EditBox(this.font, i + 103, j + 14, 60, 16, Component.translatable("container.short_circuit.truth_assigner.max_delay"));
-        this.maxDelay.setHint(Component.translatable("container.short_circuit.truth_assigner.max_delay.desc"));
+        this.maxDelay.setTooltip(Tooltip.create(Component.translatable("container.short_circuit.truth_assigner.max_delay.desc")));
         this.maxDelay.setResponder(this::onMaxDelayChange);
         this.maxDelay.setValue(Integer.toString(this.menu.getMaxDelay()));
 
@@ -49,6 +49,12 @@ public class TruthAssignerScreen extends AbstractContainerScreen<TruthAssignerMe
         this.addRenderableWidget(this.start);
 
         this.menu.addSlotListener(this);
+    }
+
+    @Override
+    public void removed() {
+        super.removed();
+        this.menu.removeSlotListener(this);
     }
 
     @Override
@@ -100,13 +106,12 @@ public class TruthAssignerScreen extends AbstractContainerScreen<TruthAssignerMe
     private void updateFieldActives() {
         this.start.active = !this.menu.isWorking() && !this.menu.isEmpty();
         this.wait.active = !this.menu.isWorking();
-        this.maxDelay.active = !this.menu.isWorking();
+        this.maxDelay.setEditable(!this.menu.isWorking());
     }
 
     @Override
     public void slotChanged(AbstractContainerMenu menu, int index, ItemStack stack) {
-        ShortCircuit.LOGGER.debug("slot {} changed to {}", index, stack);
-        if (index == 1) {
+        if (index == 0) {
             if (stack.isEmpty() || !stack.is(Items.CIRCUIT)) this.start.active = false;
             else this.start.active = !this.menu.isWorking();
         }
@@ -115,6 +120,7 @@ public class TruthAssignerScreen extends AbstractContainerScreen<TruthAssignerMe
     @Override
     public void dataChanged(AbstractContainerMenu menu, int index, int value) {
         if (index == 0) { // the "working" index
+            ShortCircuit.LOGGER.debug("data 0 changed {}", value);
             this.updateFieldActives();
         }
     }

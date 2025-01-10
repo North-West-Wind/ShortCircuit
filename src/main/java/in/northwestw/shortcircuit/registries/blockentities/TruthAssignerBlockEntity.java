@@ -13,6 +13,8 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.ContainerHelper;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.AbstractContainerMenu;
@@ -140,10 +142,13 @@ public class TruthAssignerBlockEntity extends BaseContainerBlockEntity {
         // set working to false
         this.containerData.set(0, 0);
         this.level.setBlockAndUpdate(getBlockPos(), getBlockState().setValue(TruthAssignerBlock.LIT, this.working));
+        this.level.playLocalSound(this.getBlockPos(), in.northwestw.shortcircuit.registries.SoundEvents.TRUTH_ASSIGNED.get(), SoundSource.BLOCKS, 1, this.level.random.nextFloat() * 0.2f + 0.95f, false);
     }
 
     public void tick() {
         if (!this.working) return;
+        if (this.level != null && this.level.random.nextDouble() < 0.1)
+            this.level.playLocalSound(this.getBlockPos(), SoundEvents.LEVER_CLICK, SoundSource.BLOCKS, 0.2f, this.level.random.nextFloat() * 0.4f + 0.8f, false);
         // testing code
         if (++this.ticks >= this.maxDelay) {
             this.ticks = 0;

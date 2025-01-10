@@ -176,9 +176,4 @@ public class TruthAssignerMenu extends AbstractContainerMenu {
         }
         return super.clickMenuButton(player, id);
     }
-
-    @Override
-    public void clicked(int pSlotId, int pButton, ClickType pClickType, Player pPlayer) {
-        super.clicked(pSlotId, pButton, pClickType, pPlayer);
-    }
 }

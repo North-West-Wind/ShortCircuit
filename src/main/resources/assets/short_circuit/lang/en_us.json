@@ -25,5 +25,7 @@
   "action.circuit.reload.fail.recurrence": "Recurrence is not allowed!",
   "warning.circuit.place.circuit_board": "Circuits placed in Circuit Board will not be initialized automatically.",
 
-  "itemGroup.short_circuit": "Short Circuit"
+  "itemGroup.short_circuit": "Short Circuit",
+
+  "subtitle.short_circuit.truth_assigned": "Truth Assigner Finishes"
 }

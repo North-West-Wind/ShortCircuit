@@ -20,6 +20,7 @@ public class ShortCircuit {
         Items.registerItems(modEventBus);
         Menus.registerMenus(modEventBus);
         MenuScreens.registerMenuScreens(modEventBus);
+        SoundEvents.registerSoundEvents(modEventBus);
         Tabs.registerTabs(modEventBus);
     }
 }

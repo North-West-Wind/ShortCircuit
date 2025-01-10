@@ -30,4 +30,18 @@ public enum RelativeDirection implements StringRepresentable {
     public byte getId() {
         return id;
     }
+
+    public static RelativeDirection fromName(String name) {
+        for (RelativeDirection dir : RelativeDirection.values()) {
+            if (dir.getSerializedName().equals(name)) return dir;
+        }
+        return null;
+    }
+
+    public static RelativeDirection fromId(byte id) {
+        for (RelativeDirection dir : RelativeDirection.values()) {
+            if (dir.getId() == id) return dir;
+        }
+        return null;
+    }
 }

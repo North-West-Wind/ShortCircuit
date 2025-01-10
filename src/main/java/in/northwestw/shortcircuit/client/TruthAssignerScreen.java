@@ -4,10 +4,7 @@ import in.northwestw.shortcircuit.ShortCircuit;
 import in.northwestw.shortcircuit.registries.Items;
 import in.northwestw.shortcircuit.registries.menus.TruthAssignerMenu;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.components.Button;
-import net.minecraft.client.gui.components.EditBox;
-import net.minecraft.client.gui.components.PlainTextButton;
-import net.minecraft.client.gui.components.Tooltip;
+import net.minecraft.client.gui.components.*;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -16,13 +13,12 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ContainerListener;
 import net.minecraft.world.item.ItemStack;
 
-import java.util.function.Supplier;
-
 public class TruthAssignerScreen extends AbstractContainerScreen<TruthAssignerMenu> implements ContainerListener {
     private static final ResourceLocation BASE_BACKGROUND = ResourceLocation.fromNamespaceAndPath(ShortCircuit.MOD_ID, "textures/gui/container/truth_assigner.png");
     private static final ResourceLocation BURN_PROGRESS_SPRITE = ResourceLocation.withDefaultNamespace("container/furnace/burn_progress");
     private EditBox maxDelay;
     private Button wait, start;
+    private StringWidget error;
 
     public TruthAssignerScreen(TruthAssignerMenu menu, Inventory inventory, Component title) {
         super(menu, inventory, title);
@@ -42,11 +38,14 @@ public class TruthAssignerScreen extends AbstractContainerScreen<TruthAssignerMe
         this.wait.setTooltip(Tooltip.create(Component.translatable(this.waitTranslationKey() + ".desc")));
         this.start = Button.builder(Component.translatable("container.short_circuit.truth_assigner.start"), this::onStartPress).pos(i + 103, j + 56).size(60, 16).tooltip(Tooltip.create(Component.translatable("container.short_circuit.truth_assigner.start.desc"))).build();
 
-        this.updateFieldActives();
+        this.error = new StringWidget(i, j - 24, this.imageWidth, 16, Component.empty(), this.font);
+
+        this.updateFields();
 
         this.addRenderableWidget(this.maxDelay);
         this.addRenderableWidget(this.wait);
         this.addRenderableWidget(this.start);
+        this.addRenderableWidget(this.error);
 
         this.menu.addSlotListener(this);
     }
@@ -95,7 +94,7 @@ public class TruthAssignerScreen extends AbstractContainerScreen<TruthAssignerMe
     private void onStartPress(Button button) {
         this.menu.start();
         this.minecraft.gameMode.handleInventoryButtonClick(this.menu.containerId, -2);
-        this.updateFieldActives();
+        this.updateFields();
     }
 
     private String waitTranslationKey() {
@@ -106,24 +105,25 @@ public class TruthAssignerScreen extends AbstractContainerScreen<TruthAssignerMe
         return Component.translatable(this.waitTranslationKey());
     }
 
-    private void updateFieldActives() {
-        this.start.active = !this.menu.isWorking() && !this.menu.isEmpty();
+    private void updateFields() {
+        this.start.active = !this.menu.isWorking() && !this.menu.isEmpty() && this.menu.getError() == 0;
         this.wait.active = !this.menu.isWorking();
         this.maxDelay.setEditable(!this.menu.isWorking());
+        this.updateError();
     }
 
     @Override
     public void slotChanged(AbstractContainerMenu menu, int index, ItemStack stack) {
         if (index == 0) {
             if (stack.isEmpty() || !stack.is(Items.CIRCUIT)) this.start.active = false;
-            else this.start.active = !this.menu.isWorking();
+            else this.updateFields();
         }
     }
 
     @Override
     public void dataChanged(AbstractContainerMenu menu, int index, int value) {
-        if (index == 0) { // the "working" index
-            this.updateFieldActives();
+        if (index == 0 || index == 3) { // the "working" index
+            this.updateFields();
         } else if (index == 1) {
             this.updateWait();
         } else if (index == 2) {
@@ -134,5 +134,11 @@ public class TruthAssignerScreen extends AbstractContainerScreen<TruthAssignerMe
     private void updateWait() {
         this.wait.setMessage(this.waitTranslatable());
         this.wait.setTooltip(Tooltip.create(Component.translatable(this.waitTranslationKey() + ".desc")));
+    }
+
+    private void updateError() {
+        int errorCode = this.menu.getError();
+        if (errorCode == 0) this.error.setMessage(Component.empty());
+        else this.error.setMessage(Component.translatable("container.short_circuit.truth_assigner.error." + errorCode).withColor(0xff0000));
     }
 }

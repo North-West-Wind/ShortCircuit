@@ -79,11 +79,11 @@ public class CircuitBlock extends HorizontalDirectionalBlock implements EntityBl
     public BlockState playerWillDestroy(Level level, BlockPos pos, BlockState state, Player player) {
         BlockEntity blockentity = level.getBlockEntity(pos);
         if (blockentity instanceof CircuitBlockEntity circuitBlockEntity) {
-            ItemStack itemstack = new ItemStack(Blocks.CIRCUIT);
             if (!player.isCreative() && circuitBlockEntity.isValid()) {
-                itemstack.applyComponents(blockentity.collectComponents());
+                ItemStack stack = new ItemStack(Blocks.CIRCUIT);
+                stack.applyComponents(blockentity.collectComponents());
                 ItemEntity itementity = new ItemEntity(
-                        level, (double)pos.getX() + 0.5, (double)pos.getY() + 0.5, (double)pos.getZ() + 0.5, itemstack
+                        level, (double)pos.getX() + 0.5, (double)pos.getY() + 0.5, (double)pos.getZ() + 0.5, stack
                 );
                 itementity.setDefaultPickUpDelay();
                 level.addFreshEntity(itementity);

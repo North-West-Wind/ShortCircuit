@@ -15,6 +15,10 @@
   "container.short_circuit.truth_assigner.start": "Start",
   "container.short_circuit.truth_assigner.start.desc": "Create a truth table for the circuit",
 
+  "container.short_circuit.truth_assigner.error": "",
+  "container.short_circuit.truth_assigner.error.1": "Need empty block above",
+  "container.short_circuit.truth_assigner.error.2": "This circuit has problems",
+
   "tooltip.short_circuit.circuit": "UUID: %s",
   "tooltip.short_circuit.circuit_board": "You should not be able to obtain this.",
   "action.poking_stick.change": "Exterior size: %d",
@@ -23,6 +27,7 @@
   "action.circuit.reload.fail.not_exist": "Use the Poking Stick first!",
   "action.circuit.reload.fail.no_server": "Not on server!",
   "action.circuit.reload.fail.recurrence": "Recurrence is not allowed!",
+  "action.circuit.reload.fail.multi_mode": "Each side should only have one mode!",
   "warning.circuit.place.circuit_board": "Circuits placed in Circuit Board will not be initialized automatically.",
 
   "itemGroup.short_circuit": "Short Circuit",

@@ -22,7 +22,7 @@ public class TruthAssignerMenu extends AbstractContainerMenu {
 
     // Client constructor
     public TruthAssignerMenu(int containerId, Inventory inventory) {
-        this(containerId, inventory, ContainerLevelAccess.NULL, null, new SimpleContainerData(3));
+        this(containerId, inventory, ContainerLevelAccess.NULL, null, new SimpleContainerData(4));
     }
 
     // Server constructor
@@ -33,7 +33,7 @@ public class TruthAssignerMenu extends AbstractContainerMenu {
         else this.container = container;
         this.containerData = containerData;
         checkContainerSize(this.container, 2);
-        checkContainerDataCount(this.containerData, 3);
+        checkContainerDataCount(this.containerData, 4);
 
         // input
         this.addSlot(new Slot(this.container, 0, 14, 34));
@@ -58,6 +58,9 @@ public class TruthAssignerMenu extends AbstractContainerMenu {
         }
 
         this.addDataSlots(this.containerData);
+
+        if (this.container instanceof TruthAssignerBlockEntity blockEntity)
+            this.addSlotListener(blockEntity);
     }
 
     // inventory has size 2
@@ -125,6 +128,10 @@ public class TruthAssignerMenu extends AbstractContainerMenu {
 
     public int getMaxDelay() {
         return this.containerData.get(2);
+    }
+
+    public int getError() {
+        return this.containerData.get(3);
     }
 
     public void setWait(boolean val) {

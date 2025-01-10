@@ -45,6 +45,7 @@ import net.minecraft.world.level.block.state.properties.EnumProperty;
 import net.minecraft.world.level.block.state.properties.IntegerProperty;
 import net.minecraft.world.level.block.state.properties.Property;
 import net.minecraft.world.phys.Vec3;
+import org.apache.commons.lang3.tuple.Pair;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -52,7 +53,7 @@ import java.util.*;
 public class CircuitBlockEntity extends BlockEntity {
     private UUID uuid, runtimeUuid;
     private short blockSize, ticks;
-    private boolean hidden;
+    private boolean hidden, fake;
     private byte[] powers;
     public Map<BlockPos, BlockState> blocks; // 8x8x8
 
@@ -99,7 +100,7 @@ public class CircuitBlockEntity extends BlockEntity {
     }
 
     public boolean isValid() {
-        return this.uuid != null;
+        return this.uuid != null && !this.fake;
     }
 
     public void resetRuntime() {
@@ -111,16 +112,20 @@ public class CircuitBlockEntity extends BlockEntity {
     }
 
     public RuntimeReloadResult reloadRuntime(Set<UUID> recurrence) {
-        if (this.uuid == null) return RuntimeReloadResult.FAIL_NOT_EXIST;
+        return this.reloadRuntimeAndModeMap(recurrence).getLeft();
+    }
+
+    public Pair<RuntimeReloadResult, Map<RelativeDirection, CircuitBoardBlock.Mode>> reloadRuntimeAndModeMap(Set<UUID> recurrence) {
+        if (this.uuid == null) return this.emptyMapResult(RuntimeReloadResult.FAIL_NOT_EXIST);
         MinecraftServer server = this.level.getServer();
-        if (server == null) return RuntimeReloadResult.FAIL_NO_SERVER;
+        if (server == null) return this.emptyMapResult(RuntimeReloadResult.FAIL_NO_SERVER);
         ServerLevel circuitBoardLevel = level.getServer().getLevel(Constants.CIRCUIT_BOARD_DIMENSION);
         ServerLevel runtimeLevel = level.getServer().getLevel(Constants.RUNTIME_DIMENSION);
-        if (circuitBoardLevel == null || runtimeLevel == null) return RuntimeReloadResult.FAIL_NO_SERVER;
+        if (circuitBoardLevel == null || runtimeLevel == null) return this.emptyMapResult(RuntimeReloadResult.FAIL_NO_SERVER);
         CircuitSavedData boardData = CircuitSavedData.getCircuitBoardData(circuitBoardLevel);
         CircuitSavedData runtimeData = CircuitSavedData.getRuntimeData(runtimeLevel);
         BlockPos boardPos = boardData.getCircuitStartingPos(this.uuid);
-        if (boardPos == null) return RuntimeReloadResult.FAIL_NOT_EXIST; // circuit doesn't exist yet. use the poking stick on it
+        if (boardPos == null) return this.emptyMapResult(RuntimeReloadResult.FAIL_NOT_EXIST); // circuit doesn't exist yet. use the poking stick on it
         this.blockSize = boardData.getParentOctolet(this.uuid).blockSize;
         Octolet octolet = runtimeData.getParentOctolet(this.runtimeUuid);
         int octoletIndex = runtimeData.octoletIndexForSize(blockSize);
@@ -134,29 +139,41 @@ public class CircuitBlockEntity extends BlockEntity {
         for (ChunkPos pos : octolet.getLoadedChunks())
             runtimeLevel.setChunkForced(start.getX() / 16 + pos.x, start.getZ() / 16 + pos.z, true);
         BlockPos runtimePos = runtimeData.getCircuitStartingPos(this.runtimeUuid);
+        Map<RelativeDirection, CircuitBoardBlock.Mode> modeMap = Maps.newHashMap();
         for (int ii = 0; ii < this.blockSize; ii++) {
             for (int jj = 0; jj < this.blockSize; jj++) {
                 for (int kk = 0; kk < this.blockSize; kk++) {
                     BlockPos oldPos = boardPos.offset(ii, jj, kk);
                     BlockPos newPos = runtimePos.offset(ii, jj, kk);
-                    runtimeLevel.setBlock(newPos, circuitBoardLevel.getBlockState(oldPos), Block.UPDATE_KNOWN_SHAPE | Block.UPDATE_CLIENTS); // no neighbor update to prevent things from breaking
+                    BlockState oldState = circuitBoardLevel.getBlockState(oldPos);
+                    runtimeLevel.setBlock(newPos, oldState, Block.UPDATE_KNOWN_SHAPE | Block.UPDATE_CLIENTS); // no neighbor update to prevent things from breaking
                     BlockEntity oldBlockEntity = circuitBoardLevel.getBlockEntity(oldPos);
                     if (oldBlockEntity != null) {
                         CompoundTag save = oldBlockEntity.saveCustomOnly(circuitBoardLevel.registryAccess());
                         BlockEntity be = runtimeLevel.getBlockEntity(newPos);
                         be.loadCustomOnly(save, runtimeLevel.registryAccess());
                         if (be instanceof CircuitBoardBlockEntity blockEntity) {
+                            RelativeDirection dir = oldState.getValue(CircuitBoardBlock.DIRECTION);
+                            CircuitBoardBlock.Mode mode = oldState.getValue(CircuitBoardBlock.MODE);
+                            if (modeMap.containsKey(dir)) {
+                                CircuitBoardBlock.Mode existingMode = modeMap.get(dir);
+                                if (existingMode != CircuitBoardBlock.Mode.NONE && mode != CircuitBoardBlock.Mode.NONE && existingMode != mode) {
+                                    this.removeRuntime();
+                                    return this.emptyMapResult(RuntimeReloadResult.FAIL_MULTI_MODE);
+                                }
+                            } else
+                                modeMap.put(dir, mode);
                             blockEntity.setConnection(this.level.dimension(), this.getBlockPos(), this.runtimeUuid);
                         } else if (be instanceof CircuitBlockEntity blockEntity) {
                             if (recurrence.contains(blockEntity.getUuid())) {
                                 this.removeRuntime();
-                                return RuntimeReloadResult.FAIL_RECURRENCE;
+                                return this.emptyMapResult(RuntimeReloadResult.FAIL_RECURRENCE);
                             } else {
                                 blockEntity.resetRuntime();
                                 RuntimeReloadResult result = blockEntity.reloadRuntime(recurrence);
                                 if (!result.isGood()) {
                                     this.removeRuntime();
-                                    return result;
+                                    return this.emptyMapResult(result);
                                 }
                             }
                         }
@@ -166,7 +183,11 @@ public class CircuitBlockEntity extends BlockEntity {
         }
         this.getInputSignals();
         this.updateInnerBlocks();
-        return RuntimeReloadResult.SUCCESS;
+        return Pair.of(RuntimeReloadResult.SUCCESS, modeMap);
+    }
+
+    private Pair<RuntimeReloadResult, Map<RelativeDirection, CircuitBoardBlock.Mode>> emptyMapResult(RuntimeReloadResult result) {
+        return Pair.of(result, Maps.newHashMap());
     }
 
     public void updateRuntimeBlock(int signal, RelativeDirection direction) {
@@ -240,6 +261,7 @@ public class CircuitBlockEntity extends BlockEntity {
         this.runtimeUuid = tag.getUUID("runtimeUuid");
         this.blockSize = tag.getShort("blockSize");
         this.hidden = tag.getBoolean("hidden");
+        this.fake = tag.getBoolean("fake");
         this.powers = tag.getByteArray("powers");
     }
 
@@ -250,6 +272,7 @@ public class CircuitBlockEntity extends BlockEntity {
         tag.putUUID("runtimeUuid", this.runtimeUuid);
         tag.putShort("blockSize", this.blockSize);
         tag.putBoolean("hidden", this.hidden);
+        tag.putBoolean("fake", this.fake);
         tag.putByteArray("powers", this.powers);
     }
 
@@ -324,6 +347,11 @@ public class CircuitBlockEntity extends BlockEntity {
         if (!this.hidden && !this.level.isClientSide) this.level.sendBlockUpdated(this.getBlockPos(), this.getBlockState(), this.getBlockState(), Block.UPDATE_CLIENTS);
     }
 
+    public void setFake(boolean fake) {
+        this.fake = fake;
+        this.setChanged();
+    }
+
     public boolean matchRuntimeUuid(UUID uuid) {
         return this.runtimeUuid.equals(uuid);
     }
@@ -364,6 +392,10 @@ public class CircuitBlockEntity extends BlockEntity {
         };
     }
 
+    public int getRelativePower(RelativeDirection direction) {
+        return this.powers[direction.getId()];
+    }
+
     public void getInputSignals() {
         BlockPos pos = this.getBlockPos();
         BlockState state = this.getBlockState();
@@ -380,7 +412,8 @@ public class CircuitBlockEntity extends BlockEntity {
         SUCCESS("action.circuit.reload.success", true),
         FAIL_NO_SERVER("action.circuit.reload.fail.no_server", false),
         FAIL_NOT_EXIST("action.circuit.reload.fail.not_exist", false),
-        FAIL_RECURRENCE("action.circuit.reload.fail.recurrence", false);
+        FAIL_RECURRENCE("action.circuit.reload.fail.recurrence", false),
+        FAIL_MULTI_MODE("action.circuit.reload.fail.multi_mode", false);
 
         final String translationKey;
         final boolean good;

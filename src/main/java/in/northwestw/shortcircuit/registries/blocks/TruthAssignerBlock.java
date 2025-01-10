@@ -1,22 +1,16 @@
 package in.northwestw.shortcircuit.registries.blocks;
 
 import com.mojang.serialization.MapCodec;
-import in.northwestw.shortcircuit.ShortCircuit;
 import in.northwestw.shortcircuit.registries.BlockEntities;
-import in.northwestw.shortcircuit.registries.blockentities.CircuitBlockEntity;
 import in.northwestw.shortcircuit.registries.blockentities.TruthAssignerBlockEntity;
-import in.northwestw.shortcircuit.registries.menus.TruthAssignerMenu;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.DustParticleOptions;
-import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.MenuProvider;
-import net.minecraft.world.SimpleMenuProvider;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.inventory.ContainerLevelAccess;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -104,5 +98,14 @@ public class TruthAssignerBlock extends HorizontalDirectionalBlock implements En
                 );
             }
         }
+    }
+
+    @Override
+    protected void neighborChanged(BlockState state, Level level, BlockPos pos, Block neighborBlock, BlockPos neighborPos, boolean movedByPiston) {
+        if (pos.above().equals(neighborPos) && level.getBlockEntity(pos) instanceof TruthAssignerBlockEntity blockEntity) {
+            if (!blockEntity.isWorking()) blockEntity.setErrorCode(1, level.getBlockState(neighborPos).isAir());
+            else blockEntity.recordOutput(false);
+        }
+        super.neighborChanged(state, level, pos, neighborBlock, neighborPos, movedByPiston);
     }
 }

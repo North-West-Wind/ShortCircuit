@@ -8,8 +8,10 @@ import in.northwestw.shortcircuit.registries.blockentities.TruthAssignerBlockEnt
 import in.northwestw.shortcircuit.registries.menus.TruthAssignerMenu;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.SimpleMenuProvider;
@@ -69,11 +71,8 @@ public class TruthAssignerBlock extends HorizontalDirectionalBlock implements En
 
     @Override
     protected @Nullable MenuProvider getMenuProvider(BlockState state, Level level, BlockPos pos) {
-        if (level.getBlockEntity(pos) instanceof TruthAssignerBlockEntity blockEntity) {
-            return new SimpleMenuProvider(
-                    (containerId, inventory, player) -> new TruthAssignerMenu(containerId, inventory, ContainerLevelAccess.create(level, pos), blockEntity, blockEntity.getContainerData()),
-                    Component.translatable("menu.title.short_circuit.truth_assigner"));
-        } else return null;
+        if (level.getBlockEntity(pos) instanceof TruthAssignerBlockEntity blockEntity) return blockEntity;
+        else return null;
     }
 
     @Override
@@ -81,5 +80,29 @@ public class TruthAssignerBlock extends HorizontalDirectionalBlock implements En
         if (!level.isClientSide && player instanceof ServerPlayer serverPlayer)
             serverPlayer.openMenu(state.getMenuProvider(level, pos));
         return InteractionResult.sidedSuccess(level.isClientSide);
+    }
+
+    @Override
+    public void animateTick(BlockState state, Level level, BlockPos pos, RandomSource random) {
+        if (state.getValue(LIT)) {
+            spawnParticles(level, pos);
+        }
+    }
+
+    private static void spawnParticles(Level level, BlockPos pos) {
+        RandomSource randomsource = level.random;
+
+        for (Direction direction : Direction.values()) {
+            BlockPos blockpos = pos.relative(direction);
+            if (!level.getBlockState(blockpos).isSolidRender(level, blockpos)) {
+                Direction.Axis direction$axis = direction.getAxis();
+                double d1 = direction$axis == Direction.Axis.X ? 0.5 + 0.5625 * (double)direction.getStepX() : (double)randomsource.nextFloat();
+                double d2 = direction$axis == Direction.Axis.Y ? 0.5 + 0.5625 * (double)direction.getStepY() : (double)randomsource.nextFloat();
+                double d3 = direction$axis == Direction.Axis.Z ? 0.5 + 0.5625 * (double)direction.getStepZ() : (double)randomsource.nextFloat();
+                level.addParticle(
+                        DustParticleOptions.REDSTONE, (double)pos.getX() + d1, (double)pos.getY() + d2, (double)pos.getZ() + d3, 0.0, 0.0, 0.0
+                );
+            }
+        }
     }
 }

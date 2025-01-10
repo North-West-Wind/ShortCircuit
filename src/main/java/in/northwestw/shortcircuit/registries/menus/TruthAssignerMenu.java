@@ -20,23 +20,24 @@ public class TruthAssignerMenu extends AbstractContainerMenu {
     private final Container container;
     private final ContainerData containerData;
 
+    // Client constructor
     public TruthAssignerMenu(int containerId, Inventory inventory) {
         this(containerId, inventory, ContainerLevelAccess.NULL, null, new SimpleContainerData(3));
     }
 
+    // Server constructor
     public TruthAssignerMenu(int containerId, Inventory inventory, ContainerLevelAccess access, @Nullable Container container, ContainerData containerData) {
         super(Menus.TRUTH_ASSIGNER.get(), containerId);
         this.access = access;
         if (container == null) this.container = this.createContainer(2);
         else this.container = container;
         this.containerData = containerData;
+        checkContainerSize(this.container, 2);
+        checkContainerDataCount(this.containerData, 3);
 
-        this.addSlot(new Slot(this.container, 0, 14, 34) {
-            @Override
-            public boolean mayPlace(ItemStack stack) {
-                return stack.is(Items.CIRCUIT);
-            }
-        });
+        // input
+        this.addSlot(new Slot(this.container, 0, 14, 34));
+        // output
         this.addSlot(new Slot(this.container, 1, 72, 34) {
             @Override
             public boolean mayPlace(ItemStack stack) {
@@ -57,8 +58,6 @@ public class TruthAssignerMenu extends AbstractContainerMenu {
         }
 
         this.addDataSlots(this.containerData);
-        if (this.container instanceof TruthAssignerBlockEntity blockEntity)
-            this.addSlotListener(blockEntity);
     }
 
     // inventory has size 2
@@ -130,18 +129,19 @@ public class TruthAssignerMenu extends AbstractContainerMenu {
 
     public void setWait(boolean val) {
         this.setData(1, val ? 1 : 0);
-        this.broadcastChanges();
     }
 
-    public void setMaxDelay(int maxDelay) {
-        this.setData(2, maxDelay);
-        this.broadcastChanges();
+    public boolean setMaxDelay(int maxDelay) {
+        if (maxDelay != this.getMaxDelay()) {
+            this.setData(2, maxDelay);
+            return true;
+        }
+        return false;
     }
 
     public void start() {
         if (this.isWorking()) return;
         this.setData(0, 1);
-        this.broadcastChanges();
     }
 
     // copied from ItemCombinerMenu
@@ -153,5 +153,32 @@ public class TruthAssignerMenu extends AbstractContainerMenu {
                 TruthAssignerMenu.this.slotsChanged(this);
             }
         };
+    }
+
+    @Override
+    public void setData(int id, int data) {
+        super.setData(id, data);
+        this.broadcastChanges();
+    }
+
+    // These are server-side
+    @Override
+    public boolean clickMenuButton(Player player, int id) {
+        if (id == -1) {
+            this.setWait(!this.shouldWait());
+            return true;
+        } else if (id == -2) {
+            this.start();
+            return true;
+        } else {
+            // cheese-iest strat ever to transfer int without implementing my own packet
+            this.setMaxDelay(id);
+        }
+        return super.clickMenuButton(player, id);
+    }
+
+    @Override
+    public void clicked(int pSlotId, int pButton, ClickType pClickType, Player pPlayer) {
+        super.clicked(pSlotId, pButton, pClickType, pPlayer);
     }
 }

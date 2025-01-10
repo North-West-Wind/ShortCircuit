@@ -76,7 +76,10 @@ public class TruthAssignerScreen extends AbstractContainerScreen<TruthAssignerMe
         try {
             if (!changed.isEmpty()) {
                 int delay = Integer.parseInt(changed);
-                this.menu.setMaxDelay(delay);
+                if (this.menu.setMaxDelay(delay)) {
+                    // modified, super cheesey, see TruthAssignerMenu#clickMenuButton
+                    this.minecraft.gameMode.handleInventoryButtonClick(this.menu.containerId, delay);
+                }
             }
         } catch (NumberFormatException e) {
             this.maxDelay.setValue(Integer.toString(this.menu.getMaxDelay()));
@@ -85,13 +88,13 @@ public class TruthAssignerScreen extends AbstractContainerScreen<TruthAssignerMe
 
     private void onWaitPress(Button button) {
         this.menu.setWait(!this.menu.shouldWait());
-        this.wait.setMessage(Component.translatable(this.waitTranslationKey()));
-        this.wait.setTooltip(Tooltip.create(Component.translatable(this.waitTranslationKey() + ".desc")));
-        button.setMessage(this.waitTranslatable());
+        this.updateWait();
+        this.minecraft.gameMode.handleInventoryButtonClick(this.menu.containerId, -1);
     }
 
     private void onStartPress(Button button) {
         this.menu.start();
+        this.minecraft.gameMode.handleInventoryButtonClick(this.menu.containerId, -2);
         this.updateFieldActives();
     }
 
@@ -120,8 +123,16 @@ public class TruthAssignerScreen extends AbstractContainerScreen<TruthAssignerMe
     @Override
     public void dataChanged(AbstractContainerMenu menu, int index, int value) {
         if (index == 0) { // the "working" index
-            ShortCircuit.LOGGER.debug("data 0 changed {}", value);
             this.updateFieldActives();
+        } else if (index == 1) {
+            this.updateWait();
+        } else if (index == 2) {
+            this.maxDelay.setValue(Integer.toString(value));
         }
+    }
+
+    private void updateWait() {
+        this.wait.setMessage(this.waitTranslatable());
+        this.wait.setTooltip(Tooltip.create(Component.translatable(this.waitTranslationKey() + ".desc")));
     }
 }

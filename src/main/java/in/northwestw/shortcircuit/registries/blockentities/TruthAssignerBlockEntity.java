@@ -24,7 +24,7 @@ import net.minecraft.world.level.block.entity.BaseContainerBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 
-public class TruthAssignerBlockEntity extends BaseContainerBlockEntity implements ContainerListener {
+public class TruthAssignerBlockEntity extends BaseContainerBlockEntity {
     public static final int SIZE = 2;
     private NonNullList<ItemStack> items = NonNullList.withSize(SIZE, ItemStack.EMPTY);
     private boolean working, wait;
@@ -38,9 +38,9 @@ public class TruthAssignerBlockEntity extends BaseContainerBlockEntity implement
             @Override
             public int get(int index) {
                 return switch (index) {
-                    case 0 -> working ? 1 : 0;
-                    case 1 -> wait ? 1 : 0;
-                    case 2 -> maxDelay;
+                    case 0 -> TruthAssignerBlockEntity.this.working ? 1 : 0;
+                    case 1 -> TruthAssignerBlockEntity.this.wait ? 1 : 0;
+                    case 2 -> TruthAssignerBlockEntity.this.maxDelay;
                     default -> 0;
                 };
             }
@@ -49,20 +49,19 @@ public class TruthAssignerBlockEntity extends BaseContainerBlockEntity implement
             public void set(int index, int value) {
                 switch (index) {
                     case 0:
-                        ShortCircuit.LOGGER.debug("working set to {}", value);
-                        boolean oldWorking = working;
-                        working = value != 0;
-                        if (working && !oldWorking)
+                        boolean oldWorking = TruthAssignerBlockEntity.this.working;
+                        TruthAssignerBlockEntity.this.working = value != 0;
+                        if (TruthAssignerBlockEntity.this.working && !oldWorking)
                             start();
                         break;
                     case 1:
-                        wait = value != 0;
+                        TruthAssignerBlockEntity.this.wait = value != 0;
                         break;
                     case 2:
-                        maxDelay = value;
+                        TruthAssignerBlockEntity.this.maxDelay = value;
                         break;
                 }
-                setChanged();
+                TruthAssignerBlockEntity.this.setChanged();
             }
 
             @Override
@@ -90,10 +89,6 @@ public class TruthAssignerBlockEntity extends BaseContainerBlockEntity implement
     @Override
     protected Component getDefaultName() {
         return Component.translatable("container.short_circuit.truth_assigner");
-    }
-
-    public ContainerData getContainerData() {
-        return containerData;
     }
 
     @Override
@@ -134,15 +129,17 @@ public class TruthAssignerBlockEntity extends BaseContainerBlockEntity implement
     }
 
     private void start() {
-        ShortCircuit.LOGGER.debug("block entity work started!");
         this.level.setBlockAndUpdate(getBlockPos(), getBlockState().setValue(TruthAssignerBlock.LIT, this.working));
     }
 
     private void stop() {
         // testing code: copy input to output
-        ItemStack input = this.getItem(1);
-        this.setItem(0, input.copy());
-        this.setItem(1, ItemStack.EMPTY);
+        ItemStack input = this.getItem(0);
+        this.setItem(0, ItemStack.EMPTY);
+        this.setItem(1, input.copy());
+        // set working to false
+        this.containerData.set(0, 0);
+        this.level.setBlockAndUpdate(getBlockPos(), getBlockState().setValue(TruthAssignerBlock.LIT, this.working));
     }
 
     public void tick() {
@@ -152,15 +149,5 @@ public class TruthAssignerBlockEntity extends BaseContainerBlockEntity implement
             this.ticks = 0;
             this.stop();
         }
-    }
-
-    @Override
-    public void slotChanged(AbstractContainerMenu pContainerToSend, int pDataSlotIndex, ItemStack pStack) {
-
-    }
-
-    @Override
-    public void dataChanged(AbstractContainerMenu menu, int index, int value) {
-        this.containerData.set(index, value);
     }
 }

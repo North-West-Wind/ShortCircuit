@@ -14,7 +14,6 @@
   "container.short_circuit.truth_assigner.wait.on.desc": "Assign value by the output after max delay",
   "container.short_circuit.truth_assigner.start": "Start",
   "container.short_circuit.truth_assigner.start.desc": "Create a truth table for the circuit",
-  "menu.title.short_circuit.truth_assigner": "Truth Assigner",
 
   "tooltip.short_circuit.circuit": "UUID: %s",
   "tooltip.short_circuit.circuit_board": "You should not be able to obtain this.",

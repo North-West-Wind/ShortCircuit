@@ -46,7 +46,7 @@ public class TruthAssignerBlockEntity extends BaseContainerBlockEntity implement
     public static final int SIZE = 2;
     private NonNullList<ItemStack> items = NonNullList.withSize(SIZE, ItemStack.EMPTY);
     private boolean working, wait;
-    private int maxDelay, ticks, errorCode;
+    private int maxDelay, ticks, errorCode, bits;
     private final ContainerData containerData;
     // For assigning
     private final List<RelativeDirection> inputOrder, outputOrder;
@@ -58,6 +58,7 @@ public class TruthAssignerBlockEntity extends BaseContainerBlockEntity implement
         super(BlockEntities.TRUTH_ASSIGNER.get(), pos, state);
         this.wait = true;
         this.maxDelay = 20;
+        this.bits = 4;
         this.inputOrder = Lists.newArrayList();
         this.outputOrder = Lists.newArrayList();
         this.outputMap = Maps.newHashMap();
@@ -69,6 +70,8 @@ public class TruthAssignerBlockEntity extends BaseContainerBlockEntity implement
                     case 1 -> TruthAssignerBlockEntity.this.wait ? 1 : 0;
                     case 2 -> TruthAssignerBlockEntity.this.maxDelay;
                     case 3 -> TruthAssignerBlockEntity.this.errorCode;
+                    case 4 -> TruthAssignerBlockEntity.this.currentInput;
+                    case 5 -> TruthAssignerBlockEntity.this.bits;
                     default -> 0;
                 };
             }
@@ -91,13 +94,17 @@ public class TruthAssignerBlockEntity extends BaseContainerBlockEntity implement
                     case 3:
                         TruthAssignerBlockEntity.this.errorCode = value;
                         break;
+                    case 5:
+                        if (value >= 1 && value <= 4)
+                            TruthAssignerBlockEntity.this.bits = value;
+                        break;
                 }
                 TruthAssignerBlockEntity.this.setChanged();
             }
 
             @Override
             public int getCount() {
-                return 4;
+                return 5;
             }
         };
     }
@@ -134,6 +141,7 @@ public class TruthAssignerBlockEntity extends BaseContainerBlockEntity implement
         this.working = tag.getBoolean("working");
         this.wait = tag.getBoolean("wait");
         this.maxDelay = tag.getInt("maxDelay");
+        this.bits = tag.getInt("bits");
         this.ticks = tag.getInt("ticks");
         this.errorCode = tag.getInt("errorCode");
         if (tag.hasUUID("workingUuid")) this.workingUuid = tag.getUUID("workingUuid");
@@ -147,6 +155,7 @@ public class TruthAssignerBlockEntity extends BaseContainerBlockEntity implement
         tag.putBoolean("working", this.working);
         tag.putBoolean("wait", this.wait);
         tag.putInt("maxDelay", this.maxDelay);
+        tag.putInt("bits", this.bits);
         tag.putInt("ticks", this.ticks);
         tag.putInt("errorCode", this.errorCode);
         if (this.workingUuid != null) tag.putUUID("workingUuid", this.workingUuid);
@@ -194,9 +203,10 @@ public class TruthAssignerBlockEntity extends BaseContainerBlockEntity implement
     }
 
     private void stop(boolean success) {
-        if (success && this.level instanceof ServerLevel level) {
+        if (!(this.level instanceof ServerLevel serverLevel)) return;
+        if (success) {
             // copy input output mapping to data
-            TruthTableSavedData data = TruthTableSavedData.getTruthTableData(level);
+            TruthTableSavedData data = TruthTableSavedData.getTruthTableData(serverLevel);
             UUID uuid = UUID.randomUUID();
             uuid = data.insertTruthTable(uuid, this.inputOrder, this.outputOrder, this.outputMap.entrySet().stream().filter(entry -> entry.getValue() > 0).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
 
@@ -223,7 +233,7 @@ public class TruthAssignerBlockEntity extends BaseContainerBlockEntity implement
         this.level.setBlockAndUpdate(this.getBlockPos().above(), net.minecraft.world.level.block.Blocks.AIR.defaultBlockState());
 
         // ding!
-        this.level.playLocalSound(this.getBlockPos(), in.northwestw.shortcircuit.registries.SoundEvents.TRUTH_ASSIGNED.get(), SoundSource.BLOCKS, 1, this.level.random.nextFloat() * 0.2f + 0.95f, false);
+        this.level.playSound(null, this.getBlockPos(), in.northwestw.shortcircuit.registries.SoundEvents.TRUTH_ASSIGNED.get(), SoundSource.BLOCKS, 1, this.level.random.nextFloat() * 0.2f + 0.95f);
     }
 
     public void tick() {
@@ -247,8 +257,8 @@ public class TruthAssignerBlockEntity extends BaseContainerBlockEntity implement
                 blockEntity.updateRuntimeBlock(power, this.inputOrder.get(ii));
             }
         }
-        this.ticks++;
-        if (this.ticks >= this.maxDelay) this.recordOutput(true);
+        if (++this.ticks >= this.maxDelay) this.recordOutput(true);
+        this.setChanged();
     }
 
     private void recordOutput(boolean forced) {
@@ -261,8 +271,13 @@ public class TruthAssignerBlockEntity extends BaseContainerBlockEntity implement
         if (signals != this.lastOutput || forced) {
             this.lastOutput = signals;
             this.ticks = 0;
-            this.outputMap.put(this.currentInput, signals);
-            this.currentInput++;
+            if (this.bits == 4) {
+                this.outputMap.put(this.currentInput, signals);
+                this.currentInput++;
+            } else {
+
+            }
+            this.setChanged();
         }
     }
 

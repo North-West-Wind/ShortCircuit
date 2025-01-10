@@ -17,8 +17,8 @@ public class TruthAssignerScreen extends AbstractContainerScreen<TruthAssignerMe
     private static final ResourceLocation BASE_BACKGROUND = ResourceLocation.fromNamespaceAndPath(ShortCircuit.MOD_ID, "textures/gui/container/truth_assigner.png");
     private static final ResourceLocation BURN_PROGRESS_SPRITE = ResourceLocation.withDefaultNamespace("container/furnace/burn_progress");
     private EditBox maxDelay;
-    private Button wait, start;
-    private StringWidget error;
+    private Button wait, start, bits;
+    private StringWidget error, currentInput;
 
     public TruthAssignerScreen(TruthAssignerMenu menu, Inventory inventory, Component title) {
         super(menu, inventory, title);
@@ -39,6 +39,7 @@ public class TruthAssignerScreen extends AbstractContainerScreen<TruthAssignerMe
         this.start = Button.builder(Component.translatable("container.short_circuit.truth_assigner.start"), this::onStartPress).pos(i + 103, j + 56).size(60, 16).tooltip(Tooltip.create(Component.translatable("container.short_circuit.truth_assigner.start.desc"))).build();
 
         this.error = new StringWidget(i, j - 24, this.imageWidth, 16, Component.empty(), this.font);
+        this.currentInput = new StringWidget(i + 14, j + 58, 74, 9, Component.literal(Integer.toString(this.menu.getCurrentInput())), this.font).alignLeft();
 
         this.updateFields();
 
@@ -46,6 +47,7 @@ public class TruthAssignerScreen extends AbstractContainerScreen<TruthAssignerMe
         this.addRenderableWidget(this.wait);
         this.addRenderableWidget(this.start);
         this.addRenderableWidget(this.error);
+        this.addRenderableWidget(this.currentInput);
 
         this.menu.addSlotListener(this);
     }
@@ -128,6 +130,8 @@ public class TruthAssignerScreen extends AbstractContainerScreen<TruthAssignerMe
             this.updateWait();
         } else if (index == 2) {
             this.maxDelay.setValue(Integer.toString(value));
+        } else if (index == 4) {
+            this.currentInput.setMessage(Component.literal(Integer.toString(value)));
         }
     }
 

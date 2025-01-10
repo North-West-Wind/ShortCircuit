@@ -22,7 +22,7 @@ public class TruthAssignerMenu extends AbstractContainerMenu {
 
     // Client constructor
     public TruthAssignerMenu(int containerId, Inventory inventory) {
-        this(containerId, inventory, ContainerLevelAccess.NULL, null, new SimpleContainerData(4));
+        this(containerId, inventory, ContainerLevelAccess.NULL, null, new SimpleContainerData(5));
     }
 
     // Server constructor
@@ -132,6 +132,10 @@ public class TruthAssignerMenu extends AbstractContainerMenu {
 
     public int getError() {
         return this.containerData.get(3);
+    }
+
+    public int getCurrentInput() {
+        return this.containerData.get(4);
     }
 
     public void setWait(boolean val) {

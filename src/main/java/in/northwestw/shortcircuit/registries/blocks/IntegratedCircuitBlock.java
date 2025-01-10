@@ -92,7 +92,7 @@ public class IntegratedCircuitBlock extends HorizontalDirectionalBlock implement
 
     @Override
     protected ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult result) {
-        if ((stack.is(Items.CIRCUIT) || stack.is(Items.INTEGRATED_CIRCUIT)) && level.getBlockEntity(pos) instanceof IntegratedCircuitBlockEntity blockEntity && blockEntity.isValid()) {
+        if ((stack.is(Items.CIRCUIT) || stack.is(Items.INTEGRATED_CIRCUIT)) && !player.isCrouching() && level.getBlockEntity(pos) instanceof IntegratedCircuitBlockEntity blockEntity && blockEntity.isValid()) {
             ItemStack newStack = new ItemStack(Items.INTEGRATED_CIRCUIT.get(), stack.getCount());
             newStack.applyComponents(stack.getComponents());
             newStack.set(DataComponents.UUID, new UUIDDataComponent(blockEntity.getUuid()));

@@ -35,13 +35,11 @@ public class IntegratedCircuitBlockEntity extends BlockEntity {
     private UUID uuid;
     private final Map<RelativeDirection, Integer> inputs;
     private Map<RelativeDirection, Integer> outputs;
-    private byte[] powers;
 
     public IntegratedCircuitBlockEntity(BlockPos pos, BlockState state) {
         super(BlockEntities.INTEGRATED_CIRCUIT.get(), pos, state);
         this.inputs = Maps.newHashMap();
         this.outputs = Maps.newHashMap();
-        this.powers = new byte[6];
     }
 
     public boolean isValid() {
@@ -111,7 +109,7 @@ public class IntegratedCircuitBlockEntity extends BlockEntity {
     public void setInputAndUpdate(RelativeDirection direction, int signal) {
         this.setInput(direction, signal);
         this.updateOutput();
-        this.level.setBlock(this.getBlockPos(), this.getBlockState().setValue(IntegratedCircuitBlock.POWERED, this.inputs.values().stream().anyMatch(power -> power > 0)), Block.UPDATE_CLIENTS);
+        this.level.setBlock(this.getBlockPos(), this.getBlockState().setValue(IntegratedCircuitBlock.POWERED, this.outputs.values().stream().anyMatch(power -> power > 0)), Block.UPDATE_CLIENTS);
     }
 
     private void updateOutput() {
@@ -127,8 +125,6 @@ public class IntegratedCircuitBlockEntity extends BlockEntity {
         for (Direction direction : Direction.values()) {
             RelativeDirection relDir = DirectionHelper.directionToRelativeDirection(state.getValue(HorizontalDirectionalBlock.FACING), direction);
             int signal = level.getSignal(pos.relative(direction), direction);
-            if (signal > 0)
-                ShortCircuit.LOGGER.debug("{} has power {}", relDir.getSerializedName(), signal);
             this.setInput(relDir, signal);
         }
         this.updateOutput();

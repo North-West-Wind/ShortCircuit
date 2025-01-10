@@ -133,7 +133,7 @@ public class CircuitBlock extends HorizontalDirectionalBlock implements EntityBl
     @Override
     protected ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult result) {
         if (stack.is(Items.POKING_STICK)) return ItemInteractionResult.SKIP_DEFAULT_BLOCK_INTERACTION; // handled by poking stick
-        else if (stack.is(Items.CIRCUIT) && level.getBlockEntity(pos) instanceof CircuitBlockEntity blockEntity && blockEntity.isValid()) {
+        else if (stack.is(Items.CIRCUIT) && !player.isCrouching() && level.getBlockEntity(pos) instanceof CircuitBlockEntity blockEntity && blockEntity.isValid()) {
             stack.set(DataComponents.UUID, new UUIDDataComponent(blockEntity.getUuid()));
             player.playSound(SoundEvents.BEACON_ACTIVATE, 0.5f, 1);
             return ItemInteractionResult.SUCCESS;

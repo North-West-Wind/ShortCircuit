@@ -95,7 +95,7 @@ public class TruthAssignerBlockEntity extends BaseContainerBlockEntity implement
                         TruthAssignerBlockEntity.this.errorCode = value;
                         break;
                     case 5:
-                        if (value >= 1 && value <= 4)
+                        if (value == 1 || value == 2 || value == 4)
                             TruthAssignerBlockEntity.this.bits = value;
                         break;
                 }
@@ -247,13 +247,13 @@ public class TruthAssignerBlockEntity extends BaseContainerBlockEntity implement
         // on tick 0, setup input signals
         if (this.ticks == 0) {
             // input encoding is larger than all possible situation
-            if (this.currentInput >= Math.pow(2, this.inputOrder.size() * 4)) {
+            if (this.currentInput >= Math.pow(2, this.inputOrder.size() * this.bits)) {
                 this.stop(true);
                 return;
             }
             // update runtime block signals according to encoding
             for (int ii = 0; ii < this.inputOrder.size(); ii++) {
-                int power = (this.currentInput >> (ii * 4)) & 0xF;
+                int power = (this.expandInput(this.currentInput) >> (ii * 4)) & 0xF;
                 blockEntity.updateRuntimeBlock(power, this.inputOrder.get(ii));
             }
         }
@@ -271,14 +271,22 @@ public class TruthAssignerBlockEntity extends BaseContainerBlockEntity implement
         if (signals != this.lastOutput || forced) {
             this.lastOutput = signals;
             this.ticks = 0;
-            if (this.bits == 4) {
-                this.outputMap.put(this.currentInput, signals);
-                this.currentInput++;
-            } else {
-
-            }
+            this.outputMap.put(this.currentInput, signals);
+            this.currentInput++;
             this.setChanged();
         }
+    }
+
+    private int expandInput(int input) {
+        if (this.bits == 4) return input;
+        int result = 0;
+        for (int ii = 0; ii < this.bits * this.inputOrder.size(); ii++) {
+            for (int jj = 0; jj < 4 / this.bits; jj++) {
+                result <<= 1;
+                if (((input >> ii) & 0x1) == 1) result |= 1;
+            }
+        }
+        return result;
     }
 
     public void checkAndRecord() {

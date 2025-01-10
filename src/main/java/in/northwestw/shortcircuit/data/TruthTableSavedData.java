@@ -19,7 +19,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class TruthTableSavedData extends SavedData {
-    private final Map<UUID, Triple<List<RelativeDirection>, List<RelativeDirection>, Map<Integer, Integer>>> truthTables;
+    private final Map<UUID, TruthTable> truthTables;
 
     public TruthTableSavedData() {
         this.truthTables = Maps.newHashMap();
@@ -30,17 +30,7 @@ public class TruthTableSavedData extends SavedData {
         for (Tag tt : tag.getList("tables", Tag.TAG_COMPOUND)) {
             CompoundTag tuple = (CompoundTag) tt;
             UUID uuid = tuple.getUUID("uuid");
-            List<RelativeDirection> input = Lists.newArrayList();
-            for (byte id : tuple.getByteArray("input"))
-                input.add(RelativeDirection.fromId(id));
-            List<RelativeDirection> output = Lists.newArrayList();
-            for (byte id : tuple.getByteArray("output"))
-                output.add(RelativeDirection.fromId(id));
-            Map<Integer, Integer> signalMap = Maps.newHashMap();
-            int[] mergedMap = tuple.getIntArray("map");
-            for (int ii = 0; ii < mergedMap.length / 2; ii++)
-                signalMap.put(mergedMap[ii * 2], mergedMap[ii * 2 + 1]);
-            data.truthTables.put(uuid, new Triple<>(input, output, signalMap));
+            data.truthTables.put(uuid, TruthTable.load(tuple));
         }
         return data;
     }
@@ -48,17 +38,10 @@ public class TruthTableSavedData extends SavedData {
     @Override
     public CompoundTag save(CompoundTag tag, HolderLookup.Provider registries) {
         ListTag list = new ListTag();
-        this.truthTables.forEach((uuid, triple) -> {
+        this.truthTables.forEach((uuid, table) -> {
             CompoundTag tuple = new CompoundTag();
             tuple.putUUID("uuid", uuid);
-            tuple.putByteArray("input", triple.a.stream().map(RelativeDirection::getId).toList());
-            tuple.putByteArray("output", triple.b.stream().map(RelativeDirection::getId).toList());
-            List<Integer> mergedMap = Lists.newArrayList();
-            triple.c.forEach((input, output) -> {
-                mergedMap.add(input);
-                mergedMap.add(output);
-            });
-            tuple.putIntArray("map", mergedMap);
+            table.save(tuple);
             list.add(tuple);
         });
         tag.put("tables", list);
@@ -68,56 +51,44 @@ public class TruthTableSavedData extends SavedData {
     public Map<RelativeDirection, Integer> getSignals(UUID uuid, Map<RelativeDirection, Integer> inputs) {
         Map<RelativeDirection, Integer> signals = Maps.newHashMap();
         if (!this.truthTables.containsKey(uuid)) return signals;
-        Triple<List<RelativeDirection>, List<RelativeDirection>, Map<Integer, Integer>> triple = this.truthTables.get(uuid);
+        TruthTable table = this.truthTables.get(uuid);
         int input = 0;
-        for (RelativeDirection dir : triple.a) {
-            input <<= 4;
-            input |= inputs.getOrDefault(dir, 0);
+        for (RelativeDirection dir : table.inputs) {
+            input <<= table.bits;
+            // merge 4-bit into amount specified by table.bits
+            // i haven't had time to look into the mathematical relationships yet
+            int val = inputs.getOrDefault(dir, 0);
+            if (table.bits == 4) input |= val;
+            else if (table.bits == 2) input |= (((val >> 2) > 1 ? 1 : 0) << 1) | ((val & 0x3) > 1 ? 1 : 0);
+            else input |= val > 0 ? 1 : 0;
         }
-        int output = triple.c.getOrDefault(input, 0);
-        for (RelativeDirection dir: triple.b) {
+        int output = table.signals.getOrDefault(input, 0);
+        for (RelativeDirection dir: table.outputs) {
             signals.put(dir, output & 0xF);
             output >>= 4;
         }
         return signals;
     }
 
-    public UUID insertTruthTable(UUID uuid, List<RelativeDirection> inputs, List<RelativeDirection> outputs, Map<Integer, Integer> signals) {
-        // find if the truth table repeats
-        for (Map.Entry<UUID, Triple<List<RelativeDirection>, List<RelativeDirection>, Map<Integer, Integer>>> entry : this.truthTables.entrySet()) {
-            Triple<List<RelativeDirection>, List<RelativeDirection>, Map<Integer, Integer>> triple = entry.getValue();
-            // ensure all lists and maps have the same size
-            if (triple.a.size() == inputs.size() && triple.b.size() == outputs.size() && triple.c.size() == signals.size()) {
-                boolean same = true;
-                // compare input lists
-                for (int ii = 0; ii < inputs.size(); ii++)
-                    if (triple.a.get(ii) != inputs.get(ii)) {
-                        same = false;
-                        break;
-                    }
-                // compare output lists
-                if (same) {
-                    for (int ii = 0; ii < outputs.size(); ii++)
-                        if (triple.b.get(ii) != outputs.get(ii)) {
-                            same = false;
-                            break;
-                        }
-                    // compare maps
-                    if (same) {
-                        for (Map.Entry<Integer, Integer> signalEntry : signals.entrySet()) {
-                            int key = signalEntry.getKey();
-                            if (!triple.c.containsKey(key) || !Objects.equals(triple.c.get(key), signalEntry.getValue())) {
-                                same = false;
-                                break;
-                            }
-                        }
-                        // they are the same
-                        if (same) return entry.getKey();
-                    }
-                }
-            }
+    public UUID insertTruthTable(UUID uuid, List<RelativeDirection> inputs, List<RelativeDirection> outputs, Map<Integer, Integer> signals, int bits) {
+        // optimization
+        Map<Integer, Integer> reverseMapCount = Maps.newHashMap();
+        for (int output: signals.values()) {
+            int count = reverseMapCount.getOrDefault(output, 0);
+            reverseMapCount.put(output, count + 1);
         }
-        this.truthTables.put(uuid, new Triple<>(ImmutableList.copyOf(inputs), ImmutableList.copyOf(outputs), ImmutableMap.copyOf(signals)));
+        int defaultValue = reverseMapCount.entrySet().stream().max(Comparator.comparingInt(Map.Entry::getValue)).get().getKey();
+        Map<Integer, Integer> optimizedMap = Maps.newHashMap();
+        for (Map.Entry<Integer, Integer> entry : signals.entrySet())
+            if (entry.getValue() != defaultValue)
+                optimizedMap.put(entry.getKey(), entry.getValue());
+        
+        // find if the truth table repeats
+        for (Map.Entry<UUID, TruthTable> entry : this.truthTables.entrySet()) {
+            if (entry.getValue().isSame(inputs, outputs, optimizedMap, defaultValue, bits))
+                return entry.getKey();
+        }
+        this.truthTables.put(uuid, new TruthTable(inputs, outputs, optimizedMap, defaultValue, bits));
         this.setDirty();
         return uuid;
     }

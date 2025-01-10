@@ -3,6 +3,7 @@ package in.northwestw.shortcircuit.registries;
 import in.northwestw.shortcircuit.ShortCircuit;
 import in.northwestw.shortcircuit.registries.blocks.CircuitBlock;
 import in.northwestw.shortcircuit.registries.blocks.CircuitBoardBlock;
+import in.northwestw.shortcircuit.registries.blocks.IntegratedCircuitBlock;
 import in.northwestw.shortcircuit.registries.blocks.TruthAssignerBlock;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.SoundType;
@@ -43,6 +44,17 @@ public class Blocks {
                     .requiresCorrectToolForDrops()
                     .strength(3.5F)
                     .sound(SoundType.METAL)
+    );
+    public static final DeferredBlock<Block> INTEGRATED_CIRCUIT = BLOCKS.registerBlock(
+            "integrated_circuit", IntegratedCircuitBlock::new,
+            BlockBehaviour.Properties.of()
+                    .instabreak()
+                    .sound(SoundType.STONE)
+                    .pushReaction(PushReaction.DESTROY)
+                    .noLootTable()
+                    .noOcclusion()
+                    .isValidSpawn(net.minecraft.world.level.block.Blocks::never)
+                    .isRedstoneConductor((state, level, pos) -> false)
     );
 
     public static void registerBlocks(IEventBus modEventBus) {

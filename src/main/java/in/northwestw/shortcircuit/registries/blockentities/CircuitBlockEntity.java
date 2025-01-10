@@ -157,11 +157,11 @@ public class CircuitBlockEntity extends BlockEntity {
                             CircuitBoardBlock.Mode mode = oldState.getValue(CircuitBoardBlock.MODE);
                             if (modeMap.containsKey(dir)) {
                                 CircuitBoardBlock.Mode existingMode = modeMap.get(dir);
-                                if (existingMode != CircuitBoardBlock.Mode.NONE && mode != CircuitBoardBlock.Mode.NONE && existingMode != mode) {
+                                if (mode != CircuitBoardBlock.Mode.NONE && existingMode != mode) {
                                     this.removeRuntime();
                                     return this.emptyMapResult(RuntimeReloadResult.FAIL_MULTI_MODE);
                                 }
-                            } else
+                            } else if (mode != CircuitBoardBlock.Mode.NONE)
                                 modeMap.put(dir, mode);
                             blockEntity.setConnection(this.level.dimension(), this.getBlockPos(), this.runtimeUuid);
                         } else if (be instanceof CircuitBlockEntity blockEntity) {
@@ -191,12 +191,12 @@ public class CircuitBlockEntity extends BlockEntity {
     }
 
     public void updateRuntimeBlock(int signal, RelativeDirection direction) {
-        if (this.runtimeUuid == null) return;
         MinecraftServer server = level.getServer();
         if (server == null) return;
         ServerLevel runtimeLevel = server.getLevel(Constants.RUNTIME_DIMENSION);
         if (runtimeLevel == null) return;
         CircuitSavedData data = CircuitSavedData.getRuntimeData(runtimeLevel);
+        if (!data.circuits.containsKey(this.runtimeUuid)) return;
         int octoletIndex = data.octoletIndexForSize(blockSize);
         if (!data.octolets.containsKey(octoletIndex)) data.addOctolet(octoletIndex, new Octolet(blockSize));
         BlockPos startingPos = data.getCircuitStartingPos(this.runtimeUuid);
@@ -319,6 +319,10 @@ public class CircuitBlockEntity extends BlockEntity {
         components.set(DataComponents.UUID, new UUIDDataComponent(this.uuid));
     }
 
+    public UUID getRuntimeUuid() {
+        return runtimeUuid;
+    }
+
     public UUID getUuid() {
         return uuid;
     }
@@ -399,12 +403,10 @@ public class CircuitBlockEntity extends BlockEntity {
     public void getInputSignals() {
         BlockPos pos = this.getBlockPos();
         BlockState state = this.getBlockState();
-        if (this.level.getBlockEntity(pos) instanceof CircuitBlockEntity blockEntity) {
-            for (Direction direction : Direction.values()) {
-                RelativeDirection relDir = DirectionHelper.directionToRelativeDirection(state.getValue(HorizontalDirectionalBlock.FACING), direction);
-                int signal = level.getSignal(pos.relative(direction), direction);
-                blockEntity.updateRuntimeBlock(signal, relDir);
-            }
+        for (Direction direction : Direction.values()) {
+            RelativeDirection relDir = DirectionHelper.directionToRelativeDirection(state.getValue(HorizontalDirectionalBlock.FACING), direction);
+            int signal = level.getSignal(pos.relative(direction), direction);
+            this.updateRuntimeBlock(signal, relDir);
         }
     }
 

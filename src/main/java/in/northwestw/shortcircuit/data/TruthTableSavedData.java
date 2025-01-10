@@ -1,5 +1,7 @@
 package in.northwestw.shortcircuit.data;
 
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import in.northwestw.shortcircuit.Constants;
@@ -13,9 +15,7 @@ import net.minecraft.world.level.saveddata.SavedData;
 import net.minecraft.world.level.storage.DimensionDataStorage;
 import org.antlr.v4.runtime.misc.Triple;
 
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class TruthTableSavedData extends SavedData {
@@ -80,6 +80,46 @@ public class TruthTableSavedData extends SavedData {
             output >>= 4;
         }
         return signals;
+    }
+
+    public UUID insertTruthTable(UUID uuid, List<RelativeDirection> inputs, List<RelativeDirection> outputs, Map<Integer, Integer> signals) {
+        // find if the truth table repeats
+        for (Map.Entry<UUID, Triple<List<RelativeDirection>, List<RelativeDirection>, Map<Integer, Integer>>> entry : this.truthTables.entrySet()) {
+            Triple<List<RelativeDirection>, List<RelativeDirection>, Map<Integer, Integer>> triple = entry.getValue();
+            // ensure all lists and maps have the same size
+            if (triple.a.size() == inputs.size() && triple.b.size() == outputs.size() && triple.c.size() == signals.size()) {
+                boolean same = true;
+                // compare input lists
+                for (int ii = 0; ii < inputs.size(); ii++)
+                    if (triple.a.get(ii) != inputs.get(ii)) {
+                        same = false;
+                        break;
+                    }
+                // compare output lists
+                if (same) {
+                    for (int ii = 0; ii < outputs.size(); ii++)
+                        if (triple.b.get(ii) != outputs.get(ii)) {
+                            same = false;
+                            break;
+                        }
+                    // compare maps
+                    if (same) {
+                        for (Map.Entry<Integer, Integer> signalEntry : signals.entrySet()) {
+                            int key = signalEntry.getKey();
+                            if (!triple.c.containsKey(key) || !Objects.equals(triple.c.get(key), signalEntry.getValue())) {
+                                same = false;
+                                break;
+                            }
+                        }
+                        // they are the same
+                        if (same) return entry.getKey();
+                    }
+                }
+            }
+        }
+        this.truthTables.put(uuid, new Triple<>(ImmutableList.copyOf(inputs), ImmutableList.copyOf(outputs), ImmutableMap.copyOf(signals)));
+        this.setDirty();
+        return uuid;
     }
 
     public static TruthTableSavedData getTruthTableData(ServerLevel level) {

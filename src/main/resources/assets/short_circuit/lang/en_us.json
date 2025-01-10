@@ -2,6 +2,7 @@
   "block.short_circuit.circuit": "Circuit",
   "block.short_circuit.circuit_board": "Circuit Board",
   "block.short_circuit.truth_assigner": "Truth Assigner",
+  "block.short_circuit.integrated_circuit": "Integrated Circuit",
 
   "item.short_circuit.poking_stick": "Poking Stick",
 
@@ -18,6 +19,7 @@
   "container.short_circuit.truth_assigner.error": "",
   "container.short_circuit.truth_assigner.error.1": "Need empty block above",
   "container.short_circuit.truth_assigner.error.2": "This circuit has problems",
+  "container.short_circuit.truth_assigner.error.3": "Circuit was detroyed",
 
   "tooltip.short_circuit.circuit": "UUID: %s",
   "tooltip.short_circuit.circuit_board": "You should not be able to obtain this.",

@@ -3,6 +3,7 @@ package in.northwestw.shortcircuit.registries;
 import in.northwestw.shortcircuit.ShortCircuit;
 import in.northwestw.shortcircuit.registries.blockentities.CircuitBlockEntity;
 import in.northwestw.shortcircuit.registries.blockentities.CircuitBoardBlockEntity;
+import in.northwestw.shortcircuit.registries.blockentities.IntegratedCircuitBlockEntity;
 import in.northwestw.shortcircuit.registries.blockentities.TruthAssignerBlockEntity;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -24,6 +25,10 @@ public class BlockEntities {
     public static final Supplier<BlockEntityType<TruthAssignerBlockEntity>> TRUTH_ASSIGNER = BLOCK_ENTITY_TYPES.register("truth_assigner", () -> BlockEntityType.Builder.of(
             TruthAssignerBlockEntity::new,
             Blocks.TRUTH_ASSIGNER.get()
+    ).build(null));
+    public static final Supplier<BlockEntityType<IntegratedCircuitBlockEntity>> INTEGRATED_CIRCUIT = BLOCK_ENTITY_TYPES.register("integrated_circuit", () -> BlockEntityType.Builder.of(
+            IntegratedCircuitBlockEntity::new,
+            Blocks.INTEGRATED_CIRCUIT.get()
     ).build(null));
 
     public static void registerBlockEntities(IEventBus modEventBus) {

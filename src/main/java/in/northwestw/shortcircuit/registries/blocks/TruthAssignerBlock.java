@@ -2,6 +2,7 @@ package in.northwestw.shortcircuit.registries.blocks;
 
 import com.mojang.serialization.MapCodec;
 import in.northwestw.shortcircuit.registries.BlockEntities;
+import in.northwestw.shortcircuit.registries.Blocks;
 import in.northwestw.shortcircuit.registries.blockentities.TruthAssignerBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -104,7 +105,9 @@ public class TruthAssignerBlock extends HorizontalDirectionalBlock implements En
     protected void neighborChanged(BlockState state, Level level, BlockPos pos, Block neighborBlock, BlockPos neighborPos, boolean movedByPiston) {
         if (pos.above().equals(neighborPos) && level.getBlockEntity(pos) instanceof TruthAssignerBlockEntity blockEntity) {
             if (!blockEntity.isWorking()) blockEntity.setErrorCode(1, level.getBlockState(neighborPos).isAir());
-            else blockEntity.recordOutput(false);
+            else if (level.getBlockState(neighborPos).is(Blocks.CIRCUIT)) {
+                blockEntity.checkAndRecord();
+            }
         }
         super.neighborChanged(state, level, pos, neighborBlock, neighborPos, movedByPiston);
     }

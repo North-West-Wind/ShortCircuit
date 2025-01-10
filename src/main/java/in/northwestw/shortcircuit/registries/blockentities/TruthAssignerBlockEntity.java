@@ -3,11 +3,16 @@ package in.northwestw.shortcircuit.registries.blockentities;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import in.northwestw.shortcircuit.ShortCircuit;
+import in.northwestw.shortcircuit.data.TruthTableSavedData;
 import in.northwestw.shortcircuit.properties.RelativeDirection;
 import in.northwestw.shortcircuit.registries.BlockEntities;
 import in.northwestw.shortcircuit.registries.Blocks;
+import in.northwestw.shortcircuit.registries.DataComponents;
+import in.northwestw.shortcircuit.registries.Items;
 import in.northwestw.shortcircuit.registries.blocks.CircuitBoardBlock;
 import in.northwestw.shortcircuit.registries.blocks.TruthAssignerBlock;
+import in.northwestw.shortcircuit.registries.datacomponents.UUIDDataComponent;
 import in.northwestw.shortcircuit.registries.menus.TruthAssignerMenu;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
@@ -17,6 +22,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.ContainerHelper;
@@ -33,6 +39,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 public class TruthAssignerBlockEntity extends BaseContainerBlockEntity implements ContainerListener {
     public static final int SIZE = 2;
@@ -42,8 +50,9 @@ public class TruthAssignerBlockEntity extends BaseContainerBlockEntity implement
     private final ContainerData containerData;
     // For assigning
     private final List<RelativeDirection> inputOrder, outputOrder;
-    private int currentInput;
+    private int currentInput, lastOutput;
     private final Map<Integer, Integer> outputMap;
+    private UUID workingUuid;
 
     public TruthAssignerBlockEntity(BlockPos pos, BlockState state) {
         super(BlockEntities.TRUTH_ASSIGNER.get(), pos, state);
@@ -127,6 +136,8 @@ public class TruthAssignerBlockEntity extends BaseContainerBlockEntity implement
         this.maxDelay = tag.getInt("maxDelay");
         this.ticks = tag.getInt("ticks");
         this.errorCode = tag.getInt("errorCode");
+        if (tag.hasUUID("workingUuid")) this.workingUuid = tag.getUUID("workingUuid");
+        this.lastOutput = tag.getInt("lastOutput");
     }
 
     @Override
@@ -138,6 +149,8 @@ public class TruthAssignerBlockEntity extends BaseContainerBlockEntity implement
         tag.putInt("maxDelay", this.maxDelay);
         tag.putInt("ticks", this.ticks);
         tag.putInt("errorCode", this.errorCode);
+        if (this.workingUuid != null) tag.putUUID("workingUuid", this.workingUuid);
+        tag.putInt("lastOutput", lastOutput);
     }
 
     @Override
@@ -161,6 +174,9 @@ public class TruthAssignerBlockEntity extends BaseContainerBlockEntity implement
         this.level.setBlockAndUpdate(this.getBlockPos().above(), Blocks.CIRCUIT.get().defaultBlockState());
         CircuitBlockEntity blockEntity = (CircuitBlockEntity) this.level.getBlockEntity(this.getBlockPos().above());
         blockEntity.setFake(true);
+        ItemStack input = this.getItem(0);
+        if (input.has(DataComponents.UUID))
+            blockEntity.setUuid(input.get(DataComponents.UUID).uuid());
         Pair<CircuitBlockEntity.RuntimeReloadResult, Map<RelativeDirection, CircuitBoardBlock.Mode>> pair = blockEntity.reloadRuntimeAndModeMap(Sets.newHashSet());
         CircuitBlockEntity.RuntimeReloadResult result = pair.getLeft();
         if (!result.isGood()) {
@@ -173,24 +189,40 @@ public class TruthAssignerBlockEntity extends BaseContainerBlockEntity implement
             if (mode == CircuitBoardBlock.Mode.INPUT) this.inputOrder.add(entry.getKey());
             else if (mode == CircuitBoardBlock.Mode.OUTPUT) this.outputOrder.add(entry.getKey());
         }
+        this.workingUuid = blockEntity.getRuntimeUuid();
+        this.setChanged();
     }
 
     private void stop(boolean success) {
-        if (success) {
-            // testing code: copy input to output
+        if (success && this.level instanceof ServerLevel level) {
+            // copy input output mapping to data
+            TruthTableSavedData data = TruthTableSavedData.getTruthTableData(level);
+            UUID uuid = UUID.randomUUID();
+            uuid = data.insertTruthTable(uuid, this.inputOrder, this.outputOrder, this.outputMap.entrySet().stream().filter(entry -> entry.getValue() > 0).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
+
+            // create integrated circuits by amount of circuits
             ItemStack input = this.getItem(0);
+            ItemStack outputs = new ItemStack(Items.INTEGRATED_CIRCUIT.get(), input.getCount());
+            outputs.set(DataComponents.UUID, new UUIDDataComponent(uuid));
             this.setItem(0, ItemStack.EMPTY);
-            this.setItem(1, input.copy());
+            this.setItem(1, outputs);
         }
 
+        // clear working memory
         this.currentInput = 0;
         this.inputOrder.clear();
         this.outputOrder.clear();
         this.outputMap.clear();
+
         // set working to false
         this.containerData.set(0, 0);
-        this.level.setBlockAndUpdate(this.getBlockPos().above(), net.minecraft.world.level.block.Blocks.AIR.defaultBlockState());
         this.level.setBlockAndUpdate(getBlockPos(), getBlockState().setValue(TruthAssignerBlock.LIT, this.working));
+
+        // remove the circuit
+        if (this.level.getBlockEntity(this.getBlockPos().above()) instanceof CircuitBlockEntity blockEntity) blockEntity.removeRuntime();
+        this.level.setBlockAndUpdate(this.getBlockPos().above(), net.minecraft.world.level.block.Blocks.AIR.defaultBlockState());
+
+        // ding!
         this.level.playLocalSound(this.getBlockPos(), in.northwestw.shortcircuit.registries.SoundEvents.TRUTH_ASSIGNED.get(), SoundSource.BLOCKS, 1, this.level.random.nextFloat() * 0.2f + 0.95f, false);
     }
 
@@ -219,27 +251,40 @@ public class TruthAssignerBlockEntity extends BaseContainerBlockEntity implement
         if (this.ticks >= this.maxDelay) this.recordOutput(true);
     }
 
-    public void recordOutput(boolean forced) {
+    private void recordOutput(boolean forced) {
         if (!this.working || (!forced && this.wait) || !(this.level.getBlockEntity(this.getBlockPos().above()) instanceof CircuitBlockEntity blockEntity)) return;
-        this.ticks = 0;
         int signals = 0;
         for (RelativeDirection dir : this.outputOrder) {
             signals <<= 4;
             signals |= blockEntity.getRelativePower(dir);
         }
-        this.outputMap.put(this.currentInput, signals);
-        this.currentInput++;
+        if (signals != this.lastOutput || forced) {
+            this.lastOutput = signals;
+            this.ticks = 0;
+            this.outputMap.put(this.currentInput, signals);
+            this.currentInput++;
+        }
+    }
+
+    public void checkAndRecord() {
+        if (!(this.level.getBlockEntity(this.getBlockPos().above()) instanceof CircuitBlockEntity)) {
+            this.stop(false);
+            this.setErrorCode(3, false);
+            return;
+        }
+        this.recordOutput(false);
     }
 
     public void setErrorCode(int errorCode, boolean unset) {
         if (!unset) this.containerData.set(3, errorCode);
         else if (this.errorCode == errorCode) this.containerData.set(3, 0);
+        this.setChanged();
     }
 
     @Override
     public void slotChanged(AbstractContainerMenu menu, int index, ItemStack stack) {
-        if (this.errorCode == 2 && index == 0 && stack.isEmpty())
-            this.setErrorCode(2, true);
+        if ((this.errorCode == 2 || this.errorCode == 3) && index == 0 && stack.isEmpty())
+            this.setErrorCode(this.errorCode, true);
     }
 
     @Override

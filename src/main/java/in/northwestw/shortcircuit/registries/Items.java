@@ -11,9 +11,10 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 public class Items {
     private static final DeferredRegister.Items ITEMS = DeferredRegister.createItems(ShortCircuit.MOD_ID);
 
-    public static final DeferredItem<BlockItem> CIRCUIT = ITEMS.registerSimpleBlockItem(Blocks.CIRCUIT, new Item.Properties());
-    public static final DeferredItem<BlockItem> CIRCUIT_BOARD = ITEMS.registerSimpleBlockItem(Blocks.CIRCUIT_BOARD, new Item.Properties());
-    public static final DeferredItem<BlockItem> TRUTH_ASSIGNER = ITEMS.registerSimpleBlockItem(Blocks.TRUTH_ASSIGNER, new Item.Properties());
+    public static final DeferredItem<BlockItem> CIRCUIT = ITEMS.registerSimpleBlockItem(Blocks.CIRCUIT);
+    public static final DeferredItem<BlockItem> CIRCUIT_BOARD = ITEMS.registerSimpleBlockItem(Blocks.CIRCUIT_BOARD);
+    public static final DeferredItem<BlockItem> TRUTH_ASSIGNER = ITEMS.registerSimpleBlockItem(Blocks.TRUTH_ASSIGNER);
+    public static final DeferredItem<BlockItem> INTEGRATED_CIRCUIT = ITEMS.registerSimpleBlockItem(Blocks.INTEGRATED_CIRCUIT);
 
     public static final DeferredItem<Item> POKING_STICK = ITEMS.registerItem("poking_stick", PokingStickItem::new, new Item.Properties().stacksTo(1));
 

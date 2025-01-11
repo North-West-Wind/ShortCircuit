@@ -1,6 +1,8 @@
 package in.northwestw.shortcircuit.registries.blockentities;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import in.northwestw.shortcircuit.ShortCircuit;
 import in.northwestw.shortcircuit.data.TruthTableSavedData;
 import in.northwestw.shortcircuit.properties.DirectionHelper;
@@ -28,18 +30,22 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 public class IntegratedCircuitBlockEntity extends BlockEntity {
     private UUID uuid;
     private final Map<RelativeDirection, Integer> inputs;
     private Map<RelativeDirection, Integer> outputs;
+    private final boolean[] changed;
 
     public IntegratedCircuitBlockEntity(BlockPos pos, BlockState state) {
         super(BlockEntities.INTEGRATED_CIRCUIT.get(), pos, state);
         this.inputs = Maps.newHashMap();
         this.outputs = Maps.newHashMap();
+        this.changed = new boolean[6];
     }
 
     public boolean isValid() {
@@ -110,13 +116,32 @@ public class IntegratedCircuitBlockEntity extends BlockEntity {
         this.setInput(direction, signal);
         this.updateOutput();
         this.level.setBlock(this.getBlockPos(), this.getBlockState().setValue(IntegratedCircuitBlock.POWERED, this.outputs.values().stream().anyMatch(power -> power > 0)), Block.UPDATE_CLIENTS);
+        for (int ii = 0; ii < this.changed.length; ii++)
+            if (this.changed[ii]) {
+                BlockPos pos = this.getBlockPos().relative(DirectionHelper.relativeDirectionToFacing(RelativeDirection.fromId((byte) ii), this.getBlockState().getValue(HorizontalDirectionalBlock.FACING)));
+                this.level.neighborChanged(pos, this.level.getBlockState(pos).getBlock(), this.getBlockPos());
+            }
     }
 
     private void updateOutput() {
         if (this.level instanceof ServerLevel level) {
             TruthTableSavedData data = TruthTableSavedData.getTruthTableData(level);
+            Map<RelativeDirection, Integer> oldOutputs = ImmutableMap.copyOf(this.outputs);
             this.outputs = data.getSignals(this.uuid, this.inputs);
+            this.clearChanged();
+            for (RelativeDirection key : oldOutputs.keySet()) {
+                if (!this.outputs.containsKey(key) || !this.outputs.get(key).equals(oldOutputs.get(key))) // removed value or changed value
+                    this.changed[key.getId()] = true;
+            }
+            for (RelativeDirection key : this.outputs.keySet()) {
+                if (!oldOutputs.containsKey(key)) // new value
+                    this.changed[key.getId()] = true;
+            }
         }
+    }
+
+    private void clearChanged() {
+        Arrays.fill(this.changed, false);
     }
 
     public void getInputSignals() {

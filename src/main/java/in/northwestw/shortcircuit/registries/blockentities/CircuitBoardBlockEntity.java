@@ -1,6 +1,7 @@
 package in.northwestw.shortcircuit.registries.blockentities;
 
 import com.google.common.collect.Lists;
+import in.northwestw.shortcircuit.properties.DirectionHelper;
 import in.northwestw.shortcircuit.properties.RelativeDirection;
 import in.northwestw.shortcircuit.registries.BlockEntities;
 import in.northwestw.shortcircuit.registries.blocks.CircuitBlock;
@@ -14,6 +15,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 
@@ -63,6 +65,7 @@ public class CircuitBoardBlockEntity extends BlockEntity {
         BlockEntity be = level.getBlockEntity(this.pos);
         if (!(be instanceof CircuitBlockEntity blockEntity) || !blockEntity.matchRuntimeUuid(this.runtimeUuid)) return;
         blockEntity.setPower(signal, direction);
-        level.updateNeighborsAt(this.pos, level.getBlockState(this.pos).getBlock());
+        BlockPos updatePos = this.pos.relative(DirectionHelper.relativeDirectionToFacing(direction, level.getBlockState(this.pos).getValue(HorizontalDirectionalBlock.FACING)));
+        level.neighborChanged(updatePos, level.getBlockState(updatePos).getBlock(), this.pos);
     }
 }

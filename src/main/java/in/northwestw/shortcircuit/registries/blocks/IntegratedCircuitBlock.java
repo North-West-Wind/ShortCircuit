@@ -109,7 +109,6 @@ public class IntegratedCircuitBlock extends HorizontalDirectionalBlock implement
         RelativeDirection relDir = DirectionHelper.directionToRelativeDirection(state.getValue(FACING), direction);
         int signal = level.getSignal(neighborPos, direction);
         ((IntegratedCircuitBlockEntity) level.getBlockEntity(pos)).setInputAndUpdate(relDir, signal);
-        level.updateNeighborsAtExceptFromFacing(pos, state.getBlock(), DirectionHelper.getDirectionFromPosToPos(pos, neighborPos));
     }
 
     @Override

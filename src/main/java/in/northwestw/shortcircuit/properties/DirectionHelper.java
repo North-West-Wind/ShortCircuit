@@ -23,4 +23,15 @@ public class DirectionHelper {
         if (a.getY() != b.getY()) return a.getY() - b.getY() == 1 ? Direction.DOWN : Direction.UP;
         return a.getZ() - b.getZ() == 1 ? Direction.NORTH : Direction.SOUTH;
     }
+
+    public static Direction relativeDirectionToFacing(RelativeDirection direction, Direction facing) {
+        return switch (direction) {
+            case UP -> Direction.UP;
+            case DOWN -> Direction.DOWN;
+            case FRONT -> facing;
+            case BACK -> facing.getOpposite();
+            case LEFT -> facing.getClockWise();
+            case RIGHT -> facing.getCounterClockWise();
+        };
+    }
 }

@@ -22,7 +22,7 @@ public class TruthAssignerMenu extends AbstractContainerMenu {
 
     // Client constructor
     public TruthAssignerMenu(int containerId, Inventory inventory) {
-        this(containerId, inventory, ContainerLevelAccess.NULL, null, new SimpleContainerData(5));
+        this(containerId, inventory, ContainerLevelAccess.NULL, null, new SimpleContainerData(6));
     }
 
     // Server constructor
@@ -33,7 +33,7 @@ public class TruthAssignerMenu extends AbstractContainerMenu {
         else this.container = container;
         this.containerData = containerData;
         checkContainerSize(this.container, 2);
-        checkContainerDataCount(this.containerData, 4);
+        checkContainerDataCount(this.containerData, 6);
 
         // input
         this.addSlot(new Slot(this.container, 0, 14, 34));
@@ -138,6 +138,10 @@ public class TruthAssignerMenu extends AbstractContainerMenu {
         return this.containerData.get(4);
     }
 
+    public int getBits() {
+        return this.containerData.get(5);
+    }
+
     public void setWait(boolean val) {
         this.setData(1, val ? 1 : 0);
     }
@@ -148,6 +152,12 @@ public class TruthAssignerMenu extends AbstractContainerMenu {
             return true;
         }
         return false;
+    }
+
+    public void setNextBits() {
+        int newBits = this.getBits() * 2;
+        if (newBits > 4) newBits = 1;
+        this.setData(5, newBits);
     }
 
     public void start() {
@@ -180,6 +190,9 @@ public class TruthAssignerMenu extends AbstractContainerMenu {
             return true;
         } else if (id == -2) {
             this.start();
+            return true;
+        } else if (id == -3) {
+            this.setNextBits();
             return true;
         } else {
             // cheese-iest strat ever to transfer int without implementing my own packet

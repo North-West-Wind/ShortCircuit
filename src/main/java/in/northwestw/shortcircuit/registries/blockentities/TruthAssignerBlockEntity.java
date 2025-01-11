@@ -37,6 +37,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import org.apache.commons.lang3.tuple.Pair;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -104,7 +105,7 @@ public class TruthAssignerBlockEntity extends BaseContainerBlockEntity implement
 
             @Override
             public int getCount() {
-                return 5;
+                return 6;
             }
         };
     }
@@ -142,6 +143,7 @@ public class TruthAssignerBlockEntity extends BaseContainerBlockEntity implement
         this.wait = tag.getBoolean("wait");
         this.maxDelay = tag.getInt("maxDelay");
         this.bits = tag.getInt("bits");
+        if (this.bits == 0) this.bits = 4;
         this.ticks = tag.getInt("ticks");
         this.errorCode = tag.getInt("errorCode");
         if (tag.hasUUID("workingUuid")) this.workingUuid = tag.getUUID("workingUuid");
@@ -193,7 +195,8 @@ public class TruthAssignerBlockEntity extends BaseContainerBlockEntity implement
             this.stop(false);
         }
         Map<RelativeDirection, CircuitBoardBlock.Mode> modeMap = pair.getRight();
-        for (Map.Entry<RelativeDirection, CircuitBoardBlock.Mode> entry : modeMap.entrySet()) {
+        // compute them in sorted order
+        for (Map.Entry<RelativeDirection, CircuitBoardBlock.Mode> entry : modeMap.entrySet().stream().sorted(Comparator.comparingInt(a -> a.getKey().getId())).toList()) {
             CircuitBoardBlock.Mode mode = entry.getValue();
             if (mode == CircuitBoardBlock.Mode.INPUT) this.inputOrder.add(entry.getKey());
             else if (mode == CircuitBoardBlock.Mode.OUTPUT) this.outputOrder.add(entry.getKey());
@@ -208,7 +211,7 @@ public class TruthAssignerBlockEntity extends BaseContainerBlockEntity implement
             // copy input output mapping to data
             TruthTableSavedData data = TruthTableSavedData.getTruthTableData(serverLevel);
             UUID uuid = UUID.randomUUID();
-            uuid = data.insertTruthTable(uuid, this.inputOrder, this.outputOrder, this.outputMap.entrySet().stream().filter(entry -> entry.getValue() > 0).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
+            uuid = data.insertTruthTable(uuid, this.inputOrder, this.outputOrder, this.outputMap, this.bits);
 
             // create integrated circuits by amount of circuits
             ItemStack input = this.getItem(0);

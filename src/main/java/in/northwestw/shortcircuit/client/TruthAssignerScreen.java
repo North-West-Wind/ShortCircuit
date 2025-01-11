@@ -29,21 +29,25 @@ public class TruthAssignerScreen extends AbstractContainerScreen<TruthAssignerMe
         super.init();
         int i = (this.width - this.imageWidth) / 2;
         int j = (this.height - this.imageHeight) / 2;
-        this.maxDelay = new EditBox(this.font, i + 103, j + 14, 60, 16, Component.translatable("container.short_circuit.truth_assigner.max_delay"));
+        this.maxDelay = new EditBox(this.font, i + 103, j + 14, 30, 16, Component.translatable("container.short_circuit.truth_assigner.max_delay"));
         this.maxDelay.setTooltip(Tooltip.create(Component.translatable("container.short_circuit.truth_assigner.max_delay.desc")));
         this.maxDelay.setResponder(this::onMaxDelayChange);
         this.maxDelay.setValue(Integer.toString(this.menu.getMaxDelay()));
 
-        this.wait = Button.builder(Component.translatable(this.waitTranslationKey()), this::onWaitPress).pos(i + 103, j + 35).size(60, 16).build();
-        this.wait.setTooltip(Tooltip.create(Component.translatable(this.waitTranslationKey() + ".desc")));
+        this.bits = Button.builder(this.bitsTranslatable(), this::onBitsPress).pos(i + 133, j + 14).size(30, 16).build();
+        this.updateBits();
+        this.wait = Button.builder(this.waitTranslatable(), this::onWaitPress).pos(i + 103, j + 35).size(60, 16).build();
+        this.updateWait();
         this.start = Button.builder(Component.translatable("container.short_circuit.truth_assigner.start"), this::onStartPress).pos(i + 103, j + 56).size(60, 16).tooltip(Tooltip.create(Component.translatable("container.short_circuit.truth_assigner.start.desc"))).build();
 
         this.error = new StringWidget(i, j - 24, this.imageWidth, 16, Component.empty(), this.font);
-        this.currentInput = new StringWidget(i + 14, j + 58, 74, 9, Component.literal(Integer.toString(this.menu.getCurrentInput())), this.font).alignLeft();
+        this.currentInput = new StringWidget(i + 37, j + 34, 24, 16, Component.empty(), this.font);
+        this.updateCurrentInput();
 
         this.updateFields();
 
         this.addRenderableWidget(this.maxDelay);
+        this.addRenderableWidget(this.bits);
         this.addRenderableWidget(this.wait);
         this.addRenderableWidget(this.start);
         this.addRenderableWidget(this.error);
@@ -87,6 +91,12 @@ public class TruthAssignerScreen extends AbstractContainerScreen<TruthAssignerMe
         }
     }
 
+    private void onBitsPress(Button  button) {
+        this.menu.setNextBits();
+        this.updateBits();
+        this.minecraft.gameMode.handleInventoryButtonClick(this.menu.containerId, -3);
+    }
+
     private void onWaitPress(Button button) {
         this.menu.setWait(!this.menu.shouldWait());
         this.updateWait();
@@ -99,6 +109,10 @@ public class TruthAssignerScreen extends AbstractContainerScreen<TruthAssignerMe
         this.updateFields();
     }
 
+    private Component bitsTranslatable() {
+        return Component.translatable("container.short_circuit.truth_assigner.bits", this.menu.getBits());
+    }
+
     private String waitTranslationKey() {
         return "container.short_circuit.truth_assigner.wait" + (this.menu.shouldWait() ? ".on" : "");
     }
@@ -109,9 +123,11 @@ public class TruthAssignerScreen extends AbstractContainerScreen<TruthAssignerMe
 
     private void updateFields() {
         this.start.active = !this.menu.isWorking() && !this.menu.isEmpty() && this.menu.getError() == 0;
+        this.bits.active = !this.menu.isWorking();
         this.wait.active = !this.menu.isWorking();
         this.maxDelay.setEditable(!this.menu.isWorking());
         this.updateError();
+        this.updateCurrentInput();
     }
 
     @Override
@@ -131,8 +147,15 @@ public class TruthAssignerScreen extends AbstractContainerScreen<TruthAssignerMe
         } else if (index == 2) {
             this.maxDelay.setValue(Integer.toString(value));
         } else if (index == 4) {
-            this.currentInput.setMessage(Component.literal(Integer.toString(value)));
+            this.updateCurrentInput();
+        } else if (index == 5) {
+            this.updateBits();
         }
+    }
+
+    private void updateBits() {
+        this.bits.setMessage(this.bitsTranslatable());
+        this.bits.setTooltip(Tooltip.create(Component.translatable("container.short_circuit.truth_assigner.bits.desc", (int) Math.pow(2, this.menu.getBits()))));
     }
 
     private void updateWait() {
@@ -144,5 +167,10 @@ public class TruthAssignerScreen extends AbstractContainerScreen<TruthAssignerMe
         int errorCode = this.menu.getError();
         if (errorCode == 0) this.error.setMessage(Component.empty());
         else this.error.setMessage(Component.translatable("container.short_circuit.truth_assigner.error." + errorCode).withColor(0xff0000));
+    }
+
+    private void updateCurrentInput() {
+        if (!this.menu.isWorking()) this.currentInput.setTooltip(null);
+        else this.currentInput.setTooltip(Tooltip.create(Component.translatable("container.short_circuit.truth_assigner.current_input.desc", this.menu.getCurrentInput())));
     }
 }

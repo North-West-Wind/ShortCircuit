@@ -62,7 +62,7 @@ public class TruthTableSavedData extends SavedData {
             else if (table.bits == 2) input |= (((val >> 2) > 1 ? 1 : 0) << 1) | ((val & 0x3) > 1 ? 1 : 0);
             else input |= val > 0 ? 1 : 0;
         }
-        int output = table.signals.getOrDefault(input, 0);
+        int output = table.signals.getOrDefault(input, table.defaultValue);
         for (RelativeDirection dir: table.outputs) {
             signals.put(dir, output & 0xF);
             output >>= 4;

@@ -3,11 +3,9 @@ package in.northwestw.shortcircuit.registries;
 import in.northwestw.shortcircuit.ShortCircuit;
 import in.northwestw.shortcircuit.registries.menus.TruthAssignerMenu;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.world.flag.FeatureFlagSet;
 import net.minecraft.world.flag.FeatureFlags;
 import net.minecraft.world.inventory.MenuType;
 import net.neoforged.bus.api.IEventBus;
-import net.neoforged.neoforge.common.extensions.IMenuTypeExtension;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
 import java.util.function.Supplier;

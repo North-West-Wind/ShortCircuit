@@ -1,12 +1,8 @@
 package in.northwestw.shortcircuit.registries.menus;
 
-import in.northwestw.shortcircuit.ShortCircuit;
 import in.northwestw.shortcircuit.registries.Blocks;
-import in.northwestw.shortcircuit.registries.Items;
 import in.northwestw.shortcircuit.registries.Menus;
 import in.northwestw.shortcircuit.registries.blockentities.TruthAssignerBlockEntity;
-import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.world.Container;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.player.Inventory;

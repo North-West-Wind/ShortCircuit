@@ -1,6 +1,5 @@
 package in.northwestw.shortcircuit.properties;
 
-import net.minecraft.core.Direction;
 import net.minecraft.util.StringRepresentable;
 import net.minecraft.world.level.block.state.properties.EnumProperty;
 

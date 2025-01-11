@@ -6,12 +6,10 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import in.northwestw.shortcircuit.properties.RelativeDirection;
 import net.minecraft.nbt.CompoundTag;
-import org.antlr.v4.runtime.misc.Triple;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.UUID;
 
 // The goal is to reduce memory & storage by using more brain
 public class TruthTable {

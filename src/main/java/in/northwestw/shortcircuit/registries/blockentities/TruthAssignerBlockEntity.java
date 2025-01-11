@@ -3,7 +3,6 @@ package in.northwestw.shortcircuit.registries.blockentities;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
-import in.northwestw.shortcircuit.ShortCircuit;
 import in.northwestw.shortcircuit.data.TruthTableSavedData;
 import in.northwestw.shortcircuit.properties.RelativeDirection;
 import in.northwestw.shortcircuit.registries.BlockEntities;
@@ -41,7 +40,6 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 public class TruthAssignerBlockEntity extends BaseContainerBlockEntity implements ContainerListener {
     public static final int SIZE = 2;

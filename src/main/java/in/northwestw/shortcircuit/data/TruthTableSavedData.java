@@ -1,8 +1,5 @@
 package in.northwestw.shortcircuit.data;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import in.northwestw.shortcircuit.Constants;
 import in.northwestw.shortcircuit.properties.RelativeDirection;
@@ -13,10 +10,11 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.saveddata.SavedData;
 import net.minecraft.world.level.storage.DimensionDataStorage;
-import org.antlr.v4.runtime.misc.Triple;
 
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 public class TruthTableSavedData extends SavedData {
     private final Map<UUID, TruthTable> truthTables;

@@ -3,7 +3,6 @@ package in.northwestw.shortcircuit.data;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import in.northwestw.shortcircuit.Constants;
-import in.northwestw.shortcircuit.ShortCircuit;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;

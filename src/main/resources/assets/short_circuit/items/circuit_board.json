@@ -1,0 +1,6 @@
+{
+  "model": {
+    "type": "minecraft:model",
+    "model": "short_circuit:item/circuit_board"
+  }
+}

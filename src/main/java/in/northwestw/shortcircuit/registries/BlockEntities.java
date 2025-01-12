@@ -14,22 +14,22 @@ import java.util.function.Supplier;
 
 public class BlockEntities {
     public static final DeferredRegister<BlockEntityType<?>> BLOCK_ENTITY_TYPES = DeferredRegister.create(Registries.BLOCK_ENTITY_TYPE, ShortCircuit.MOD_ID);
-    public static final Supplier<BlockEntityType<CircuitBlockEntity>> CIRCUIT = BLOCK_ENTITY_TYPES.register("circuit", () -> BlockEntityType.Builder.of(
+    public static final Supplier<BlockEntityType<CircuitBlockEntity>> CIRCUIT = BLOCK_ENTITY_TYPES.register("circuit", () -> new BlockEntityType<>(
             CircuitBlockEntity::new,
             Blocks.CIRCUIT.get()
-    ).build(null));
-    public static final Supplier<BlockEntityType<CircuitBoardBlockEntity>> CIRCUIT_BOARD = BLOCK_ENTITY_TYPES.register("circuit_board", () -> BlockEntityType.Builder.of(
+    ));
+    public static final Supplier<BlockEntityType<CircuitBoardBlockEntity>> CIRCUIT_BOARD = BLOCK_ENTITY_TYPES.register("circuit_board", () -> new BlockEntityType<>(
             CircuitBoardBlockEntity::new,
             Blocks.CIRCUIT_BOARD.get()
-    ).build(null));
-    public static final Supplier<BlockEntityType<TruthAssignerBlockEntity>> TRUTH_ASSIGNER = BLOCK_ENTITY_TYPES.register("truth_assigner", () -> BlockEntityType.Builder.of(
+    ));
+    public static final Supplier<BlockEntityType<TruthAssignerBlockEntity>> TRUTH_ASSIGNER = BLOCK_ENTITY_TYPES.register("truth_assigner", () -> new BlockEntityType<>(
             TruthAssignerBlockEntity::new,
             Blocks.TRUTH_ASSIGNER.get()
-    ).build(null));
-    public static final Supplier<BlockEntityType<IntegratedCircuitBlockEntity>> INTEGRATED_CIRCUIT = BLOCK_ENTITY_TYPES.register("integrated_circuit", () -> BlockEntityType.Builder.of(
+    ));
+    public static final Supplier<BlockEntityType<IntegratedCircuitBlockEntity>> INTEGRATED_CIRCUIT = BLOCK_ENTITY_TYPES.register("integrated_circuit", () -> new BlockEntityType<>(
             IntegratedCircuitBlockEntity::new,
             Blocks.INTEGRATED_CIRCUIT.get()
-    ).build(null));
+    ));
 
     public static void registerBlockEntities(IEventBus modEventBus) {
         BLOCK_ENTITY_TYPES.register(modEventBus);

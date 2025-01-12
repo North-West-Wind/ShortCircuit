@@ -3,6 +3,7 @@ package in.northwestw.shortcircuit.registries.blocks;
 import com.mojang.serialization.MapCodec;
 import in.northwestw.shortcircuit.registries.BlockEntities;
 import in.northwestw.shortcircuit.registries.Blocks;
+import in.northwestw.shortcircuit.registries.Codecs;
 import in.northwestw.shortcircuit.registries.blockentities.TruthAssignerBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -24,11 +25,11 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
+import net.minecraft.world.level.redstone.Orientation;
 import net.minecraft.world.phys.BlockHitResult;
 import org.jetbrains.annotations.Nullable;
 
 public class TruthAssignerBlock extends HorizontalDirectionalBlock implements EntityBlock {
-    public static final MapCodec<TruthAssignerBlock> CODEC = simpleCodec(TruthAssignerBlock::new);
     public static final BooleanProperty LIT = BlockStateProperties.LIT;
 
     public TruthAssignerBlock(Properties properties) {
@@ -40,8 +41,8 @@ public class TruthAssignerBlock extends HorizontalDirectionalBlock implements En
     }
 
     @Override
-    protected MapCodec<? extends HorizontalDirectionalBlock> codec() {
-        return CODEC;
+    protected MapCodec<TruthAssignerBlock> codec() {
+        return Codecs.TRUTH_ASSIGNER.get();
     }
 
     @Override
@@ -74,7 +75,7 @@ public class TruthAssignerBlock extends HorizontalDirectionalBlock implements En
     protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult result) {
         if (!level.isClientSide && player instanceof ServerPlayer serverPlayer)
             serverPlayer.openMenu(state.getMenuProvider(level, pos));
-        return InteractionResult.sidedSuccess(level.isClientSide);
+        return InteractionResult.SUCCESS_SERVER;
     }
 
     @Override
@@ -84,12 +85,14 @@ public class TruthAssignerBlock extends HorizontalDirectionalBlock implements En
         }
     }
 
+    // copied from RedstoneOreBlock
     private static void spawnParticles(Level level, BlockPos pos) {
+        double d0 = 0.5625;
         RandomSource randomsource = level.random;
 
         for (Direction direction : Direction.values()) {
             BlockPos blockpos = pos.relative(direction);
-            if (!level.getBlockState(blockpos).isSolidRender(level, blockpos)) {
+            if (!level.getBlockState(blockpos).isSolidRender()) {
                 Direction.Axis direction$axis = direction.getAxis();
                 double d1 = direction$axis == Direction.Axis.X ? 0.5 + 0.5625 * (double)direction.getStepX() : (double)randomsource.nextFloat();
                 double d2 = direction$axis == Direction.Axis.Y ? 0.5 + 0.5625 * (double)direction.getStepY() : (double)randomsource.nextFloat();
@@ -102,13 +105,15 @@ public class TruthAssignerBlock extends HorizontalDirectionalBlock implements En
     }
 
     @Override
-    protected void neighborChanged(BlockState state, Level level, BlockPos pos, Block neighborBlock, BlockPos neighborPos, boolean movedByPiston) {
+    protected void neighborChanged(BlockState state, Level level, BlockPos pos, Block neighborBlock, @Nullable Orientation orientation, boolean movedByPiston) {
+        super.neighborChanged(state, level, pos, neighborBlock, orientation, movedByPiston);
+        if (orientation == null) return;
+        BlockPos neighborPos = pos.relative(orientation.getFront());
         if (pos.above().equals(neighborPos) && level.getBlockEntity(pos) instanceof TruthAssignerBlockEntity blockEntity) {
             if (!blockEntity.isWorking()) blockEntity.setErrorCode(1, level.getBlockState(neighborPos).isAir());
             else if (level.getBlockState(neighborPos).is(Blocks.CIRCUIT)) {
                 blockEntity.checkAndRecord();
             }
         }
-        super.neighborChanged(state, level, pos, neighborBlock, neighborPos, movedByPiston);
     }
 }

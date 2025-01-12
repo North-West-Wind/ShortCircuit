@@ -1,9 +1,11 @@
 package in.northwestw.shortcircuit.registries.blocks;
 
 import com.mojang.serialization.MapCodec;
+import in.northwestw.shortcircuit.ShortCircuit;
 import in.northwestw.shortcircuit.properties.DirectionHelper;
 import in.northwestw.shortcircuit.properties.RelativeDirection;
 import in.northwestw.shortcircuit.registries.Blocks;
+import in.northwestw.shortcircuit.registries.Codecs;
 import in.northwestw.shortcircuit.registries.DataComponents;
 import in.northwestw.shortcircuit.registries.Items;
 import in.northwestw.shortcircuit.registries.blockentities.IntegratedCircuitBlockEntity;
@@ -13,7 +15,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.ItemInteractionResult;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
@@ -31,13 +33,13 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
+import net.minecraft.world.level.redstone.Orientation;
 import net.minecraft.world.phys.BlockHitResult;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
 public class IntegratedCircuitBlock extends HorizontalDirectionalBlock implements EntityBlock {
-    public static final MapCodec<CircuitBlock> CODEC = simpleCodec(CircuitBlock::new);
     public static final BooleanProperty POWERED = BlockStateProperties.POWERED;
 
     public IntegratedCircuitBlock(Properties pProperties) {
@@ -48,8 +50,8 @@ public class IntegratedCircuitBlock extends HorizontalDirectionalBlock implement
     }
 
     @Override
-    protected MapCodec<? extends HorizontalDirectionalBlock> codec() {
-        return CODEC;
+    protected MapCodec<IntegratedCircuitBlock> codec() {
+        return Codecs.INTEGRATED_CIRCUIT.get();
     }
 
     @Override
@@ -88,24 +90,24 @@ public class IntegratedCircuitBlock extends HorizontalDirectionalBlock implement
     }
 
     @Override
-    protected ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult result) {
+    protected InteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult result) {
         if ((stack.is(Items.CIRCUIT) || stack.is(Items.INTEGRATED_CIRCUIT)) && !player.isCrouching() && level.getBlockEntity(pos) instanceof IntegratedCircuitBlockEntity blockEntity && blockEntity.isValid()) {
             ItemStack newStack = new ItemStack(Items.INTEGRATED_CIRCUIT.get(), stack.getCount());
             newStack.applyComponents(stack.getComponents());
             newStack.set(DataComponents.UUID, new UUIDDataComponent(blockEntity.getUuid()));
             player.playSound(SoundEvents.BEACON_ACTIVATE, 0.5f, 1);
-            return ItemInteractionResult.SUCCESS;
+            return InteractionResult.SUCCESS.heldItemTransformedTo(newStack);
         }
         return super.useItemOn(stack, state, level, pos, player, hand, result);
     }
 
     @Override
-    protected void neighborChanged(BlockState state, Level level, BlockPos pos, Block neighborBlock, BlockPos neighborPos, boolean movedByPiston) {
-        super.neighborChanged(state, level, pos, neighborBlock, neighborPos, movedByPiston);
-        Direction direction = DirectionHelper.getDirectionFromPosToPos(pos, neighborPos);
-        RelativeDirection relDir = DirectionHelper.directionToRelativeDirection(state.getValue(FACING), direction);
-        int signal = level.getSignal(neighborPos, direction);
-        ((IntegratedCircuitBlockEntity) level.getBlockEntity(pos)).setInputAndUpdate(relDir, signal);
+    protected void neighborChanged(BlockState state, Level level, BlockPos pos, Block neighborBlock, @Nullable Orientation orientation, boolean movedByPiston) {
+        super.neighborChanged(state, level, pos, neighborBlock, orientation, movedByPiston);
+        if (level.getBlockEntity(pos) instanceof IntegratedCircuitBlockEntity blockEntity) {
+            blockEntity.getInputSignals();
+            blockEntity.updateChangedNeighbors();
+        }
     }
 
     @Override

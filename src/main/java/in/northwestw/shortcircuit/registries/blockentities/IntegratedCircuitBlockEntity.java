@@ -22,6 +22,7 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.redstone.Orientation;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
@@ -101,18 +102,11 @@ public class IntegratedCircuitBlockEntity extends BlockEntity {
         };
     }
 
-    public void setInput(RelativeDirection direction, int signal) {
-        this.inputs.put(direction, signal);
-    }
-
-    public void setInputAndUpdate(RelativeDirection direction, int signal) {
-        this.setInput(direction, signal);
-        this.updateOutput();
-        this.level.setBlock(this.getBlockPos(), this.getBlockState().setValue(IntegratedCircuitBlock.POWERED, this.outputs.values().stream().anyMatch(power -> power > 0)), Block.UPDATE_CLIENTS);
+    public void updateChangedNeighbors() {
         for (int ii = 0; ii < this.changed.length; ii++)
             if (this.changed[ii]) {
                 BlockPos pos = this.getBlockPos().relative(DirectionHelper.relativeDirectionToFacing(RelativeDirection.fromId((byte) ii), this.getBlockState().getValue(HorizontalDirectionalBlock.FACING)));
-                this.level.neighborChanged(pos, this.level.getBlockState(pos).getBlock(), this.getBlockPos());
+                this.level.neighborChanged(pos, this.level.getBlockState(pos).getBlock(), null);
             }
     }
 
@@ -130,6 +124,7 @@ public class IntegratedCircuitBlockEntity extends BlockEntity {
                 if (!oldOutputs.containsKey(key)) // new value
                     this.changed[key.getId()] = true;
             }
+            this.level.setBlock(this.getBlockPos(), this.getBlockState().setValue(IntegratedCircuitBlock.POWERED, this.outputs.values().stream().anyMatch(power -> power > 0)), Block.UPDATE_CLIENTS);
         }
     }
 
@@ -143,7 +138,7 @@ public class IntegratedCircuitBlockEntity extends BlockEntity {
         for (Direction direction : Direction.values()) {
             RelativeDirection relDir = DirectionHelper.directionToRelativeDirection(state.getValue(HorizontalDirectionalBlock.FACING), direction);
             int signal = level.getSignal(pos.relative(direction), direction);
-            this.setInput(relDir, signal);
+            this.inputs.put(relDir, signal);
         }
         this.updateOutput();
     }

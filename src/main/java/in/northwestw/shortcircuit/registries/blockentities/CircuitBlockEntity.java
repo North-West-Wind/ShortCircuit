@@ -3,6 +3,7 @@ package in.northwestw.shortcircuit.registries.blockentities;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import in.northwestw.shortcircuit.Constants;
+import in.northwestw.shortcircuit.ShortCircuit;
 import in.northwestw.shortcircuit.data.CircuitSavedData;
 import in.northwestw.shortcircuit.data.Octolet;
 import in.northwestw.shortcircuit.properties.DirectionHelper;
@@ -47,6 +48,7 @@ public class CircuitBlockEntity extends BlockEntity {
     private short blockSize, ticks;
     private boolean hidden, fake;
     private byte[] powers;
+    private final byte[] inputs;
     public Map<BlockPos, BlockState> blocks; // 8x8x8
 
     public CircuitBlockEntity(BlockPos pos, BlockState state) {
@@ -54,6 +56,7 @@ public class CircuitBlockEntity extends BlockEntity {
         this.blocks = Maps.newHashMap();
         this.runtimeUuid = UUID.randomUUID();
         this.powers = new byte[6];
+        this.inputs = new byte[6];
     }
 
     public static <T extends BlockEntity> void tick(Level level, BlockPos pos, BlockState state, T t) {
@@ -352,9 +355,9 @@ public class CircuitBlockEntity extends BlockEntity {
         return this.runtimeUuid.equals(uuid);
     }
 
-    public void setPower(int power, RelativeDirection direction) {
+    public boolean setPower(int power, RelativeDirection direction) {
         byte oldPower = this.powers[direction.getId()];
-        if (oldPower == power) return;
+        if (oldPower == power) return false;
         this.powers[direction.getId()] = (byte) power;
         BlockState state = this.getBlockState();
         boolean powered = false;
@@ -365,9 +368,10 @@ public class CircuitBlockEntity extends BlockEntity {
             }
         }
         state = state.setValue(CircuitBlock.POWERED, powered);
-        this.level.setBlockAndUpdate(this.getBlockPos(), state);
+        this.level.setBlock(this.getBlockPos(), state, Block.UPDATE_CLIENTS);
         this.setChanged();
         this.updateInnerBlocks();
+        return true;
     }
 
     public int getPower(Direction direction) {
@@ -398,7 +402,11 @@ public class CircuitBlockEntity extends BlockEntity {
         for (Direction direction : Direction.values()) {
             RelativeDirection relDir = DirectionHelper.directionToRelativeDirection(state.getValue(HorizontalDirectionalBlock.FACING), direction);
             int signal = level.getSignal(pos.relative(direction), direction);
-            this.updateRuntimeBlock(signal, relDir);
+            if (this.inputs[relDir.getId()] != signal) {
+                ShortCircuit.LOGGER.debug("updating circuit at {} because dir {} changed to {}", pos, relDir, signal);
+                this.inputs[relDir.getId()] = (byte) signal;
+                this.updateRuntimeBlock(signal, relDir);
+            }
         }
     }
 

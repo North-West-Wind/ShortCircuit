@@ -1,8 +1,11 @@
 package in.northwestw.shortcircuit.registries.blocks;
 
+import com.mojang.serialization.MapCodec;
+import in.northwestw.shortcircuit.ShortCircuit;
 import in.northwestw.shortcircuit.properties.DirectionHelper;
 import in.northwestw.shortcircuit.properties.RelativeDirection;
 import in.northwestw.shortcircuit.registries.Blocks;
+import in.northwestw.shortcircuit.registries.Codecs;
 import in.northwestw.shortcircuit.registries.blockentities.CircuitBoardBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -25,6 +28,7 @@ import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.block.state.properties.EnumProperty;
 import net.minecraft.world.level.block.state.properties.IntegerProperty;
+import net.minecraft.world.level.redstone.Orientation;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -52,6 +56,11 @@ public class CircuitBoardBlock extends Block implements EntityBlock {
     }
 
     @Override
+    protected MapCodec<? extends Block> codec() {
+        return Codecs.CIRCUIT_BOARD.get();
+    }
+
+    @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
         builder.add(DIRECTION, ANNOTATED, MODE, POWER);
     }
@@ -72,14 +81,18 @@ public class CircuitBoardBlock extends Block implements EntityBlock {
     }
 
     @Override
-    protected void neighborChanged(BlockState state, Level level, BlockPos pos, Block neighborBlock, BlockPos neighborPos, boolean movedByPiston) {
-        super.neighborChanged(state, level, pos, neighborBlock, neighborPos, movedByPiston);
-        if (state.getValue(MODE) != Mode.OUTPUT) return;
-        if (neighborBlock != Blocks.CIRCUIT_BOARD.get()) {
-            CircuitBoardBlockEntity blockEntity = (CircuitBoardBlockEntity) level.getBlockEntity(pos);
-            int signal = level.getSignal(neighborPos, DirectionHelper.getDirectionFromPosToPos(pos, neighborPos));
-            //ShortCircuit.LOGGER.debug("neighbor {}, direction {}, signal {}", neighborPos, DirectionHelper.getDirectionFromPosToPos(neighborPos, pos), signal);
-            blockEntity.updateCircuitBlock(signal, state.getValue(DIRECTION));
+    protected void neighborChanged(BlockState state, Level level, BlockPos pos, Block neighborBlock, @Nullable Orientation orientation, boolean movedByPiston) {
+        super.neighborChanged(state, level, pos, neighborBlock, orientation, movedByPiston);
+        if (state.getValue(MODE) != Mode.OUTPUT || neighborBlock == Blocks.CIRCUIT_BOARD.get()) return;
+        if (level.getBlockEntity(pos) instanceof CircuitBoardBlockEntity blockEntity) {
+            for (Direction direction : Direction.values()) {
+                BlockPos neighborPos = pos.relative(direction);
+                BlockState neighborState = level.getBlockState(neighborPos);
+                if (!neighborState.is(Blocks.CIRCUIT_BOARD) && !neighborState.isAir()) {
+                    blockEntity.updateCircuitBlock(level.getSignal(neighborPos, direction), state.getValue(DIRECTION));
+                    break;
+                }
+            }
         }
     }
 

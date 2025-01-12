@@ -2,22 +2,21 @@ package in.northwestw.shortcircuit.registries.blocks;
 
 import com.mojang.serialization.MapCodec;
 import in.northwestw.shortcircuit.Constants;
+import in.northwestw.shortcircuit.ShortCircuit;
 import in.northwestw.shortcircuit.properties.DirectionHelper;
 import in.northwestw.shortcircuit.properties.RelativeDirection;
-import in.northwestw.shortcircuit.registries.BlockEntities;
-import in.northwestw.shortcircuit.registries.Blocks;
-import in.northwestw.shortcircuit.registries.DataComponents;
-import in.northwestw.shortcircuit.registries.Items;
+import in.northwestw.shortcircuit.registries.*;
 import in.northwestw.shortcircuit.registries.blockentities.CircuitBlockEntity;
+import in.northwestw.shortcircuit.registries.blockentities.IntegratedCircuitBlockEntity;
 import in.northwestw.shortcircuit.registries.datacomponents.UUIDDataComponent;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.Style;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.ItemInteractionResult;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
@@ -39,6 +38,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
+import net.minecraft.world.level.redstone.Orientation;
 import net.minecraft.world.phys.BlockHitResult;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,7 +46,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public class CircuitBlock extends HorizontalDirectionalBlock implements EntityBlock {
-    public static final MapCodec<CircuitBlock> CODEC = simpleCodec(CircuitBlock::new);
     public static final BooleanProperty POWERED = BlockStateProperties.POWERED;
 
     public CircuitBlock(BlockBehaviour.Properties properties) {
@@ -57,8 +56,8 @@ public class CircuitBlock extends HorizontalDirectionalBlock implements EntityBl
     }
 
     @Override
-    protected @NotNull MapCodec<? extends HorizontalDirectionalBlock> codec() {
-        return CODEC;
+    protected @NotNull MapCodec<CircuitBlock> codec() {
+        return Codecs.CIRCUIT.get();
     }
 
     @Override
@@ -92,7 +91,7 @@ public class CircuitBlock extends HorizontalDirectionalBlock implements EntityBl
     }
 
     @Override
-    public void onBlockExploded(BlockState state, Level level, BlockPos pos, Explosion explosion) {
+    public void onBlockExploded(BlockState state, ServerLevel level, BlockPos pos, Explosion explosion) {
         if (level.getBlockEntity(pos) instanceof CircuitBlockEntity blockEntity)
             blockEntity.removeRuntime();
         super.onBlockExploded(state, level, pos, explosion);
@@ -124,16 +123,16 @@ public class CircuitBlock extends HorizontalDirectionalBlock implements EntityBl
             CircuitBlockEntity.RuntimeReloadResult result = blockEntity.reloadRuntime();
             player.displayClientMessage(Component.translatable(result.getTranslationKey()).withStyle(Style.EMPTY.withColor(result.isGood() ? 0x00ff00 : 0xff0000)), true);
         }
-        return InteractionResult.sidedSuccess(level.isClientSide);
+        return InteractionResult.SUCCESS_SERVER;
     }
 
     @Override
-    protected ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult result) {
-        if (stack.is(Items.POKING_STICK)) return ItemInteractionResult.SKIP_DEFAULT_BLOCK_INTERACTION; // handled by poking stick
+    protected InteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult result) {
+        if (stack.is(Items.POKING_STICK)) return InteractionResult.PASS; // handled by poking stick
         else if (stack.is(Items.CIRCUIT) && !player.isCrouching() && level.getBlockEntity(pos) instanceof CircuitBlockEntity blockEntity && blockEntity.isValid()) {
             stack.set(DataComponents.UUID, new UUIDDataComponent(blockEntity.getUuid()));
             player.playSound(SoundEvents.BEACON_ACTIVATE, 0.5f, 1);
-            return ItemInteractionResult.SUCCESS;
+            return InteractionResult.SUCCESS.heldItemTransformedTo(stack);
         }
         return super.useItemOn(stack, state, level, pos, player, hand, result);
     }
@@ -155,12 +154,10 @@ public class CircuitBlock extends HorizontalDirectionalBlock implements EntityBl
     }
 
     @Override
-    protected void neighborChanged(BlockState state, Level level, BlockPos pos, Block neighborBlock, BlockPos neighborPos, boolean movedByPiston) {
-        super.neighborChanged(state, level, pos, neighborBlock, neighborPos, movedByPiston);
-        Direction direction = DirectionHelper.getDirectionFromPosToPos(pos, neighborPos);
-        RelativeDirection relDir = DirectionHelper.directionToRelativeDirection(state.getValue(FACING), direction);
-        int signal = level.getSignal(neighborPos, direction);
-        ((CircuitBlockEntity) level.getBlockEntity(pos)).updateRuntimeBlock(signal, relDir);
+    protected void neighborChanged(BlockState state, Level level, BlockPos pos, Block neighborBlock, @Nullable Orientation orientation, boolean movedByPiston) {
+        super.neighborChanged(state, level, pos, neighborBlock, orientation, movedByPiston);
+        if (level.getBlockEntity(pos) instanceof CircuitBlockEntity blockEntity)
+            blockEntity.getInputSignals();
     }
 
     @Override

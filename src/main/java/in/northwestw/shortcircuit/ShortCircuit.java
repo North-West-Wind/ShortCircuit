@@ -15,6 +15,7 @@ public class ShortCircuit {
     public ShortCircuit(IEventBus modEventBus, ModContainer modContainer) {
         BlockEntities.registerBlockEntities(modEventBus);
         Blocks.registerBlocks(modEventBus);
+        Codecs.registerCodecs(modEventBus);
         DataComponents.registerDataComponentTypes(modEventBus);
         EntityRenderers.registerEntityRenderers(modEventBus);
         Items.registerItems(modEventBus);

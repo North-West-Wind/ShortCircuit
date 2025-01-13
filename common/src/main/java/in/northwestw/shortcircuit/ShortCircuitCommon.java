@@ -9,8 +9,9 @@ public class ShortCircuitCommon {
     public static final Logger LOGGER = LogManager.getLogger();
 
     public static void init() {
-        BlockEntities.trigger();
+        // blocks must be registered before block entities for fabric
         Blocks.trigger();
+        BlockEntities.trigger();
         Codecs.trigger();
         DataComponents.trigger();
         Items.trigger();

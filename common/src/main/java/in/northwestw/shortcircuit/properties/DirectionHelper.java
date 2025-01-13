@@ -30,8 +30,8 @@ public class DirectionHelper {
             case DOWN -> Direction.DOWN;
             case FRONT -> facing;
             case BACK -> facing.getOpposite();
-            case LEFT -> facing.getClockWise();
-            case RIGHT -> facing.getCounterClockWise();
+            case LEFT -> facing.getCounterClockWise();
+            case RIGHT -> facing.getClockWise();
         };
     }
 }

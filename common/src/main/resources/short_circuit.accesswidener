@@ -1,0 +1,4 @@
+accessWidener v2 named
+# This is used for Fabric. For some reason, the Fabric BlockEntityType.Builder is not here so this will have to do.
+transitive-accessible class net/minecraft/world/level/block/entity/BlockEntityType$BlockEntitySupplier
+transitive-accessible method net/minecraft/world/level/block/entity/BlockEntityType register (Ljava/lang/String;Lnet/minecraft/world/level/block/entity/BlockEntityType$BlockEntitySupplier;[Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/entity/BlockEntityType;

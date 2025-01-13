@@ -1,0 +1,45 @@
+{
+  "block.short_circuit.circuit": "Circuit",
+  "block.short_circuit.circuit_board": "Circuit Board",
+  "block.short_circuit.truth_assigner": "Truth Assigner",
+  "block.short_circuit.integrated_circuit": "Integrated Circuit",
+
+  "item.short_circuit.poking_stick": "Poking Stick",
+  "item.short_circuit.circuit": "Circuit",
+  "item.short_circuit.circuit_board": "Circuit Board",
+  "item.short_circuit.truth_assigner": "Truth Assigner",
+  "item.short_circuit.integrated_circuit": "Integrated Circuit",
+
+  "container.short_circuit.truth_assigner": "Truth Assigner",
+  "container.short_circuit.truth_assigner.max_delay": "Max Delay",
+  "container.short_circuit.truth_assigner.max_delay.desc": "Maximum (game) ticks to wait for before determining the output of the circuit",
+  "container.short_circuit.truth_assigner.bits": "%d-Bit",
+  "container.short_circuit.truth_assigner.bits.desc": "Each input signal will be treated as %d states",
+  "container.short_circuit.truth_assigner.wait": "First Change",
+  "container.short_circuit.truth_assigner.wait.on": "Full Delay",
+  "container.short_circuit.truth_assigner.wait.desc": "Assign value by the first output change",
+  "container.short_circuit.truth_assigner.wait.on.desc": "Assign value by the output after max delay",
+  "container.short_circuit.truth_assigner.start": "Start",
+  "container.short_circuit.truth_assigner.start.desc": "Create a truth table for the circuit",
+  "container.short_circuit.truth_assigner.current_input.desc": "Iteration: %d",
+
+  "container.short_circuit.truth_assigner.error": "",
+  "container.short_circuit.truth_assigner.error.1": "Need empty block above",
+  "container.short_circuit.truth_assigner.error.2": "This circuit has problems",
+  "container.short_circuit.truth_assigner.error.3": "Circuit was detroyed",
+
+  "tooltip.short_circuit.circuit": "UUID: %s",
+  "tooltip.short_circuit.circuit_board": "You should not be able to obtain this.",
+  "action.poking_stick.change": "Exterior size: %d",
+  "action.circuit.reload": "Reloading circuit in runtime...",
+  "action.circuit.reload.success": "Success!",
+  "action.circuit.reload.fail.not_exist": "Use the Poking Stick first!",
+  "action.circuit.reload.fail.no_server": "Not on server!",
+  "action.circuit.reload.fail.recurrence": "Recurrence is not allowed!",
+  "action.circuit.reload.fail.multi_mode": "Each side should only have one mode!",
+  "warning.circuit.place.circuit_board": "Circuits placed in Circuit Board will not be initialized automatically.",
+
+  "itemGroup.short_circuit": "Short Circuit",
+
+  "subtitle.short_circuit.truth_assigned": "Truth Assigner Finishes"
+}

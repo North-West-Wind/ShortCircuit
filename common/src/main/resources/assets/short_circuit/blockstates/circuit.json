@@ -1,7 +1,10 @@
 {
   "variants": {
-    "": {
+    "colored=false": {
       "model": "short_circuit:block/circuit"
+    },
+    "colored=true": {
+      "model": "minecraft:block/air"
     }
   }
 }

@@ -5,6 +5,7 @@
   "block.short_circuit.integrated_circuit": "Integrated Circuit",
 
   "item.short_circuit.poking_stick": "Poking Stick",
+  "item.short_circuit.labelling_stick": "Labelling Stick",
   "item.short_circuit.circuit": "Circuit",
   "item.short_circuit.circuit_board": "Circuit Board",
   "item.short_circuit.truth_assigner": "Truth Assigner",

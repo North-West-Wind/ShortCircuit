@@ -5,6 +5,7 @@ import in.northwestw.shortcircuit.platform.ForgeRegistryHelper;
 import in.northwestw.shortcircuit.registries.BlockEntities;
 import in.northwestw.shortcircuit.registries.Menus;
 import in.northwestw.shortcircuit.registries.blockentityrenderers.CircuitBlockEntityRenderer;
+import in.northwestw.shortcircuit.registries.blockentityrenderers.IntegratedCircuitBlockEntityRenderer;
 import net.minecraft.client.gui.screens.MenuScreens;
 import net.minecraftforge.client.event.EntityRenderersEvent;
 import net.minecraftforge.eventbus.api.IEventBus;
@@ -28,6 +29,7 @@ public class ShortCircuitForge {
         ForgeRegistryHelper.ITEMS.register(bus);
         ForgeRegistryHelper.MENUS.register(bus);
         ForgeRegistryHelper.SOUND_EVENTS.register(bus);
+        ForgeRegistryHelper.CREATIVE_MODE_TABS.register(bus);
     }
 
     @Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.MOD)
@@ -35,6 +37,7 @@ public class ShortCircuitForge {
         @SubscribeEvent
         public static void registerEntityRenderers(EntityRenderersEvent.RegisterRenderers event) {
             event.registerBlockEntityRenderer(BlockEntities.CIRCUIT.get(), CircuitBlockEntityRenderer::new);
+            event.registerBlockEntityRenderer(BlockEntities.INTEGRATED_CIRCUIT.get(), IntegratedCircuitBlockEntityRenderer::new);
         }
 
         @SubscribeEvent

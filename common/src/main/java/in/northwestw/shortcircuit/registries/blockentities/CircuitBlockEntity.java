@@ -24,11 +24,15 @@ import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.NbtUtils;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.Connection;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.ComponentSerialization;
+import net.minecraft.network.chat.ComponentUtils;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -49,6 +53,8 @@ public class CircuitBlockEntity extends BlockEntity {
     private boolean hidden, fake;
     private byte[] powers;
     private final byte[] inputs;
+    private Component name;
+    private DyeColor color;
     public Map<BlockPos, BlockState> blocks; // 8x8x8
 
     public CircuitBlockEntity(BlockPos pos, BlockState state) {
@@ -258,6 +264,8 @@ public class CircuitBlockEntity extends BlockEntity {
         this.hidden = tag.getBoolean("hidden");
         this.fake = tag.getBoolean("fake");
         this.powers = tag.getByteArray("powers");
+        if (tag.contains("customName", Tag.TAG_STRING)) this.name = Component.Serializer.fromJson(tag.getString("customName"), provider);
+        if (tag.contains("color", Tag.TAG_BYTE)) this.color = DyeColor.byId(tag.getByte("color"));
         this.loadExtraFromData(tag);
     }
 
@@ -270,6 +278,8 @@ public class CircuitBlockEntity extends BlockEntity {
         tag.putBoolean("hidden", this.hidden);
         tag.putBoolean("fake", this.fake);
         tag.putByteArray("powers", this.powers);
+        if (this.name != null) tag.putString("customName", Component.Serializer.toJson(this.name, provider));
+        if (this.color != null) tag.putByte("color", (byte) this.color.getId());
     }
 
     @Override
@@ -310,6 +320,7 @@ public class CircuitBlockEntity extends BlockEntity {
     protected void collectImplicitComponents(DataComponentMap.Builder components) {
         super.collectImplicitComponents(components);
         components.set(DataComponents.UUID.get(), new UUIDDataComponent(this.uuid));
+        if (this.name != null) components.set(net.minecraft.core.component.DataComponents.CUSTOM_NAME, this.name);
     }
 
     public UUID getRuntimeUuid() {
@@ -347,6 +358,29 @@ public class CircuitBlockEntity extends BlockEntity {
     public void setFake(boolean fake) {
         this.fake = fake;
         this.setChanged();
+    }
+
+    public void setName(Component name) {
+        this.name = name;
+        this.setChanged();
+    }
+
+    public void cycleColor(boolean backwards) {
+        if (this.color == null) {
+            this.color = DyeColor.byId(backwards ? 15 : 0);
+            this.level.setBlock(this.getBlockPos(), this.getBlockState().setValue(CircuitBlock.COLORED, true), Block.UPDATE_CLIENTS);
+        }
+        else if (this.color.getId() < 15 && !backwards) this.color = DyeColor.byId(this.color.getId() + 1);
+        else if (this.color.getId() > 0 && backwards) this.color = DyeColor.byId(this.color.getId() - 1);
+        else {
+            this.color = null;
+            this.level.setBlock(this.getBlockPos(), this.getBlockState().setValue(CircuitBlock.COLORED, false), Block.UPDATE_CLIENTS);
+        }
+        this.setChanged();
+    }
+
+    public DyeColor getColor() {
+        return color;
     }
 
     public boolean matchRuntimeUuid(UUID uuid) {

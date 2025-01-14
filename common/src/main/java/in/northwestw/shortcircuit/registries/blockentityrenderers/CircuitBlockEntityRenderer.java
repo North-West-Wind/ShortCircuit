@@ -1,6 +1,7 @@
 package in.northwestw.shortcircuit.registries.blockentityrenderers;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import in.northwestw.shortcircuit.properties.ColorHelper;
 import in.northwestw.shortcircuit.registries.blockentities.CircuitBlockEntity;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.block.BlockRenderDispatcher;
@@ -8,6 +9,7 @@ import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.level.block.state.BlockState;
@@ -30,6 +32,11 @@ public class CircuitBlockEntityRenderer implements BlockEntityRenderer<CircuitBl
     @Override
     public void render(CircuitBlockEntity blockEntity, float partialTick, PoseStack poseStack, MultiBufferSource bufferSource, int packedLight, int packedOverlay) {
         poseStack.pushPose();
+        // color outer shell
+        DyeColor color = blockEntity.getColor();
+        if (color != null) {
+            this.blockRenderDispatcher.renderSingleBlock(ColorHelper.colorToStainedGlass(color).defaultBlockState(), poseStack, bufferSource, packedLight, packedOverlay);
+        }
         // direction handling. move to the center and rotate, then move back
         poseStack.translate(0.5, 0.5, 0.5);
         switch (blockEntity.getBlockState().getValue(HorizontalDirectionalBlock.FACING)) {

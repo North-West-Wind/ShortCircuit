@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    "G",
+    "P",
+    "R"
+  ],
+  "key": {
+    "G": "minecraft:glass",
+    "P": "minecraft:ender_pearl",
+    "R": "minecraft:redstone"
+  },
+  "result": {
+    "id": "short_circuit:circuit",
+    "count": 4
+  }
+}

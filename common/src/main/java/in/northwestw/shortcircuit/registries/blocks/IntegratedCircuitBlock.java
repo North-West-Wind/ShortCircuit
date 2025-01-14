@@ -38,12 +38,14 @@ import java.util.List;
 
 public class IntegratedCircuitBlock extends HorizontalDirectionalBlock implements EntityBlock {
     public static final BooleanProperty POWERED = BlockStateProperties.POWERED;
+    public static final BooleanProperty COLORED = BooleanProperty.create("colored");
 
     public IntegratedCircuitBlock(Properties pProperties) {
         super(pProperties);
         this.registerDefaultState(this.stateDefinition.any()
                 .setValue(FACING, Direction.NORTH)
-                .setValue(POWERED, false));
+                .setValue(POWERED, false)
+                .setValue(COLORED, false));
     }
 
     @Override
@@ -58,7 +60,7 @@ public class IntegratedCircuitBlock extends HorizontalDirectionalBlock implement
 
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(FACING, POWERED);
+        builder.add(FACING, POWERED, COLORED);
     }
 
     @Override
@@ -127,6 +129,8 @@ public class IntegratedCircuitBlock extends HorizontalDirectionalBlock implement
         if (state.hasBlockEntity() && level.getBlockEntity(pos) instanceof IntegratedCircuitBlockEntity blockEntity)
             if (stack.has(DataComponents.UUID.get())) {
                 blockEntity.setUuid(stack.get(DataComponents.UUID.get()).uuid());
+                if (stack.has(net.minecraft.core.component.DataComponents.CUSTOM_NAME))
+                    blockEntity.setName(stack.get(net.minecraft.core.component.DataComponents.CUSTOM_NAME));
                 blockEntity.getInputSignals();
             }
         super.setPlacedBy(level, pos, state, placer, stack);

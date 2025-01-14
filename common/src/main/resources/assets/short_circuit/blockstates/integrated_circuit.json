@@ -1,33 +1,63 @@
 {
   "variants": {
-    "facing=east,powered=false": {
+    "facing=east,powered=false,colored=false": {
       "model": "short_circuit:block/integrated_circuit",
       "y": 90
     },
-    "facing=east,powered=true": {
+    "facing=east,powered=true,colored=false": {
       "model": "short_circuit:block/integrated_circuit_on",
       "y": 90
     },
-    "facing=north,powered=false": {
+    "facing=north,powered=false,colored=false": {
       "model": "short_circuit:block/integrated_circuit"
     },
-    "facing=north,powered=true": {
+    "facing=north,powered=true,colored=false": {
       "model": "short_circuit:block/integrated_circuit_on"
     },
-    "facing=south,powered=false": {
+    "facing=south,powered=false,colored=false": {
       "model": "short_circuit:block/integrated_circuit",
       "y": 180
     },
-    "facing=south,powered=true": {
+    "facing=south,powered=true,colored=false": {
       "model": "short_circuit:block/integrated_circuit_on",
       "y": 180
     },
-    "facing=west,powered=false": {
+    "facing=west,powered=false,colored=false": {
       "model": "short_circuit:block/integrated_circuit",
       "y": 270
     },
-    "facing=west,powered=true": {
+    "facing=west,powered=true,colored=false": {
       "model": "short_circuit:block/integrated_circuit_on",
+      "y": 270
+    },
+    "facing=east,powered=false,colored=true": {
+      "model": "short_circuit:block/integrated_circuit_noshell",
+      "y": 90
+    },
+    "facing=east,powered=true,colored=true": {
+      "model": "short_circuit:block/integrated_circuit_on_noshell",
+      "y": 90
+    },
+    "facing=north,powered=false,colored=true": {
+      "model": "short_circuit:block/integrated_circuit_noshell"
+    },
+    "facing=north,powered=true,colored=true": {
+      "model": "short_circuit:block/integrated_circuit_on_noshell"
+    },
+    "facing=south,powered=false,colored=true": {
+      "model": "short_circuit:block/integrated_circuit_noshell",
+      "y": 180
+    },
+    "facing=south,powered=true,colored=true": {
+      "model": "short_circuit:block/integrated_circuit_on_noshell",
+      "y": 180
+    },
+    "facing=west,powered=false,colored=true": {
+      "model": "short_circuit:block/integrated_circuit_noshell",
+      "y": 270
+    },
+    "facing=west,powered=true,colored=true": {
+      "model": "short_circuit:block/integrated_circuit_on_noshell",
       "y": 270
     }
   }

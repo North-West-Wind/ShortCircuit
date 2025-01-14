@@ -7,6 +7,7 @@ import in.northwestw.shortcircuit.properties.DirectionHelper;
 import in.northwestw.shortcircuit.properties.RelativeDirection;
 import in.northwestw.shortcircuit.registries.BlockEntities;
 import in.northwestw.shortcircuit.registries.DataComponents;
+import in.northwestw.shortcircuit.registries.blocks.CircuitBlock;
 import in.northwestw.shortcircuit.registries.blocks.IntegratedCircuitBlock;
 import in.northwestw.shortcircuit.registries.datacomponents.UUIDDataComponent;
 import net.minecraft.core.BlockPos;
@@ -14,10 +15,13 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -34,6 +38,8 @@ public class IntegratedCircuitBlockEntity extends BlockEntity {
     private final Map<RelativeDirection, Integer> inputs;
     private Map<RelativeDirection, Integer> outputs;
     private final boolean[] changed;
+    private Component name;
+    private DyeColor color;
 
     public IntegratedCircuitBlockEntity(BlockPos pos, BlockState state) {
         super(BlockEntities.INTEGRATED_CIRCUIT.get(), pos, state);
@@ -58,12 +64,16 @@ public class IntegratedCircuitBlockEntity extends BlockEntity {
     protected void loadAdditional(CompoundTag tag, HolderLookup.Provider provider) {
         super.loadAdditional(tag, provider);
         if (tag.hasUUID("uuid")) this.uuid = tag.getUUID("uuid");
+        if (tag.contains("customName", Tag.TAG_STRING)) this.name = Component.Serializer.fromJson(tag.getString("customName"), provider);
+        if (tag.contains("color", Tag.TAG_BYTE)) this.color = DyeColor.byId(tag.getByte("color"));
     }
 
     @Override
     protected void saveAdditional(CompoundTag tag, HolderLookup.Provider provider) {
         super.saveAdditional(tag, provider);
         if (this.uuid != null) tag.putUUID("uuid", this.uuid);
+        if (this.name != null) tag.putString("customName", Component.Serializer.toJson(this.name, provider));
+        if (this.color != null) tag.putByte("color", (byte) this.color.getId());
     }
 
     @Override
@@ -82,6 +92,29 @@ public class IntegratedCircuitBlockEntity extends BlockEntity {
     protected void collectImplicitComponents(DataComponentMap.Builder components) {
         super.collectImplicitComponents(components);
         components.set(DataComponents.UUID.get(), new UUIDDataComponent(this.uuid));
+        if (this.name != null) components.set(net.minecraft.core.component.DataComponents.CUSTOM_NAME, this.name);
+    }
+
+    public void setName(Component name) {
+        this.name = name;
+    }
+
+    public void cycleColor(boolean backwards) {
+        if (this.color == null) {
+            this.color = DyeColor.byId(backwards ? 15 : 0);
+            this.level.setBlock(this.getBlockPos(), this.getBlockState().setValue(CircuitBlock.COLORED, true), Block.UPDATE_CLIENTS);
+        }
+        else if (this.color.getId() < 15 && !backwards) this.color = DyeColor.byId(this.color.getId() + 1);
+        else if (this.color.getId() > 0 && backwards) this.color = DyeColor.byId(this.color.getId() - 1);
+        else {
+            this.color = null;
+            this.level.setBlock(this.getBlockPos(), this.getBlockState().setValue(CircuitBlock.COLORED, false), Block.UPDATE_CLIENTS);
+        }
+        this.setChanged();
+    }
+
+    public DyeColor getColor() {
+        return color;
     }
 
     public int getPower(Direction direction) {

@@ -81,7 +81,7 @@ public class ForgeRegistryHelper implements IRegistryHelper {
 
     @Override
     public Supplier<CreativeModeTab> registerCreativeModeTab(String name, Component title, Supplier<ItemStack> icon, Supplier<? extends Item>... items) {
-        return CREATIVE_MODE_TABS.register(name, () -> CreativeModeTab.builder().withTabsAfter(CreativeModeTabs.COMBAT).title(title).icon(icon).displayItems((params, output) -> {
+        return CREATIVE_MODE_TABS.register(name, () -> CreativeModeTab.builder().withTabsBefore(CreativeModeTabs.COMBAT).title(title).icon(icon).displayItems((params, output) -> {
             for (Supplier<? extends Item> item : items)
                 output.accept(item.get());
         }).build());

@@ -43,12 +43,14 @@ import java.util.List;
 
 public class CircuitBlock extends HorizontalDirectionalBlock implements EntityBlock {
     public static final BooleanProperty POWERED = BlockStateProperties.POWERED;
+    public static final BooleanProperty COLORED = BooleanProperty.create("colored");
 
     public CircuitBlock(BlockBehaviour.Properties properties) {
         super(properties);
         this.registerDefaultState(this.stateDefinition.any()
                 .setValue(FACING, Direction.NORTH)
-                .setValue(POWERED, false));
+                .setValue(POWERED, false)
+                .setValue(COLORED, false));
     }
 
     @Override
@@ -64,7 +66,7 @@ public class CircuitBlock extends HorizontalDirectionalBlock implements EntityBl
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
         //builder.add(FACING, UP_POWER, DOWN_POWER, LEFT_POWER, RIGHT_POWER, FRONT_POWER, BACK_POWER);
-        builder.add(FACING, POWERED);
+        builder.add(FACING, POWERED, COLORED);
     }
 
     @Override
@@ -124,7 +126,7 @@ public class CircuitBlock extends HorizontalDirectionalBlock implements EntityBl
 
     @Override
     protected InteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult result) {
-        if (stack.is(Items.POKING_STICK.get())) return InteractionResult.PASS; // handled by poking stick
+        if (stack.is(Items.POKING_STICK.get()) || stack.is(Items.LABELLING_STICK.get())) return InteractionResult.PASS; // handled by item
         else if (stack.is(Items.CIRCUIT.get()) && !player.isCrouching() && level.getBlockEntity(pos) instanceof CircuitBlockEntity blockEntity && blockEntity.isValid()) {
             stack.set(DataComponents.UUID.get(), new UUIDDataComponent(blockEntity.getUuid()));
             player.playSound(SoundEvents.BEACON_ACTIVATE, 0.5f, 1);
@@ -161,6 +163,8 @@ public class CircuitBlock extends HorizontalDirectionalBlock implements EntityBl
         if (state.hasBlockEntity() && level.getBlockEntity(pos) instanceof CircuitBlockEntity blockEntity) {
             if (stack.has(DataComponents.UUID.get())) {
                 blockEntity.setUuid(stack.get(DataComponents.UUID.get()).uuid());
+                if (stack.has(net.minecraft.core.component.DataComponents.CUSTOM_NAME))
+                    blockEntity.setName(stack.get(net.minecraft.core.component.DataComponents.CUSTOM_NAME));
                 if (!level.dimension().equals(Constants.CIRCUIT_BOARD_DIMENSION)) {
                     blockEntity.reloadRuntime();
                     blockEntity.getInputSignals();

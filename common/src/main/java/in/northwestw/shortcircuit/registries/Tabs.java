@@ -11,7 +11,7 @@ public class Tabs {
             "short_circuit",
             Component.translatable("itemGroup.short_circuit"),
             () -> Items.CIRCUIT.get().getDefaultInstance(),
-            Items.CIRCUIT, Items.POKING_STICK, Items.TRUTH_ASSIGNER);
+            Items.CIRCUIT, Items.POKING_STICK, Items.LABELLING_STICK, Items.TRUTH_ASSIGNER);
 
     public static void trigger() { }
 }

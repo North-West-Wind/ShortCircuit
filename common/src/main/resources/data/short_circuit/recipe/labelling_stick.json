@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    "  N",
+    " I",
+    "I"
+  ],
+  "key": {
+    "N": "minecraft:name_tag",
+    "I": "minecraft:iron_ingot"
+  },
+  "result": {
+    "id": "short_circuit:labelling_stick",
+    "count": 1
+  }
+}

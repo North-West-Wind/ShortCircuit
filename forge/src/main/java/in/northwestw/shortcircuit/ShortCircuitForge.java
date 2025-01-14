@@ -3,10 +3,13 @@ package in.northwestw.shortcircuit;
 import in.northwestw.shortcircuit.client.TruthAssignerScreen;
 import in.northwestw.shortcircuit.platform.ForgeRegistryHelper;
 import in.northwestw.shortcircuit.registries.BlockEntities;
+import in.northwestw.shortcircuit.registries.Blocks;
 import in.northwestw.shortcircuit.registries.Menus;
 import in.northwestw.shortcircuit.registries.blockentityrenderers.CircuitBlockEntityRenderer;
 import in.northwestw.shortcircuit.registries.blockentityrenderers.IntegratedCircuitBlockEntityRenderer;
 import net.minecraft.client.gui.screens.MenuScreens;
+import net.minecraft.client.renderer.ItemBlockRenderTypes;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraftforge.client.event.EntityRenderersEvent;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -43,6 +46,9 @@ public class ShortCircuitForge {
         @SubscribeEvent
         public static void clientSetup(FMLClientSetupEvent event) {
             event.enqueueWork(() -> MenuScreens.register(Menus.TRUTH_ASSIGNER.get(), TruthAssignerScreen::new));
+            // this should've been set in the block model json, but for whatever reason it refused to work
+            event.enqueueWork(() -> ItemBlockRenderTypes.setRenderLayer(Blocks.CIRCUIT.get(), RenderType.cutout()));
+            event.enqueueWork(() -> ItemBlockRenderTypes.setRenderLayer(Blocks.INTEGRATED_CIRCUIT.get(), RenderType.cutout()));
         }
     }
 }

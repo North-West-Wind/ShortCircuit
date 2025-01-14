@@ -8,8 +8,10 @@ import in.northwestw.shortcircuit.platform.services.IRegistryHelper;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.component.DataComponents;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.flag.FeatureFlagSet;
@@ -51,7 +53,7 @@ public class ForgeRegistryHelper implements IRegistryHelper {
 
     @Override
     public Supplier<Block> registerBlock(String name, Function<BlockBehaviour.Properties, Block> factory, BlockBehaviour.Properties properties) {
-        return BLOCKS.register(name, () -> factory.apply(properties));
+        return BLOCKS.register(name, () -> factory.apply(properties.setId(ResourceKey.create(Registries.BLOCK, ShortCircuitCommon.rl(name)))));
     }
 
     @Override
@@ -66,7 +68,7 @@ public class ForgeRegistryHelper implements IRegistryHelper {
 
     @Override
     public <T extends Item> Supplier<T> registerItem(String name, Function<Item.Properties, T> function, Item.Properties properties) {
-        return ITEMS.register(name, () -> function.apply(properties));
+        return ITEMS.register(name, () -> function.apply(properties.setId(ResourceKey.create(Registries.ITEM, ShortCircuitCommon.rl(name)))));
     }
 
     @Override

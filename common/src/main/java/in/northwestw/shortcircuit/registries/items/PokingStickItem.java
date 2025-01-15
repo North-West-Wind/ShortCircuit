@@ -37,7 +37,7 @@ import java.util.UUID;
 public class PokingStickItem extends Item {
     public PokingStickItem(Properties properties) {
         super(properties);
-        properties.component(DataComponents.SHORT.get(), new ShortDataComponent((short) 4));
+        properties.component(DataComponents.SHORT.get(), (short) 4);
     }
 
     @Override
@@ -116,15 +116,15 @@ public class PokingStickItem extends Item {
     }
 
     private short getBlockSize(ItemStack stack) {
-        ShortDataComponent component = stack.get(DataComponents.SHORT.get());
-        return component == null ? 4 : component.value();
+        if (!stack.has(DataComponents.SHORT.get())) return 4;
+        return stack.get(DataComponents.SHORT.get());
     }
 
     private InteractionResult cycleBlockSize(ItemStack stack, Player player) {
-        short old = stack.getOrDefault(DataComponents.SHORT.get(), new ShortDataComponent((short) 4)).value();
+        short old = stack.getOrDefault(DataComponents.SHORT.get(), (short) 4);
         short newVal = old == 256 ? 4 : (short) (old * 2);
-        if (old == 256) stack.set(DataComponents.SHORT.get(), new ShortDataComponent(newVal));
-        else stack.set(DataComponents.SHORT.get(), new ShortDataComponent(newVal));
+        if (old == 256) stack.set(DataComponents.SHORT.get(), newVal);
+        else stack.set(DataComponents.SHORT.get(), newVal);
         player.displayClientMessage(Component.translatable("action.poking_stick.change", newVal), true);
         player.playSound(SoundEvents.CHICKEN_EGG);
         return InteractionResult.SUCCESS;

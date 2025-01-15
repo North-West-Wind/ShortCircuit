@@ -379,6 +379,11 @@ public class CircuitBlockEntity extends BlockEntity {
         this.setChanged();
     }
 
+    public void setColor(DyeColor color) {
+        this.color = color;
+        this.setChanged();
+    }
+
     public DyeColor getColor() {
         return color;
     }

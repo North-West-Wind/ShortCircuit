@@ -4,7 +4,10 @@ import in.northwestw.shortcircuit.registries.Blocks;
 import in.northwestw.shortcircuit.registries.DataComponents;
 import in.northwestw.shortcircuit.registries.blockentities.CircuitBlockEntity;
 import in.northwestw.shortcircuit.registries.blockentities.IntegratedCircuitBlockEntity;
+import in.northwestw.shortcircuit.registries.blocks.CircuitBoardBlock;
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
+import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
@@ -25,7 +28,7 @@ public class LabellingStickItem extends Item {
     @Override
     public InteractionResult use(Level level, Player player, InteractionHand hand) {
         HitResult hitresult = getPlayerPOVHitResult(level, player, ClipContext.Fluid.NONE);
-        if (hitresult.getType() == HitResult.Type.MISS) return this.changeMode(player.getItemInHand(hand));
+        if (hitresult.getType() == HitResult.Type.MISS) return this.changeMode(player.getItemInHand(hand), player);
         return super.use(level, player, hand);
     }
 
@@ -60,6 +63,7 @@ public class LabellingStickItem extends Item {
             else if (level.getBlockEntity(pos) instanceof IntegratedCircuitBlockEntity blockEntity) color = blockEntity.getColor();
             if (color == null) stack.remove(DataComponents.SHORT.get());
             else stack.set(DataComponents.SHORT.get(), (short) color.getId());
+            player.displayClientMessage(Component.translatable("action.labelling_stick.copy").withColor(color == null ? 0xFFFFFF : color.getTextColor()), true);
         } else {
             short id = stack.getOrDefault(DataComponents.SHORT.get(), (short) -1);
             DyeColor color = id < 0 ? null : DyeColor.byId(id);
@@ -69,9 +73,11 @@ public class LabellingStickItem extends Item {
         return InteractionResult.SUCCESS;
     }
 
-    private InteractionResult changeMode(ItemStack stack) {
+    private InteractionResult changeMode(ItemStack stack, Player player) {
         boolean copyPasteMode = stack.getOrDefault(DataComponents.BIT.get(), false);
         stack.set(DataComponents.BIT.get(), !copyPasteMode);
+        player.displayClientMessage(Component.translatable("action.labelling_stick.change." + (!copyPasteMode ? "copy" : "cycle")), true);
+        player.playSound(SoundEvents.CHICKEN_EGG);
         return InteractionResult.SUCCESS;
     }
 }

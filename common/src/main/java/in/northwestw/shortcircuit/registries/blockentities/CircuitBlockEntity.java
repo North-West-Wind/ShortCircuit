@@ -52,8 +52,7 @@ public class CircuitBlockEntity extends BlockEntity {
     private UUID uuid, runtimeUuid;
     private short blockSize, ticks;
     private boolean hidden, fake;
-    private byte[] powers;
-    private final byte[] inputs;
+    private byte[] powers, inputs;
     private Component name;
     private DyeColor color;
     public Map<BlockPos, BlockState> blocks; // 8x8x8
@@ -265,6 +264,7 @@ public class CircuitBlockEntity extends BlockEntity {
         this.hidden = tag.getBoolean("hidden");
         this.fake = tag.getBoolean("fake");
         this.powers = tag.getByteArray("powers");
+        this.inputs = tag.getByteArray("inputs");
         if (tag.contains("customName", Tag.TAG_STRING)) this.name = Component.Serializer.fromJson(tag.getString("customName"), provider);
         if (tag.contains("color", Tag.TAG_BYTE)) this.color = DyeColor.byId(tag.getByte("color"));
         this.loadExtraFromData(tag);
@@ -279,6 +279,7 @@ public class CircuitBlockEntity extends BlockEntity {
         tag.putBoolean("hidden", this.hidden);
         tag.putBoolean("fake", this.fake);
         tag.putByteArray("powers", this.powers);
+        tag.putByteArray("inputs", this.inputs);
         if (this.name != null) tag.putString("customName", Component.Serializer.toJson(this.name, provider));
         if (this.color != null) tag.putByte("color", (byte) this.color.getId());
     }
@@ -442,7 +443,6 @@ public class CircuitBlockEntity extends BlockEntity {
             RelativeDirection relDir = DirectionHelper.directionToRelativeDirection(state.getValue(HorizontalDirectionalBlock.FACING), direction);
             int signal = level.getSignal(pos.relative(direction), direction);
             if (this.inputs[relDir.getId()] != signal) {
-                ShortCircuitCommon.LOGGER.debug("updating circuit at {} because dir {} changed to {}", pos, relDir, signal);
                 this.inputs[relDir.getId()] = (byte) signal;
                 this.updateRuntimeBlock(signal, relDir);
             }

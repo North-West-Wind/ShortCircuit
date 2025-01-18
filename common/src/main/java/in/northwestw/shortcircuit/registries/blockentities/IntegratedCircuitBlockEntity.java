@@ -15,6 +15,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.Packet;
@@ -60,12 +61,33 @@ public class IntegratedCircuitBlockEntity extends BlockEntity {
         return uuid;
     }
 
+    private void loadSignalMap(CompoundTag tag, String key, Map<RelativeDirection, Integer> map) {
+        if (tag.contains(key, Tag.TAG_LIST))
+            for (Tag t : tag.getList(key, Tag.TAG_COMPOUND)) {
+                CompoundTag pair = (CompoundTag) t;
+                map.put(RelativeDirection.fromId(pair.getByte("key")), (int) pair.getByte("value"));
+            }
+    }
+
+    private void saveSignalMap(CompoundTag tag, String key, Map<RelativeDirection, Integer> map) {
+        ListTag list = new ListTag();
+        for (Map.Entry<RelativeDirection, Integer> entry : map.entrySet()) {
+            CompoundTag pair = new CompoundTag();
+            pair.putByte("key", entry.getKey().getId());
+            pair.putByte("value", entry.getValue().byteValue());
+            list.add(pair);
+        }
+        tag.put(key, list);
+    }
+
     @Override
     protected void loadAdditional(CompoundTag tag, HolderLookup.Provider provider) {
         super.loadAdditional(tag, provider);
         if (tag.hasUUID("uuid")) this.uuid = tag.getUUID("uuid");
         if (tag.contains("customName", Tag.TAG_STRING)) this.name = Component.Serializer.fromJson(tag.getString("customName"), provider);
         if (tag.contains("color", Tag.TAG_BYTE)) this.color = DyeColor.byId(tag.getByte("color"));
+        this.loadSignalMap(tag, "inputs", this.inputs);
+        this.loadSignalMap(tag, "outputs", this.outputs);
     }
 
     @Override
@@ -74,6 +96,8 @@ public class IntegratedCircuitBlockEntity extends BlockEntity {
         if (this.uuid != null) tag.putUUID("uuid", this.uuid);
         if (this.name != null) tag.putString("customName", Component.Serializer.toJson(this.name, provider));
         if (this.color != null) tag.putByte("color", (byte) this.color.getId());
+        this.saveSignalMap(tag, "inputs", this.inputs);
+        this.saveSignalMap(tag, "outputs", this.outputs);
     }
 
     @Override
@@ -142,10 +166,13 @@ public class IntegratedCircuitBlockEntity extends BlockEntity {
     }
 
     public void updateChangedNeighbors() {
+        BlockState state = this.getBlockState();
+        Direction direction = state.getValue(HorizontalDirectionalBlock.FACING);
         for (int ii = 0; ii < this.changed.length; ii++)
             if (this.changed[ii]) {
-                BlockPos pos = this.getBlockPos().relative(DirectionHelper.relativeDirectionToFacing(RelativeDirection.fromId((byte) ii), this.getBlockState().getValue(HorizontalDirectionalBlock.FACING)));
+                BlockPos pos = this.getBlockPos().relative(DirectionHelper.relativeDirectionToFacing(RelativeDirection.fromId((byte) ii), direction));
                 this.level.neighborChanged(pos, this.level.getBlockState(pos).getBlock(), null);
+                this.level.updateNeighborsAtExceptFromFacing(pos, state.getBlock(), direction.getOpposite(), null);
             }
     }
 

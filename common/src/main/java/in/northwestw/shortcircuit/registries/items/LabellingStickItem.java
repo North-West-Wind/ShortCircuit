@@ -39,6 +39,8 @@ public class LabellingStickItem extends Item {
         boolean copyPasteMode = stack.getOrDefault(DataComponents.BIT.get(), false);
         if (state.is(Blocks.CIRCUIT.get()) || state.is(Blocks.INTEGRATED_CIRCUIT.get()))
             return copyPasteMode ? this.copyOrPasteCircuitColor(context) : this.cycleCircuitColor(context);
+        if (state.is(Blocks.CIRCUIT_BOARD.get()))
+            return this.toggleAnnotation(context);
         return super.useOn(context);
     }
 
@@ -78,6 +80,13 @@ public class LabellingStickItem extends Item {
         stack.set(DataComponents.BIT.get(), !copyPasteMode);
         player.displayClientMessage(Component.translatable("action.labelling_stick.change." + (!copyPasteMode ? "copy" : "cycle")), true);
         player.playSound(SoundEvents.CHICKEN_EGG);
+        return InteractionResult.SUCCESS;
+    }
+
+    private InteractionResult toggleAnnotation(UseOnContext context) {
+        Level level = context.getLevel();
+        BlockPos pos = context.getClickedPos();
+        level.setBlockAndUpdate(pos, level.getBlockState(pos).setValue(CircuitBoardBlock.ANNOTATED, !level.getBlockState(pos).getValue(CircuitBoardBlock.ANNOTATED)));
         return InteractionResult.SUCCESS;
     }
 }

@@ -3,7 +3,6 @@ package in.northwestw.shortcircuit;
 
 import in.northwestw.shortcircuit.client.TruthAssignerScreen;
 import in.northwestw.shortcircuit.platform.NeoForgeRegistryHelper;
-import in.northwestw.shortcircuit.platform.Services;
 import in.northwestw.shortcircuit.registries.BlockEntities;
 import in.northwestw.shortcircuit.registries.Menus;
 import in.northwestw.shortcircuit.registries.blockentityrenderers.CircuitBlockEntityRenderer;

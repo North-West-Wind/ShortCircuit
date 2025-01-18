@@ -1,17 +1,11 @@
 package in.northwestw.shortcircuit.registries;
 
 import com.mojang.serialization.Codec;
-import com.mojang.serialization.codecs.RecordCodecBuilder;
 import in.northwestw.shortcircuit.platform.Services;
 import in.northwestw.shortcircuit.registries.datacomponents.LastPosDataComponent;
-import in.northwestw.shortcircuit.registries.datacomponents.ShortDataComponent;
 import in.northwestw.shortcircuit.registries.datacomponents.UUIDDataComponent;
-import io.netty.buffer.ByteBuf;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.network.codec.ByteBufCodecs;
-import net.minecraft.network.codec.StreamCodec;
-import net.minecraft.util.ExtraCodecs;
-import org.joml.Vector3f;
 
 import java.util.function.Supplier;
 

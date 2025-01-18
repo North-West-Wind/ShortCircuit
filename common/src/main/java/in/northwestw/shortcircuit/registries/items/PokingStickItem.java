@@ -9,7 +9,6 @@ import in.northwestw.shortcircuit.registries.DataComponents;
 import in.northwestw.shortcircuit.registries.blockentities.CircuitBlockEntity;
 import in.northwestw.shortcircuit.registries.blocks.CircuitBoardBlock;
 import in.northwestw.shortcircuit.registries.datacomponents.LastPosDataComponent;
-import in.northwestw.shortcircuit.registries.datacomponents.ShortDataComponent;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;

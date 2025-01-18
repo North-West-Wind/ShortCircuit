@@ -49,7 +49,7 @@ public class IntegratedCircuitBlockEntity extends BlockEntity {
     }
 
     public boolean isValid() {
-        return this.uuid == null;
+        return this.uuid != null;
     }
 
     public void setUuid(UUID uuid) {
@@ -102,19 +102,20 @@ public class IntegratedCircuitBlockEntity extends BlockEntity {
     public void cycleColor(boolean backwards) {
         if (this.color == null) {
             this.color = DyeColor.byId(backwards ? 15 : 0);
-            this.level.setBlock(this.getBlockPos(), this.getBlockState().setValue(CircuitBlock.COLORED, true), Block.UPDATE_CLIENTS);
+            this.level.setBlock(this.getBlockPos(), this.getBlockState().setValue(IntegratedCircuitBlock.COLORED, true), Block.UPDATE_CLIENTS);
         }
         else if (this.color.getId() < 15 && !backwards) this.color = DyeColor.byId(this.color.getId() + 1);
         else if (this.color.getId() > 0 && backwards) this.color = DyeColor.byId(this.color.getId() - 1);
         else {
             this.color = null;
-            this.level.setBlock(this.getBlockPos(), this.getBlockState().setValue(CircuitBlock.COLORED, false), Block.UPDATE_CLIENTS);
+            this.level.setBlock(this.getBlockPos(), this.getBlockState().setValue(IntegratedCircuitBlock.COLORED, false), Block.UPDATE_CLIENTS);
         }
         this.setChanged();
     }
 
     public void setColor(DyeColor color) {
         this.color = color;
+        this.level.setBlock(this.getBlockPos(), this.getBlockState().setValue(IntegratedCircuitBlock.COLORED, this.color != null), Block.UPDATE_CLIENTS);
         this.setChanged();
     }
 

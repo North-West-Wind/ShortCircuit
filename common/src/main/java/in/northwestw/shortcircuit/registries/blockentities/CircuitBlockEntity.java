@@ -13,6 +13,7 @@ import in.northwestw.shortcircuit.registries.Blocks;
 import in.northwestw.shortcircuit.registries.DataComponents;
 import in.northwestw.shortcircuit.registries.blocks.CircuitBlock;
 import in.northwestw.shortcircuit.registries.blocks.CircuitBoardBlock;
+import in.northwestw.shortcircuit.registries.blocks.IntegratedCircuitBlock;
 import in.northwestw.shortcircuit.registries.datacomponents.UUIDDataComponent;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -381,6 +382,7 @@ public class CircuitBlockEntity extends BlockEntity {
 
     public void setColor(DyeColor color) {
         this.color = color;
+        this.level.setBlock(this.getBlockPos(), this.getBlockState().setValue(CircuitBlock.COLORED, this.color != null), Block.UPDATE_CLIENTS);
         this.setChanged();
     }
 

@@ -264,7 +264,9 @@ public class CircuitBlockEntity extends BlockEntity {
         this.hidden = tag.getBoolean("hidden");
         this.fake = tag.getBoolean("fake");
         this.powers = tag.getByteArray("powers");
+        if (this.powers.length != 6) this.powers = new byte[6];
         this.inputs = tag.getByteArray("inputs");
+        if (this.inputs.length != 6) this.inputs = new byte[6];
         if (tag.contains("customName", Tag.TAG_STRING)) this.name = Component.Serializer.fromJson(tag.getString("customName"), provider);
         if (tag.contains("color", Tag.TAG_BYTE)) this.color = DyeColor.byId(tag.getByte("color"));
         this.loadExtraFromData(tag);

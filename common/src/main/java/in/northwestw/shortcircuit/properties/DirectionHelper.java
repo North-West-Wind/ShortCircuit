@@ -18,12 +18,6 @@ public class DirectionHelper {
         };
     }
 
-    public static Direction getDirectionFromPosToPos(BlockPos a, BlockPos b) {
-        if (a.getX() != b.getX()) return a.getX() - b.getX() == 1 ? Direction.WEST : Direction.EAST;
-        if (a.getY() != b.getY()) return a.getY() - b.getY() == 1 ? Direction.DOWN : Direction.UP;
-        return a.getZ() - b.getZ() == 1 ? Direction.NORTH : Direction.SOUTH;
-    }
-
     public static Direction relativeDirectionToFacing(RelativeDirection direction, Direction facing) {
         return switch (direction) {
             case UP -> Direction.UP;
@@ -32,6 +26,17 @@ public class DirectionHelper {
             case BACK -> facing.getOpposite();
             case LEFT -> facing.getCounterClockWise();
             case RIGHT -> facing.getClockWise();
+        };
+    }
+
+    public static Direction circuitBoardFixedDirection(RelativeDirection direction) {
+        return switch (direction) {
+            case UP -> Direction.UP;
+            case DOWN -> Direction.DOWN;
+            case LEFT -> Direction.SOUTH;
+            case RIGHT -> Direction.NORTH;
+            case FRONT -> Direction.WEST;
+            case BACK -> Direction.EAST;
         };
     }
 }

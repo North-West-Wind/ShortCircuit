@@ -116,15 +116,13 @@ public class PokingStickItem extends Item {
     }
 
     private short getBlockSize(ItemStack stack) {
-        if (!stack.has(DataComponents.SHORT.get())) return 4;
-        return stack.get(DataComponents.SHORT.get());
+        return stack.getOrDefault(DataComponents.SHORT.get(), (short) 4);
     }
 
     private InteractionResult cycleBlockSize(ItemStack stack, Player player) {
         short old = stack.getOrDefault(DataComponents.SHORT.get(), (short) 4);
         short newVal = old == 256 ? 4 : (short) (old * 2);
-        if (old == 256) stack.set(DataComponents.SHORT.get(), newVal);
-        else stack.set(DataComponents.SHORT.get(), newVal);
+        stack.set(DataComponents.SHORT.get(), newVal);
         player.displayClientMessage(Component.translatable("action.poking_stick.change", newVal), true);
         player.playSound(SoundEvents.CHICKEN_EGG);
         return InteractionResult.SUCCESS;

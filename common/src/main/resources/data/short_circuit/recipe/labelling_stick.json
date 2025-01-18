@@ -3,8 +3,8 @@
   "category": "redstone",
   "pattern": [
     "  N",
-    " I",
-    "I"
+    " I ",
+    "I  "
   ],
   "key": {
     "N": "minecraft:name_tag",

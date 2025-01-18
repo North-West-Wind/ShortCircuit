@@ -3,8 +3,8 @@
   "category": "redstone",
   "pattern": [
     "  R",
-    " I",
-    "I"
+    " I ",
+    "I  "
   ],
   "key": {
     "I": "minecraft:iron_ingot",

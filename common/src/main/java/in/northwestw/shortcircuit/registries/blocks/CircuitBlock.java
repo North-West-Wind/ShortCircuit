@@ -2,8 +2,10 @@ package in.northwestw.shortcircuit.registries.blocks;
 
 import com.mojang.serialization.MapCodec;
 import in.northwestw.shortcircuit.Constants;
+import in.northwestw.shortcircuit.ShortCircuitCommon;
 import in.northwestw.shortcircuit.registries.*;
 import in.northwestw.shortcircuit.registries.blockentities.CircuitBlockEntity;
+import in.northwestw.shortcircuit.registries.blockentities.IntegratedCircuitBlockEntity;
 import in.northwestw.shortcircuit.registries.datacomponents.UUIDDataComponent;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -127,10 +129,14 @@ public class CircuitBlock extends HorizontalDirectionalBlock implements EntityBl
     @Override
     protected InteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult result) {
         if (stack.is(Items.POKING_STICK.get()) || stack.is(Items.LABELLING_STICK.get())) return InteractionResult.PASS; // handled by item
-        else if (stack.is(Items.CIRCUIT.get()) && !player.isCrouching() && level.getBlockEntity(pos) instanceof CircuitBlockEntity blockEntity && blockEntity.isValid()) {
-            stack.set(DataComponents.UUID.get(), new UUIDDataComponent(blockEntity.getUuid()));
+        else if ((stack.is(Items.CIRCUIT.get()) || stack.is(Items.INTEGRATED_CIRCUIT.get())) && !player.isCrouching() && level.getBlockEntity(pos) instanceof CircuitBlockEntity blockEntity && blockEntity.isValid()) {
+            ItemStack newStack = new ItemStack(Items.CIRCUIT.get(), stack.getCount());
+            newStack.applyComponents(stack.getComponents());
+            newStack.set(DataComponents.UUID.get(), new UUIDDataComponent(blockEntity.getUuid()));
+            newStack.set(net.minecraft.core.component.DataComponents.ITEM_MODEL, ShortCircuitCommon.rl("circuit"));
+            player.setItemInHand(hand, newStack);
             player.playSound(SoundEvents.BEACON_ACTIVATE, 0.5f, 1);
-            return InteractionResult.SUCCESS.heldItemTransformedTo(stack);
+            return InteractionResult.SUCCESS.heldItemTransformedTo(newStack);
         }
         return super.useItemOn(stack, state, level, pos, player, hand, result);
     }
@@ -154,8 +160,10 @@ public class CircuitBlock extends HorizontalDirectionalBlock implements EntityBl
     @Override
     protected void neighborChanged(BlockState state, Level level, BlockPos pos, Block neighborBlock, @Nullable Orientation orientation, boolean movedByPiston) {
         super.neighborChanged(state, level, pos, neighborBlock, orientation, movedByPiston);
-        if (level.getBlockEntity(pos) instanceof CircuitBlockEntity blockEntity)
+        if (level.getBlockEntity(pos) instanceof CircuitBlockEntity blockEntity) {
+            //ShortCircuitCommon.LOGGER.info("neighbor changed for circuit at {}", pos);
             blockEntity.getInputSignals();
+        }
     }
 
     @Override

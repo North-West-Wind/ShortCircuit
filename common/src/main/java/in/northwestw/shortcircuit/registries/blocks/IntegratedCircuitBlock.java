@@ -1,6 +1,7 @@
 package in.northwestw.shortcircuit.registries.blocks;
 
 import com.mojang.serialization.MapCodec;
+import in.northwestw.shortcircuit.ShortCircuitCommon;
 import in.northwestw.shortcircuit.registries.Blocks;
 import in.northwestw.shortcircuit.registries.Codecs;
 import in.northwestw.shortcircuit.registries.DataComponents;
@@ -10,6 +11,7 @@ import in.northwestw.shortcircuit.registries.datacomponents.UUIDDataComponent;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -94,6 +96,8 @@ public class IntegratedCircuitBlock extends HorizontalDirectionalBlock implement
             ItemStack newStack = new ItemStack(Items.INTEGRATED_CIRCUIT.get(), stack.getCount());
             newStack.applyComponents(stack.getComponents());
             newStack.set(DataComponents.UUID.get(), new UUIDDataComponent(blockEntity.getUuid()));
+            newStack.set(net.minecraft.core.component.DataComponents.ITEM_MODEL, ShortCircuitCommon.rl("integrated_circuit"));
+            player.setItemInHand(hand, newStack);
             player.playSound(SoundEvents.BEACON_ACTIVATE, 0.5f, 1);
             return InteractionResult.SUCCESS.heldItemTransformedTo(newStack);
         }
@@ -117,6 +121,11 @@ public class IntegratedCircuitBlock extends HorizontalDirectionalBlock implement
     @Override
     protected int getSignal(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
         return ((IntegratedCircuitBlockEntity) level.getBlockEntity(pos)).getPower(direction);
+    }
+
+    @Override
+    protected int getDirectSignal(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
+        return state.getSignal(level, pos, direction);
     }
 
     @Override

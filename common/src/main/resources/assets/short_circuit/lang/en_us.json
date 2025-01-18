@@ -31,7 +31,12 @@
 
   "tooltip.short_circuit.circuit": "UUID: %s",
   "tooltip.short_circuit.circuit_board": "You should not be able to obtain this.",
+
   "action.poking_stick.change": "Exterior size: %d",
+  "action.labelling_stick.change.cycle": "Mode: Cycle",
+  "action.labelling_stick.change.copy": "Mode: Copy & Paste",
+  "action.labelling_stick.copy": "Copied color",
+
   "action.circuit.reload": "Reloading circuit in runtime...",
   "action.circuit.reload.success": "Success!",
   "action.circuit.reload.fail.not_exist": "Use the Poking Stick first!",

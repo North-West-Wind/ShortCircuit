@@ -108,7 +108,7 @@ public class Octolet {
             int chunkZ = (chunkIndex / sideLength) % sideLength;
             return octoletPos.offset(chunkX * chunkPerBlock * 16, (index % verticalBlocks) * this.blockSize, chunkZ * chunkPerBlock * 16);
         } else {
-            int chunkBlocks = (16 / this.blockSize) * (16 / this.blockSize) * 256 / this.blockSize;
+            int chunkBlocks = (16 / this.blockSize) * (16 / this.blockSize) * verticalBlocks;
             int blockPerChunk = 16 / this.blockSize;
             int chunkIndex = index / chunkBlocks;
             int sideLength = MAX_SIZE / 16;
@@ -117,7 +117,7 @@ public class Octolet {
             int innerIndex = index % chunkBlocks;
             int x = innerIndex % blockPerChunk;
             int z = (innerIndex / blockPerChunk) % blockPerChunk;
-            int y = (innerIndex / (blockPerChunk * blockPerChunk)) % blockPerChunk;
+            int y = innerIndex / (blockPerChunk * blockPerChunk);
             return octoletPos.offset(chunkX * 16 + x * this.blockSize, y * this.blockSize, chunkZ * 16 + z * this.blockSize);
         }
     }

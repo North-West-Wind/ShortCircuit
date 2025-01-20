@@ -1,5 +1,6 @@
 package in.northwestw.shortcircuit.registries.blockentities;
 
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import in.northwestw.shortcircuit.Constants;
@@ -38,10 +39,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import org.apache.commons.lang3.tuple.Pair;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 public class CircuitBlockEntity extends BlockEntity {
     private UUID uuid, runtimeUuid;
@@ -136,6 +134,7 @@ public class CircuitBlockEntity extends BlockEntity {
             runtimeLevel.setChunkForced(start.getX() / 16 + pos.x, start.getZ() / 16 + pos.z, true);
         BlockPos runtimePos = runtimeData.getCircuitStartingPos(this.runtimeUuid);
         Map<RelativeDirection, CircuitBoardBlock.Mode> modeMap = Maps.newHashMap();
+        List<BlockPos> outputBlockPos = Lists.newArrayList();
         for (int ii = 0; ii < this.blockSize; ii++) {
             for (int jj = 0; jj < this.blockSize; jj++) {
                 for (int kk = 0; kk < this.blockSize; kk++) {
@@ -160,6 +159,7 @@ public class CircuitBlockEntity extends BlockEntity {
                             } else if (mode != CircuitBoardBlock.Mode.NONE)
                                 modeMap.put(dir, mode);
                             blockEntity.setConnection(this.level.dimension(), this.getBlockPos(), this.runtimeUuid);
+                            if (mode == CircuitBoardBlock.Mode.OUTPUT) outputBlockPos.add(newPos);
                         } else if (be instanceof CircuitBlockEntity blockEntity) {
                             if (recurrence.contains(blockEntity.getUuid())) {
                                 this.removeRuntime();
@@ -178,6 +178,7 @@ public class CircuitBlockEntity extends BlockEntity {
             }
         }
         this.getInputSignals();
+        outputBlockPos.forEach(pos -> runtimeLevel.neighborChanged(pos, runtimeLevel.getBlockState(pos).getBlock(), null));
         this.updateInnerBlocks();
         return Pair.of(RuntimeReloadResult.SUCCESS, modeMap);
     }

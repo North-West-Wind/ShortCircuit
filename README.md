@@ -3,8 +3,8 @@ Fast, compact, modular way to design redstone circuits.
 
 ## Downloads
 Short Circuit is available for downloads on Modrinth and Curseforge, for multiple mod loaders including Fabric, Forge, NeoForge and Quilt (uses Fabric).
-- [Modrinth]()
-- Curseforge
+- [Modrinth](https://modrinth.com/mod/short-circuit)
+- [Curseforge](https://www.curseforge.com/minecraft/mc-mods/short-circuit)
 
 You may also build the mod from source using JDK 21 and by running the following:
 ```bash
@@ -15,7 +15,8 @@ cd ShortCircuit
 Compiled mod files will be output at `{loader}/build/libs/`, where `{loader}` can be either `fabric`, `forge` or `neoforge`.
 
 ## Usage
-I have made a video for this, if you prefer having some visuals.
+I have made a video for this, if you prefer having some visuals.  
+https://www.youtube.com/watch?v=P3QMM_KYTZk
 
 This mod comes with 4 items you can craft:
 - Circuit

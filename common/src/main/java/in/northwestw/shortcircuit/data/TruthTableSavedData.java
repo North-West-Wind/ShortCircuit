@@ -61,7 +61,7 @@ public class TruthTableSavedData extends SavedData {
             else input |= val > 0 ? 1 : 0;
         }
         int output = table.signals.getOrDefault(input, table.defaultValue);
-        for (RelativeDirection dir: table.outputs) {
+        for (RelativeDirection dir: table.outputs.reversed()) {
             signals.put(dir, output & 0xF);
             output >>= 4;
         }

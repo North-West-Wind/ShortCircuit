@@ -16,7 +16,7 @@ Compiled mod files will be output at `{loader}/build/libs/`, where `{loader}` ca
 
 ## Usage
 I have made a video for this, if you prefer having some visuals.  
-https://www.youtube.com/watch?v=P3QMM_KYTZk
+[![](https://img.youtube.com/vi/klFv8QrZ1eY/maxresdefault.jpg)](https://youtu.be/klFv8QrZ1eY)
 
 This mod comes with 4 items you can craft:
 - Circuit

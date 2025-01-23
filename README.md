@@ -125,7 +125,12 @@ To make it easier for me to fix things, if you encounter a seemingly unintention
   - Changing input/output sides
 - Duplicate the circuit and place down multiple of them. Check if any of them run correctly.
 
-If you confirm that a circuit is consistently buggy, please also include the circuit in the bug report. 
+If you confirm that a circuit is consistently buggy, please also include the circuit in the bug report.
+
+## Plans
+- Span large circuit generations across multiple ticks to avoid completely freezing the game
+  - 1 chunk per tick?
+- Create different renders for different integrated circuits
 
 ## Inspiration
 This mod is inspired by another mod, Compact Machines, and real world computer engineering.

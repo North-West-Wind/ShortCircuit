@@ -177,6 +177,16 @@ public class CircuitBlockEntity extends BlockEntity {
                 }
             }
         }
+        // tick everything inside once
+        for (int ii = 1; ii < this.blockSize - 1; ii++) {
+            for (int jj = 1; jj < this.blockSize - 1; jj++) {
+                for (int kk = 1; kk < this.blockSize - 1; kk++) {
+                    BlockPos pos = runtimePos.offset(ii, jj, kk);
+                    BlockState state = runtimeLevel.getBlockState(pos);
+                    if (!state.isAir()) runtimeLevel.blockUpdated(pos, state.getBlock());
+                }
+            }
+        }
         this.getInputSignals();
         outputBlockPos.forEach(pos -> runtimeLevel.neighborChanged(pos, runtimeLevel.getBlockState(pos).getBlock(), null));
         this.updateInnerBlocks();

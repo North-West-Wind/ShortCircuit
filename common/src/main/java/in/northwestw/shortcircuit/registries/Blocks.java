@@ -1,10 +1,7 @@
 package in.northwestw.shortcircuit.registries;
 
 import in.northwestw.shortcircuit.platform.Services;
-import in.northwestw.shortcircuit.registries.blocks.CircuitBlock;
-import in.northwestw.shortcircuit.registries.blocks.CircuitBoardBlock;
-import in.northwestw.shortcircuit.registries.blocks.IntegratedCircuitBlock;
-import in.northwestw.shortcircuit.registries.blocks.TruthAssignerBlock;
+import in.northwestw.shortcircuit.registries.blocks.*;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
@@ -53,6 +50,11 @@ public class Blocks {
                     .noOcclusion()
                     .isValidSpawn((state, level, pos, type) -> false)
                     .isRedstoneConductor((state, level, pos) -> false)
+    );
+
+    public static final Supplier<Block> INNER_IC = Services.REGISTRY.registerBlock(
+            "inner_ic", InnerICBlock::new,
+            BlockBehaviour.Properties.of().noLootTable()
     );
 
     public static void trigger() { }

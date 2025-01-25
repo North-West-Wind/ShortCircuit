@@ -39,6 +39,7 @@ public class IntegratedCircuitBlockEntity extends BlockEntity {
     private final boolean[] changed;
     private Component name;
     private DyeColor color;
+    private boolean hidden;
 
     public IntegratedCircuitBlockEntity(BlockPos pos, BlockState state) {
         super(BlockEntities.INTEGRATED_CIRCUIT.get(), pos, state);
@@ -86,6 +87,9 @@ public class IntegratedCircuitBlockEntity extends BlockEntity {
         if (tag.contains("color", Tag.TAG_BYTE)) this.color = DyeColor.byId(tag.getByte("color"));
         this.loadSignalMap(tag, "inputs", this.inputs);
         this.loadSignalMap(tag, "outputs", this.outputs);
+        // upgrade to v1.0.2, default hidden to true
+        if (tag.contains("hidden")) this.hidden = tag.getBoolean("hidden");
+        else this.hidden = true;
     }
 
     @Override
@@ -96,6 +100,7 @@ public class IntegratedCircuitBlockEntity extends BlockEntity {
         if (this.color != null) tag.putByte("color", (byte) this.color.getId());
         this.saveSignalMap(tag, "inputs", this.inputs);
         this.saveSignalMap(tag, "outputs", this.outputs);
+        tag.putBoolean("hidden", this.hidden);
     }
 
     @Override
@@ -115,6 +120,14 @@ public class IntegratedCircuitBlockEntity extends BlockEntity {
         super.collectImplicitComponents(components);
         components.set(DataComponents.UUID.get(), new UUIDDataComponent(this.uuid));
         if (this.name != null) components.set(net.minecraft.core.component.DataComponents.CUSTOM_NAME, this.name);
+    }
+
+    public boolean isHidden() {
+        return hidden;
+    }
+
+    public void setHidden(boolean hidden) {
+        this.hidden = hidden;
     }
 
     public void setName(Component name) {

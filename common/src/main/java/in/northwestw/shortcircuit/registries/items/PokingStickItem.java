@@ -7,6 +7,7 @@ import in.northwestw.shortcircuit.properties.RelativeDirection;
 import in.northwestw.shortcircuit.registries.Blocks;
 import in.northwestw.shortcircuit.registries.DataComponents;
 import in.northwestw.shortcircuit.registries.blockentities.CircuitBlockEntity;
+import in.northwestw.shortcircuit.registries.blockentities.IntegratedCircuitBlockEntity;
 import in.northwestw.shortcircuit.registries.blocks.CircuitBoardBlock;
 import in.northwestw.shortcircuit.registries.datacomponents.LastPosDataComponent;
 import net.minecraft.core.BlockPos;
@@ -54,18 +55,16 @@ public class PokingStickItem extends Item {
         Player player = context.getPlayer();
         ItemStack stack = context.getItemInHand();
         if (state.is(Blocks.CIRCUIT_BOARD.get())) return this.useOnCircuitBoardBlock(context);
-        if (!state.is(Blocks.CIRCUIT.get())) return this.cycleBlockSize(stack, player);
-        BlockEntity be = level.getBlockEntity(pos);
-        if (player == null) return InteractionResult.FAIL;
-        if (be instanceof CircuitBlockEntity) return this.useOnCircuitBlock(context);
+        if (state.is(Blocks.CIRCUIT.get())) return this.useOnCircuitBlock(context);
+        if (state.is(Blocks.INTEGRATED_CIRCUIT.get())) return this.useOnIntegratedCircuitBlock(context);
 
-        return InteractionResult.SUCCESS;
+        return this.cycleBlockSize(stack, player);
     }
 
     private InteractionResult useOnCircuitBlock(UseOnContext context) {
         Level level = context.getLevel();
+        if (!(level.getBlockEntity(context.getClickedPos()) instanceof CircuitBlockEntity blockEntity)) return InteractionResult.FAIL;
         Player player = context.getPlayer();
-        CircuitBlockEntity blockEntity = (CircuitBlockEntity) level.getBlockEntity(context.getClickedPos());
         ItemStack stack = context.getItemInHand();
         if (player.isCrouching()) {
             blockEntity.setHidden(!blockEntity.isHidden());
@@ -112,6 +111,17 @@ public class PokingStickItem extends Item {
             }
         }
         return InteractionResult.SUCCESS;
+    }
+
+    private InteractionResult useOnIntegratedCircuitBlock(UseOnContext context) {
+        Level level = context.getLevel();
+        Player player = context.getPlayer();
+        if (!(level.getBlockEntity(context.getClickedPos()) instanceof IntegratedCircuitBlockEntity blockEntity)) return InteractionResult.FAIL;
+        if (player.isCrouching()) {
+            blockEntity.setHidden(!blockEntity.isHidden());
+            return InteractionResult.SUCCESS;
+        }
+        return InteractionResult.FAIL;
     }
 
     private short getBlockSize(ItemStack stack) {

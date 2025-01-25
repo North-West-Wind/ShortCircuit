@@ -3,11 +3,10 @@
   "render_type": "minecraft:cutout",
   "ambientocclusion": false,
   "textures": {
-    "3": "minecraft:block/glass",
     "slab": "minecraft:block/smooth_stone",
-    "particle": "short_circuit:block/integrated_circuit_on",
-    "top": "short_circuit:block/integrated_circuit_on",
-    "unlit": "short_circuit:block/integrated_circuit_torch"
+    "particle": "short_circuit:block/integrated_circuit",
+    "top": "short_circuit:block/integrated_circuit",
+    "unlit": "short_circuit:block/integrated_circuit_torch_off"
   },
   "elements": [
     {
@@ -59,18 +58,6 @@
         "west": {"uv": [7, 6, 9, 11], "texture": "#unlit"},
         "up": {"uv": [7, 6, 9, 8], "texture": "#unlit"},
         "down": {"uv": [7, 13, 9, 15], "texture": "#unlit"}
-      }
-    },
-    {
-      "from": [0, 2, 0],
-      "to": [16, 16, 16],
-      "faces": {
-        "north": {"uv": [0, 0, 16, 14], "texture": "#3"},
-        "east": {"uv": [0, 0, 16, 14], "texture": "#3"},
-        "south": {"uv": [0, 0, 16, 14], "texture": "#3"},
-        "west": {"uv": [0, 0, 16, 14], "texture": "#3"},
-        "up": {"uv": [0, 0, 16, 16], "texture": "#3"},
-        "down": {"uv": [0, 0, 16, 16], "texture": "#3"}
       }
     }
   ]

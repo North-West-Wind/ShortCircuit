@@ -130,7 +130,7 @@ If you confirm that a circuit is consistently buggy, please also include the cir
 ## Plans
 - Span large circuit generations across multiple ticks to avoid completely freezing the game
   - 1 chunk per tick?
-- Create different renders for different integrated circuits
+- Backport?
 
 ## Inspiration
 This mod is inspired by another mod, Compact Machines, and real world computer engineering.

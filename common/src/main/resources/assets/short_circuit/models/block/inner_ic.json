@@ -1,6 +1,5 @@
 {
   "credit": "Made with Blockbench",
-  "render_type": "minecraft:cutout",
   "ambientocclusion": false,
   "textures": {
     "slab": "minecraft:block/smooth_stone",

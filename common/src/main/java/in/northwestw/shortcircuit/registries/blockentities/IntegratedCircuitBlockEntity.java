@@ -1,6 +1,7 @@
 package in.northwestw.shortcircuit.registries.blockentities;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import in.northwestw.shortcircuit.data.TruthTableSavedData;
 import in.northwestw.shortcircuit.properties.DirectionHelper;
@@ -21,18 +22,24 @@ import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.CommandBlock;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.levelgen.XoroshiroRandomSource;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
 public class IntegratedCircuitBlockEntity extends BlockEntity {
+    private static final Block[] POSSIBLE_INNER_BLOCKS = new Block[] { Blocks.COMMAND_BLOCK, Blocks.CHAIN_COMMAND_BLOCK, Blocks.REPEATING_COMMAND_BLOCK };
     private UUID uuid;
     private final Map<RelativeDirection, Integer> inputs;
     private Map<RelativeDirection, Integer> outputs;
@@ -40,12 +47,16 @@ public class IntegratedCircuitBlockEntity extends BlockEntity {
     private Component name;
     private DyeColor color;
     private boolean hidden;
+    // used for rendering
+    public final List<BlockState> blocks;
 
     public IntegratedCircuitBlockEntity(BlockPos pos, BlockState state) {
         super(BlockEntities.INTEGRATED_CIRCUIT.get(), pos, state);
         this.inputs = Maps.newHashMap();
         this.outputs = Maps.newHashMap();
         this.changed = new boolean[6];
+        this.hidden = true;
+        this.blocks = Lists.newArrayList();
     }
 
     public boolean isValid() {
@@ -82,7 +93,9 @@ public class IntegratedCircuitBlockEntity extends BlockEntity {
     @Override
     protected void loadAdditional(CompoundTag tag, HolderLookup.Provider provider) {
         super.loadAdditional(tag, provider);
+        UUID oldUuid = this.uuid;
         if (tag.hasUUID("uuid")) this.uuid = tag.getUUID("uuid");
+        else this.uuid = null;
         if (tag.contains("customName", Tag.TAG_STRING)) this.name = Component.Serializer.fromJson(tag.getString("customName"), provider);
         if (tag.contains("color", Tag.TAG_BYTE)) this.color = DyeColor.byId(tag.getByte("color"));
         this.loadSignalMap(tag, "inputs", this.inputs);
@@ -90,6 +103,14 @@ public class IntegratedCircuitBlockEntity extends BlockEntity {
         // upgrade to v1.0.2, default hidden to true
         if (tag.contains("hidden")) this.hidden = tag.getBoolean("hidden");
         else this.hidden = true;
+
+        this.blocks.clear();
+        if (oldUuid != this.uuid && this.uuid != null) {
+            RandomSource random = new XoroshiroRandomSource(this.uuid.getLeastSignificantBits(), this.uuid.getMostSignificantBits());
+            Direction[] directions = Direction.values();
+            for (int ii = 0; ii < 8; ii++)
+                this.blocks.add(POSSIBLE_INNER_BLOCKS[random.nextInt(POSSIBLE_INNER_BLOCKS.length)].defaultBlockState().setValue(CommandBlock.FACING, directions[random.nextInt(directions.length)]));
+        }
     }
 
     @Override
@@ -218,5 +239,9 @@ public class IntegratedCircuitBlockEntity extends BlockEntity {
             this.inputs.put(relDir, signal);
         }
         this.updateOutput();
+    }
+
+    public void tick() {
+
     }
 }

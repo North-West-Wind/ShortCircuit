@@ -10,8 +10,10 @@ import in.northwestw.shortcircuit.registries.blockentities.IntegratedCircuitBloc
 import in.northwestw.shortcircuit.registries.datacomponents.UUIDDataComponent;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvents;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.LivingEntity;
@@ -40,6 +42,7 @@ import java.util.List;
 public class IntegratedCircuitBlock extends HorizontalDirectionalBlock implements EntityBlock {
     public static final BooleanProperty POWERED = BlockStateProperties.POWERED;
     public static final BooleanProperty COLORED = BooleanProperty.create("colored");
+    public static final DustParticleOptions PARTICLE = new DustParticleOptions(0xFFDD00, 1.0F);
 
     public IntegratedCircuitBlock(Properties pProperties) {
         super(pProperties);
@@ -142,5 +145,29 @@ public class IntegratedCircuitBlock extends HorizontalDirectionalBlock implement
                 blockEntity.getInputSignals();
             }
         super.setPlacedBy(level, pos, state, placer, stack);
+    }
+
+    @Override
+    public void animateTick(BlockState state, Level level, BlockPos pos, RandomSource random) {
+        if (state.getValue(POWERED) && (!(level.getBlockEntity(pos) instanceof IntegratedCircuitBlockEntity blockEntity) || !blockEntity.isHidden())) {
+            spawnParticles(level, pos);
+        }
+    }
+
+    // copied from RedstoneOreBlock
+    private static void spawnParticles(Level level, BlockPos pos) {
+        RandomSource randomsource = level.random;
+        for (Direction direction : Direction.values()) {
+            BlockPos blockpos = pos.relative(direction);
+            if (!level.getBlockState(blockpos).isSolidRender()) {
+                Direction.Axis direction$axis = direction.getAxis();
+                double d1 = direction$axis == Direction.Axis.X ? 0.5 + 0.5625 * (double)direction.getStepX() : (double)randomsource.nextFloat();
+                double d2 = direction$axis == Direction.Axis.Y ? 0.5 + 0.5625 * (double)direction.getStepY() : (double)randomsource.nextFloat();
+                double d3 = direction$axis == Direction.Axis.Z ? 0.5 + 0.5625 * (double)direction.getStepZ() : (double)randomsource.nextFloat();
+                level.addParticle(
+                        PARTICLE, (double)pos.getX() + d1, (double)pos.getY() + d2, (double)pos.getZ() + d3, 0.0, 0.0, 0.0
+                );
+            }
+        }
     }
 }

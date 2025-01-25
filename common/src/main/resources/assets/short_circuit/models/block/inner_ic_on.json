@@ -1,7 +1,6 @@
 {
 	"credit": "Made with Blockbench",
 	"ambientocclusion": false,
-	"render_type": "minecraft:cutout",
 	"textures": {
 		"slab": "block/smooth_stone",
 		"particle": "short_circuit:block/integrated_circuit_on",

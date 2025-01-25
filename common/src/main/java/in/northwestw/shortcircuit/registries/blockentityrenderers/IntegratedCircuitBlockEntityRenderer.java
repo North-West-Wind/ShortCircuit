@@ -7,10 +7,11 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.block.BlockRenderDispatcher;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
-import net.minecraft.core.Direction;
+import net.minecraft.core.BlockPos;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import org.joml.Quaternionf;
 
@@ -51,6 +52,20 @@ public class IntegratedCircuitBlockEntityRenderer implements BlockEntityRenderer
                     in.northwestw.shortcircuit.registries.Blocks.INNER_IC.get().defaultBlockState().setValue(BlockStateProperties.POWERED, blockEntity.getBlockState().getValue(BlockStateProperties.POWERED)),
                     poseStack, bufferSource, packedLight, packedOverlay
             );
+        } else {
+            // intentional repeated scaling so blocks don't clip out
+            poseStack.scale(HIDDEN_SCALE, HIDDEN_SCALE, HIDDEN_SCALE);
+            poseStack.translate(HIDDEN_TRANSLATE, 0, HIDDEN_TRANSLATE);
+            float scale = 1f / 2;
+            poseStack.scale(scale, scale, scale);
+            int count = 0;
+            for (BlockState state : blockEntity.blocks) {
+                BlockPos vec = new BlockPos(count % 2, (count / 2) % 2, (count / 4) % 2);
+                poseStack.translate(vec.getX(), vec.getY(), vec.getZ());
+                this.blockRenderDispatcher.renderSingleBlock(state, poseStack, bufferSource, packedLight, packedOverlay);
+                poseStack.translate(-vec.getX(), -vec.getY(), -vec.getZ());
+                count++;
+            }
         }
 
         poseStack.popPose();

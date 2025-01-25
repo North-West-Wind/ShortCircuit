@@ -30,6 +30,7 @@
   "container.short_circuit.truth_assigner.error.3": "Circuit was detroyed",
 
   "tooltip.short_circuit.circuit": "UUID: %s",
+  "tooltip.short_circuit.circuit.color": "Color: %s",
   "tooltip.short_circuit.circuit_board": "You should not be able to obtain this.",
 
   "action.poking_stick.change": "Exterior size: %d",

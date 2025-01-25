@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:block/air",
+  "textures": {
+    "particle": "short_circuit:block/integrated_circuit"
+  }
+}

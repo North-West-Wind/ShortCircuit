@@ -4,7 +4,7 @@
       "model": "short_circuit:block/circuit"
     },
     "colored=true": {
-      "model": "minecraft:block/air"
+      "model": "short_circuit:block/circuit_air_ic"
     }
   }
 }

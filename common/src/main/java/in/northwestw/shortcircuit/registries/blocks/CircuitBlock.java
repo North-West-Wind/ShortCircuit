@@ -17,6 +17,7 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
@@ -100,7 +101,11 @@ public class CircuitBlock extends HorizontalDirectionalBlock implements EntityBl
     public void appendHoverText(ItemStack stack, Item.TooltipContext ctx, List<Component> components, TooltipFlag flag) {
         super.appendHoverText(stack, ctx, components, flag);
         if (stack.has(DataComponents.UUID.get())) {
-            components.add(Component.translatable("tooltip.short_circuit.circuit", stack.get(DataComponents.UUID.get()).uuid().toString()));
+            components.add(Component.translatable("tooltip.short_circuit.circuit", stack.get(DataComponents.UUID.get()).uuid().toString()).withColor(0x7f7f7f));
+        }
+        if (stack.has(DataComponents.SHORT.get())) {
+            DyeColor color = DyeColor.byId(stack.get(DataComponents.SHORT.get()));
+            components.add(Component.translatable("tooltip.short_circuit.circuit.color", Component.translatable("color.minecraft." + color.getName())).withColor(color.getTextColor()));
         }
     }
 
@@ -112,7 +117,7 @@ public class CircuitBlock extends HorizontalDirectionalBlock implements EntityBl
     @SuppressWarnings("unchecked")
     @Override
     public @Nullable <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
-        return type == BlockEntities.CIRCUIT.get() ? CircuitBlockEntity::tick : null;
+        return type == BlockEntities.CIRCUIT.get() ? (pLevel, pPos, pState, blockEntity) -> ((CircuitBlockEntity) blockEntity).tick() : null;
     }
 
     @Override
@@ -132,6 +137,8 @@ public class CircuitBlock extends HorizontalDirectionalBlock implements EntityBl
             ItemStack newStack = new ItemStack(Items.CIRCUIT.get(), stack.getCount());
             newStack.applyComponents(stack.getComponents());
             newStack.set(DataComponents.UUID.get(), new UUIDDataComponent(blockEntity.getUuid()));
+            if (blockEntity.getColor() != null)
+                newStack.set(DataComponents.SHORT.get(), (short) blockEntity.getColor().getId());
             newStack.set(net.minecraft.core.component.DataComponents.ITEM_MODEL, ShortCircuitCommon.rl("circuit"));
             player.setItemInHand(hand, newStack);
             player.playSound(SoundEvents.BEACON_ACTIVATE, 0.5f, 1);
@@ -172,6 +179,8 @@ public class CircuitBlock extends HorizontalDirectionalBlock implements EntityBl
                 blockEntity.setUuid(stack.get(DataComponents.UUID.get()).uuid());
                 if (stack.has(net.minecraft.core.component.DataComponents.CUSTOM_NAME))
                     blockEntity.setName(stack.get(net.minecraft.core.component.DataComponents.CUSTOM_NAME));
+                if (stack.has(DataComponents.SHORT.get()))
+                    blockEntity.setColor(DyeColor.byId(stack.get(DataComponents.SHORT.get())));
                 if (!level.dimension().equals(Constants.CIRCUIT_BOARD_DIMENSION)) {
                     blockEntity.reloadRuntime();
                     blockEntity.getInputSignals();

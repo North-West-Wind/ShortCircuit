@@ -31,7 +31,6 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.level.ChunkPos;
-import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -58,9 +57,9 @@ public class CircuitBlockEntity extends BlockEntity {
         this.inputs = new byte[6];
     }
 
-    public static <T extends BlockEntity> void tick(Level level, BlockPos pos, BlockState state, T t) {
-        if (t instanceof CircuitBlockEntity blockEntity && blockEntity.shouldTick())
-            blockEntity.updateInnerBlocks();
+    public void tick() {
+        if (this.shouldTick())
+            this.updateInnerBlocks();
     }
 
     public boolean shouldTick() {
@@ -330,6 +329,7 @@ public class CircuitBlockEntity extends BlockEntity {
     protected void collectImplicitComponents(DataComponentMap.Builder components) {
         super.collectImplicitComponents(components);
         components.set(DataComponents.UUID.get(), new UUIDDataComponent(this.uuid));
+        if (this.color != null) components.set(DataComponents.SHORT.get(), (short) this.color.getId());
         if (this.name != null) components.set(net.minecraft.core.component.DataComponents.CUSTOM_NAME, this.name);
     }
 

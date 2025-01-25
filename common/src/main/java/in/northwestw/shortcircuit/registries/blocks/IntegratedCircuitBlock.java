@@ -19,6 +19,7 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
@@ -88,7 +89,11 @@ public class IntegratedCircuitBlock extends HorizontalDirectionalBlock implement
     public void appendHoverText(ItemStack stack, Item.TooltipContext ctx, List<Component> components, TooltipFlag flag) {
         super.appendHoverText(stack, ctx, components, flag);
         if (stack.has(DataComponents.UUID.get())) {
-            components.add(Component.translatable("tooltip.short_circuit.circuit", stack.get(DataComponents.UUID.get()).uuid().toString()));
+            components.add(Component.translatable("tooltip.short_circuit.circuit", stack.get(DataComponents.UUID.get()).uuid().toString()).withColor(0x7f7f7f));
+        }
+        if (stack.has(DataComponents.SHORT.get())) {
+            DyeColor color = DyeColor.byId(stack.get(DataComponents.SHORT.get()));
+            components.add(Component.translatable("tooltip.short_circuit.circuit.color", Component.translatable("color.minecraft." + color.getName())).withColor(color.getTextColor()));
         }
     }
 
@@ -98,6 +103,8 @@ public class IntegratedCircuitBlock extends HorizontalDirectionalBlock implement
             ItemStack newStack = new ItemStack(Items.INTEGRATED_CIRCUIT.get(), stack.getCount());
             newStack.applyComponents(stack.getComponents());
             newStack.set(DataComponents.UUID.get(), new UUIDDataComponent(blockEntity.getUuid()));
+            if (blockEntity.getColor() != null)
+                newStack.set(DataComponents.SHORT.get(), (short) blockEntity.getColor().getId());
             newStack.set(net.minecraft.core.component.DataComponents.ITEM_MODEL, ShortCircuitCommon.rl("integrated_circuit"));
             player.setItemInHand(hand, newStack);
             player.playSound(SoundEvents.BEACON_ACTIVATE, 0.5f, 1);
@@ -142,6 +149,8 @@ public class IntegratedCircuitBlock extends HorizontalDirectionalBlock implement
                 blockEntity.setUuid(stack.get(DataComponents.UUID.get()).uuid());
                 if (stack.has(net.minecraft.core.component.DataComponents.CUSTOM_NAME))
                     blockEntity.setName(stack.get(net.minecraft.core.component.DataComponents.CUSTOM_NAME));
+                if (stack.has(DataComponents.SHORT.get()))
+                    blockEntity.setColor(DyeColor.byId(stack.get(DataComponents.SHORT.get())));
                 blockEntity.getInputSignals();
             }
         super.setPlacedBy(level, pos, state, placer, stack);

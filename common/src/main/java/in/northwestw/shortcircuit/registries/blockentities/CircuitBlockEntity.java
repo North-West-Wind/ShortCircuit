@@ -191,7 +191,10 @@ public class CircuitBlockEntity extends CommonCircuitBlockEntity {
             }
         }
         this.updateInputs();
-        outputBlockPos.forEach(pos -> runtimeLevel.neighborChanged(pos, runtimeLevel.getBlockState(pos).getBlock(), null));
+        outputBlockPos.forEach(pos -> {
+            BlockState state = runtimeLevel.getBlockState(pos);
+            runtimeLevel.neighborChanged(pos, state.getBlock(), pos.relative(DirectionHelper.circuitBoardFixedDirection(state.getValue(CircuitBoardBlock.DIRECTION))));
+        });
         this.chunkedOffset = 0;
         this.chunked = false;
         this.updateInnerBlocks();

@@ -1,7 +1,6 @@
 package in.northwestw.shortcircuit.registries.blocks;
 
 import com.mojang.serialization.MapCodec;
-import in.northwestw.shortcircuit.ShortCircuitCommon;
 import in.northwestw.shortcircuit.registries.*;
 import in.northwestw.shortcircuit.registries.blockentities.IntegratedCircuitBlockEntity;
 import in.northwestw.shortcircuit.registries.datacomponents.UUIDDataComponent;
@@ -12,7 +11,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.InteractionResult;
+import net.minecraft.world.ItemInteractionResult;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
@@ -33,8 +32,8 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
-import net.minecraft.world.level.redstone.Orientation;
 import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -42,7 +41,7 @@ import java.util.List;
 public class IntegratedCircuitBlock extends HorizontalDirectionalBlock implements EntityBlock {
     public static final BooleanProperty POWERED = BlockStateProperties.POWERED;
     public static final BooleanProperty COLORED = BooleanProperty.create("colored");
-    public static final DustParticleOptions PARTICLE = new DustParticleOptions(0xFFDD00, 1.0F);
+    public static final DustParticleOptions PARTICLE = new DustParticleOptions(Vec3.fromRGB24(0xFFDD00).toVector3f(), 1.0F);
 
     public IntegratedCircuitBlock(Properties pProperties) {
         super(pProperties);
@@ -97,24 +96,23 @@ public class IntegratedCircuitBlock extends HorizontalDirectionalBlock implement
     }
 
     @Override
-    protected InteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult result) {
+    protected ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult result) {
         if ((stack.is(Items.CIRCUIT.get()) || stack.is(Items.INTEGRATED_CIRCUIT.get())) && !player.isCrouching() && level.getBlockEntity(pos) instanceof IntegratedCircuitBlockEntity blockEntity && blockEntity.isValid()) {
             ItemStack newStack = new ItemStack(Items.INTEGRATED_CIRCUIT.get(), stack.getCount());
             newStack.applyComponents(stack.getComponents());
             newStack.set(DataComponents.UUID.get(), new UUIDDataComponent(blockEntity.getUuid()));
             if (blockEntity.getColor() != null)
                 newStack.set(DataComponents.SHORT.get(), (short) blockEntity.getColor().getId());
-            newStack.set(net.minecraft.core.component.DataComponents.ITEM_MODEL, ShortCircuitCommon.rl("integrated_circuit"));
             player.setItemInHand(hand, newStack);
             player.playSound(SoundEvents.BEACON_ACTIVATE, 0.5f, 1);
-            return InteractionResult.SUCCESS.heldItemTransformedTo(newStack);
+            return ItemInteractionResult.SUCCESS;
         }
         return super.useItemOn(stack, state, level, pos, player, hand, result);
     }
 
     @Override
-    protected void neighborChanged(BlockState state, Level level, BlockPos pos, Block neighborBlock, @Nullable Orientation orientation, boolean movedByPiston) {
-        super.neighborChanged(state, level, pos, neighborBlock, orientation, movedByPiston);
+    protected void neighborChanged(BlockState state, Level level, BlockPos pos, Block neighborBlock, BlockPos neighborPos, boolean movedByPiston) {
+        super.neighborChanged(state, level, pos, neighborBlock, neighborPos, movedByPiston);
         if (level.getBlockEntity(pos) instanceof IntegratedCircuitBlockEntity blockEntity)
             blockEntity.updateInputs();
     }
@@ -170,7 +168,7 @@ public class IntegratedCircuitBlock extends HorizontalDirectionalBlock implement
         RandomSource randomsource = level.random;
         for (Direction direction : Direction.values()) {
             BlockPos blockpos = pos.relative(direction);
-            if (!level.getBlockState(blockpos).isSolidRender()) {
+            if (!level.getBlockState(blockpos).isSolidRender(level, pos)) {
                 Direction.Axis direction$axis = direction.getAxis();
                 double d1 = direction$axis == Direction.Axis.X ? 0.5 + 0.5625 * (double)direction.getStepX() : (double)randomsource.nextFloat();
                 double d2 = direction$axis == Direction.Axis.Y ? 0.5 + 0.5625 * (double)direction.getStepY() : (double)randomsource.nextFloat();

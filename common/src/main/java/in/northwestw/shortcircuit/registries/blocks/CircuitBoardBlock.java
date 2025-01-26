@@ -27,7 +27,6 @@ import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.block.state.properties.EnumProperty;
 import net.minecraft.world.level.block.state.properties.IntegerProperty;
-import net.minecraft.world.level.redstone.Orientation;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -80,12 +79,11 @@ public class CircuitBoardBlock extends Block implements EntityBlock {
     }
 
     @Override
-    protected void neighborChanged(BlockState state, Level level, BlockPos pos, Block neighborBlock, @Nullable Orientation orientation, boolean movedByPiston) {
-        super.neighborChanged(state, level, pos, neighborBlock, orientation, movedByPiston);
+    protected void neighborChanged(BlockState state, Level level, BlockPos pos, Block neighborBlock, BlockPos neighborPos, boolean movedByPiston) {
+        super.neighborChanged(state, level, pos, neighborBlock, neighborPos, movedByPiston);
         if (state.getValue(MODE) != Mode.OUTPUT || neighborBlock == Blocks.CIRCUIT_BOARD.get()) return;
         if (level.getBlockEntity(pos) instanceof CircuitBoardBlockEntity blockEntity) {
             Direction direction = DirectionHelper.circuitBoardFixedDirection(state.getValue(DIRECTION)).getOpposite();
-            BlockPos neighborPos = pos.relative(direction);
             BlockState neighborState = level.getBlockState(neighborPos);
             if (!neighborState.is(Blocks.CIRCUIT_BOARD.get()) && !neighborState.isAir()) {
                 blockEntity.updateCircuitBlock(level.getSignal(neighborPos, direction), state.getValue(DIRECTION));

@@ -10,6 +10,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.Item;
@@ -26,7 +27,7 @@ public class LabellingStickItem extends Item {
     }
 
     @Override
-    public InteractionResult use(Level level, Player player, InteractionHand hand) {
+    public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
         HitResult hitresult = getPlayerPOVHitResult(level, player, ClipContext.Fluid.NONE);
         if (hitresult.getType() == HitResult.Type.MISS) return this.changeMode(player.getItemInHand(hand), player);
         return super.use(level, player, hand);
@@ -75,12 +76,12 @@ public class LabellingStickItem extends Item {
         return InteractionResult.SUCCESS;
     }
 
-    private InteractionResult changeMode(ItemStack stack, Player player) {
+    private InteractionResultHolder<ItemStack> changeMode(ItemStack stack, Player player) {
         boolean copyPasteMode = stack.getOrDefault(DataComponents.BIT.get(), false);
         stack.set(DataComponents.BIT.get(), !copyPasteMode);
         player.displayClientMessage(Component.translatable("action.labelling_stick.change." + (!copyPasteMode ? "copy" : "cycle")), true);
         player.playSound(SoundEvents.CHICKEN_EGG);
-        return InteractionResult.SUCCESS;
+        return InteractionResultHolder.success(stack);
     }
 
     private InteractionResult toggleAnnotation(UseOnContext context) {

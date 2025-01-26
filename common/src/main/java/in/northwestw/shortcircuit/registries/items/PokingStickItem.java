@@ -20,6 +20,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -27,7 +28,7 @@ import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.portal.TeleportTransition;
+import net.minecraft.world.level.portal.DimensionTransition;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 
@@ -40,7 +41,7 @@ public class PokingStickItem extends Item {
     }
 
     @Override
-    public InteractionResult use(Level level, Player player, InteractionHand hand) {
+    public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
         HitResult hitresult = getPlayerPOVHitResult(level, player, ClipContext.Fluid.NONE);
         if (hitresult.getType() == HitResult.Type.MISS) return this.cycleBlockSize(player.getItemInHand(hand), player);
         return super.use(level, player, hand);
@@ -57,7 +58,7 @@ public class PokingStickItem extends Item {
         if (state.is(Blocks.CIRCUIT.get())) return this.useOnCircuitBlock(context);
         if (state.is(Blocks.INTEGRATED_CIRCUIT.get())) return this.useOnIntegratedCircuitBlock(context);
 
-        return this.cycleBlockSize(stack, player);
+        return this.cycleBlockSize(stack, player).getResult();
     }
 
     private InteractionResult useOnCircuitBlock(UseOnContext context) {
@@ -68,7 +69,7 @@ public class PokingStickItem extends Item {
         if (player.isCrouching()) {
             blockEntity.setHidden(!blockEntity.isHidden());
         } else {
-            TeleportTransition transition;
+            DimensionTransition transition;
             UUID uuid = blockEntity.getUuid();
             stack.set(DataComponents.LAST_POS.get(), new LastPosDataComponent(level.dimension().location(), player.position()));
             if (uuid == null) {
@@ -78,7 +79,7 @@ public class PokingStickItem extends Item {
                 transition = this.getDimensionTransition(uuid, level);
             }
 
-            if (transition != null) player.teleport(transition);
+            if (transition != null) player.changeDimension(transition);
         }
 
         return InteractionResult.SUCCESS;
@@ -97,7 +98,7 @@ public class PokingStickItem extends Item {
                 if (server == null) return InteractionResult.CONSUME;
                 LastPosDataComponent component = stack.get(DataComponents.LAST_POS.get());
                 ServerLevel serverLevel = server.getLevel(ResourceKey.create(Registries.DIMENSION, component.rl()));
-                player.teleport(new TeleportTransition(serverLevel, component.pos(), Vec3.ZERO, 0, 0, TeleportTransition.DO_NOTHING));
+                player.changeDimension(new DimensionTransition(serverLevel, component.pos(), Vec3.ZERO, 0, 0, DimensionTransition.DO_NOTHING));
                 stack.remove(DataComponents.LAST_POS.get());
             } else {
                 MinecraftServer server = level.getServer();
@@ -106,7 +107,7 @@ public class PokingStickItem extends Item {
                 ServerLevel serverLevel = server.getLevel(serverPlayer.getRespawnDimension());
                 BlockPos respawn = serverPlayer.getRespawnPosition();
                 if (respawn == null) respawn = serverLevel.getSharedSpawnPos();
-                player.teleport(new TeleportTransition(serverLevel, respawn.getCenter(), Vec3.ZERO, 0, 0, TeleportTransition.DO_NOTHING));
+                player.changeDimension(new DimensionTransition(serverLevel, respawn.getCenter(), Vec3.ZERO, 0, 0, DimensionTransition.DO_NOTHING));
             }
         }
         return InteractionResult.SUCCESS;
@@ -127,25 +128,25 @@ public class PokingStickItem extends Item {
         return stack.getOrDefault(DataComponents.SHORT.get(), (short) 4);
     }
 
-    private InteractionResult cycleBlockSize(ItemStack stack, Player player) {
+    private InteractionResultHolder<ItemStack> cycleBlockSize(ItemStack stack, Player player) {
         short old = stack.getOrDefault(DataComponents.SHORT.get(), (short) 4);
         short newVal = old == 256 ? 4 : (short) (old * 2);
         stack.set(DataComponents.SHORT.get(), newVal);
         player.displayClientMessage(Component.translatable("action.poking_stick.change", newVal), true);
         player.playSound(SoundEvents.CHICKEN_EGG);
-        return InteractionResult.SUCCESS;
+        return InteractionResultHolder.success(stack);
     }
 
-    private TeleportTransition getDimensionTransition(UUID uuid, Level level) {
+    private DimensionTransition getDimensionTransition(UUID uuid, Level level) {
         MinecraftServer server = level.getServer();
         if (server == null) return null;
         ServerLevel circuitBoardLevel = server.getLevel(Constants.CIRCUIT_BOARD_DIMENSION);
         if (circuitBoardLevel == null) return null;
         CircuitSavedData data = CircuitSavedData.getCircuitBoardData(circuitBoardLevel);
-        return new TeleportTransition(circuitBoardLevel, data.getCircuitStartingPos(uuid).offset(1, 1, 1).getCenter(), Vec3.ZERO, 0, 0, TeleportTransition.DO_NOTHING);
+        return new DimensionTransition(circuitBoardLevel, data.getCircuitStartingPos(uuid).offset(1, 1, 1).getCenter(), Vec3.ZERO, 0, 0, DimensionTransition.DO_NOTHING);
     }
 
-    private TeleportTransition getNewDimensionTransition(short blockSize, Level level, CircuitBlockEntity blockEntity) {
+    private DimensionTransition getNewDimensionTransition(short blockSize, Level level, CircuitBlockEntity blockEntity) {
         MinecraftServer server = level.getServer();
         if (server == null) return null;
         ServerLevel circuitBoardLevel = server.getLevel(Constants.CIRCUIT_BOARD_DIMENSION);
@@ -176,7 +177,7 @@ public class PokingStickItem extends Item {
                 }
             }
         }
-        return new TeleportTransition(circuitBoardLevel, startingPos.offset(1, 1, 1).getCenter(), Vec3.ZERO, 0, 0, TeleportTransition.DO_NOTHING);
+        return new DimensionTransition(circuitBoardLevel, startingPos.offset(1, 1, 1).getCenter(), Vec3.ZERO, 0, 0, DimensionTransition.DO_NOTHING);
     }
 
     private boolean isMiddleFour(int ii, int jj, int kk, short blockSize) {

@@ -115,7 +115,7 @@ public class IntegratedCircuitBlockEntity extends CommonCircuitBlockEntity {
             if (this.changed[ii]) {
                 BlockPos pos = this.getBlockPos().relative(DirectionHelper.relativeDirectionToFacing(RelativeDirection.fromId((byte) ii), direction));
                 this.level.neighborChanged(pos, this.level.getBlockState(pos).getBlock(), null);
-                this.level.updateNeighborsAtExceptFromFacing(pos, state.getBlock(), direction.getOpposite(), null);
+                this.level.updateNeighborsAtExceptFromFacing(pos, state.getBlock(), direction.getOpposite());
             }
     }
 

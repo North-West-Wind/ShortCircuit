@@ -36,14 +36,14 @@ public class FabricRegistryHelper implements IRegistryHelper {
     @Override
     public <T extends BlockEntity> Supplier<BlockEntityType<T>> registerBlockEntityType(String name, BlockEntitySupplier<T> factory, Supplier<Block> ...blocks) {
         ResourceLocation id = ResourceLocation.fromNamespaceAndPath(ShortCircuitCommon.MOD_ID, name);
-        BlockEntityType<T> type = BlockEntityType.register(id.toString(), factory::create, Arrays.stream(blocks).map(Supplier::get).toArray(Block[]::new));
+        BlockEntityType<T> type = BlockEntityType.register(id.toString(), BlockEntityType.Builder.of(factory::create, Arrays.stream(blocks).map(Supplier::get).toArray(Block[]::new)));
         return () -> type;
     }
 
     @Override
     public Supplier<Block> registerBlock(String name, Function<BlockBehaviour.Properties, Block> factory, BlockBehaviour.Properties properties) {
         ResourceLocation id = ResourceLocation.fromNamespaceAndPath(ShortCircuitCommon.MOD_ID, name);
-        Block block = Registry.register(BuiltInRegistries.BLOCK, id, factory.apply(properties.setId(ResourceKey.create(BuiltInRegistries.BLOCK.key(), id))));
+        Block block = Registry.register(BuiltInRegistries.BLOCK, id, factory.apply(properties));
         return () -> block;
     }
 
@@ -64,7 +64,7 @@ public class FabricRegistryHelper implements IRegistryHelper {
     @Override
     public <T extends Item> Supplier<T> registerItem(String name, Function<Item.Properties, T> function, Item.Properties properties) {
         ResourceLocation id = ResourceLocation.fromNamespaceAndPath(ShortCircuitCommon.MOD_ID, name);
-        T item = Registry.register(BuiltInRegistries.ITEM, id, function.apply(properties.setId(ResourceKey.create(BuiltInRegistries.ITEM.key(), id))));
+        T item = Registry.register(BuiltInRegistries.ITEM, id, function.apply(properties));
         return () -> item;
     }
 

@@ -40,12 +40,12 @@ public class ForgeRegistryHelper implements IRegistryHelper {
 
     @Override
     public <T extends BlockEntity> Supplier<BlockEntityType<T>> registerBlockEntityType(String name, BlockEntitySupplier<T> factory, Supplier<Block> ...blocks) {
-        return BLOCK_ENTITIES.register(name, () -> new BlockEntityType<>(factory::create, Arrays.stream(blocks).map(Supplier::get).collect(Collectors.toSet())));
+        return BLOCK_ENTITIES.register(name, () -> new BlockEntityType<>(factory::create, Arrays.stream(blocks).map(Supplier::get).collect(Collectors.toSet()), null));
     }
 
     @Override
     public Supplier<Block> registerBlock(String name, Function<BlockBehaviour.Properties, Block> factory, BlockBehaviour.Properties properties) {
-        return BLOCKS.register(name, () -> factory.apply(properties.setId(ResourceKey.create(Registries.BLOCK, ShortCircuitCommon.rl(name)))));
+        return BLOCKS.register(name, () -> factory.apply(properties));
     }
 
     @Override
@@ -60,7 +60,7 @@ public class ForgeRegistryHelper implements IRegistryHelper {
 
     @Override
     public <T extends Item> Supplier<T> registerItem(String name, Function<Item.Properties, T> function, Item.Properties properties) {
-        return ITEMS.register(name, () -> function.apply(properties.setId(ResourceKey.create(Registries.ITEM, ShortCircuitCommon.rl(name)))));
+        return ITEMS.register(name, () -> function.apply(properties));
     }
 
     @Override

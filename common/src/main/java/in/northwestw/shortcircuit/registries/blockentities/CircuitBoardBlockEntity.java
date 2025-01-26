@@ -68,6 +68,7 @@ public class CircuitBoardBlockEntity extends BlockEntity {
             Direction circuitDirection = circuitState.getValue(HorizontalDirectionalBlock.FACING);
             BlockPos updatePos = this.pos.relative(DirectionHelper.relativeDirectionToFacing(direction, circuitDirection));
             level.neighborChanged(updatePos, level.getBlockState(updatePos).getBlock(), this.pos);
+            level.neighborChanged(updatePos, level.getBlockState(updatePos).getBlock(), null);
             level.updateNeighborsAtExceptFromFacing(updatePos, circuitState.getBlock(), circuitDirection.getOpposite());
         }
     }

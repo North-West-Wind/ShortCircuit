@@ -25,7 +25,7 @@ This mod comes with 4 items you can craft:
 - Labelling Stick
 
 ### Circuit
-![Crafting recipe of a Circuit](https://github.com/North-West-Wind/ShortCircuit/blob/main/images/circuit.png?raw=true)
+![Crafting recipe of a Circuit](https://github.com/North-West-Wind/ShortCircuit/blob/main/images/circuit.png?raw=true)  
 A circuit item looks like a repeater with green torches. When placed, it is shown as a glass block with a carpet inside.
 This is an uninitialized circuit. To make it work, hold the Poking Stick, and right-click on it.
 You will be brought to the inside of the circuit.
@@ -46,7 +46,7 @@ This circuit is now ready to receive signals!
 You can duplicate circuits by right-clicking circuit items on a placed circuit block.
 
 ### Poking Stick
-![Crafting recipe of a Poking Stick](https://github.com/North-West-Wind/ShortCircuit/blob/main/images/poking_stick.png?raw=true)
+![Crafting recipe of a Poking Stick](https://github.com/North-West-Wind/ShortCircuit/blob/main/images/poking_stick.png?raw=true)  
 As introduced in the circuit section, the Poking Stick is the main way to interact with the circuit.
 However, there are additional uses for it.
 
@@ -57,7 +57,7 @@ You can also set the exterior size of a circuit using the Poking Stick.
 By right-clicking the item towards nothing, you can cycle sizes between 4 and 256 (only powers of 2).
 
 ### Truth Assigner
-![Crafting recipe of a Truth Assigner](https://github.com/North-West-Wind/ShortCircuit/blob/main/images/truth_assigner.png?raw=true)
+![Crafting recipe of a Truth Assigner](https://github.com/North-West-Wind/ShortCircuit/blob/main/images/truth_assigner.png?raw=true)  
 This is the "fast" part of Short Circuit.
 As circuits are made base on existing redstone components, they will have a certain amount of delay.
 The Truth Assigner (aka the washing machine) fixes this problem.
@@ -101,7 +101,7 @@ Using 2-bit for 3-input will result in 4x4x4=64 iterations, while using 1-bit wi
 If your circuit is not signal strength dependant, consider using 1 or 2-bit.
 
 ### Labelling Stick
-![Crafting recipe of a Labelling Stick](https://github.com/North-West-Wind/ShortCircuit/blob/main/images/labelling_stick.png?raw=true)
+![Crafting recipe of a Labelling Stick](https://github.com/North-West-Wind/ShortCircuit/blob/main/images/labelling_stick.png?raw=true)  
 The Labelling Stick is an item for changing colors of circuits.
 This is particularly useful for ICs, as all of them have the exact same model.
 Changing the color allow players to distinguish between circuits with different functionality.

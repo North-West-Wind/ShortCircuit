@@ -7,9 +7,15 @@
     "R"
   ],
   "key": {
-    "G": "minecraft:glass",
-    "P": "minecraft:ender_pearl",
-    "R": "minecraft:redstone"
+    "G": {
+      "item": "minecraft:glass"
+    },
+    "P": {
+      "item": "minecraft:ender_pearl"
+    },
+    "R": {
+      "item": "minecraft:redstone"
+    }
   },
   "result": {
     "id": "short_circuit:circuit",

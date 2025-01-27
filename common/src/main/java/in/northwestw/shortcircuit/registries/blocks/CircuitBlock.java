@@ -1,23 +1,21 @@
 package in.northwestw.shortcircuit.registries.blocks;
 
-import com.mojang.serialization.MapCodec;
 import in.northwestw.shortcircuit.Constants;
 import in.northwestw.shortcircuit.registries.*;
 import in.northwestw.shortcircuit.registries.blockentities.CircuitBlockEntity;
-import in.northwestw.shortcircuit.registries.datacomponents.UUIDDataComponent;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.Style;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.ItemInteractionResult;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.DyeColor;
-import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.context.BlockPlaceContext;
@@ -36,7 +34,7 @@ import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.phys.BlockHitResult;
-import org.jetbrains.annotations.NotNull;
+import net.minecraft.world.phys.HitResult;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -54,11 +52,6 @@ public class CircuitBlock extends HorizontalDirectionalBlock implements EntityBl
     }
 
     @Override
-    protected @NotNull MapCodec<CircuitBlock> codec() {
-        return Codecs.CIRCUIT.get();
-    }
-
-    @Override
     public BlockState getStateForPlacement(BlockPlaceContext pContext) {
         return this.defaultBlockState().setValue(FACING, pContext.getHorizontalDirection());
     }
@@ -70,12 +63,12 @@ public class CircuitBlock extends HorizontalDirectionalBlock implements EntityBl
     }
 
     @Override
-    public BlockState playerWillDestroy(Level level, BlockPos pos, BlockState state, Player player) {
+    public void playerWillDestroy(Level level, BlockPos pos, BlockState state, Player player) {
         BlockEntity blockentity = level.getBlockEntity(pos);
         if (blockentity instanceof CircuitBlockEntity circuitBlockEntity) {
             if (!player.isCreative() && circuitBlockEntity.isValid()) {
                 ItemStack stack = new ItemStack(Blocks.CIRCUIT.get());
-                stack.applyComponents(blockentity.collectComponents());
+                circuitBlockEntity.saveToItem(stack);
                 ItemEntity itementity = new ItemEntity(
                         level, (double)pos.getX() + 0.5, (double)pos.getY() + 0.5, (double)pos.getZ() + 0.5, stack
                 );
@@ -85,7 +78,7 @@ public class CircuitBlock extends HorizontalDirectionalBlock implements EntityBl
             circuitBlockEntity.removeRuntime();
         }
 
-        return super.playerWillDestroy(level, pos, state, player);
+        super.playerWillDestroy(level, pos, state, player);
     }
 
     @Override
@@ -96,14 +89,15 @@ public class CircuitBlock extends HorizontalDirectionalBlock implements EntityBl
     }
 
     @Override
-    public void appendHoverText(ItemStack stack, Item.TooltipContext ctx, List<Component> components, TooltipFlag flag) {
-        super.appendHoverText(stack, ctx, components, flag);
-        if (stack.has(DataComponents.UUID.get())) {
-            components.add(Component.translatable("tooltip.short_circuit.circuit", stack.get(DataComponents.UUID.get()).uuid().toString()).withColor(0x7f7f7f));
+    public void appendHoverText(ItemStack stack, @Nullable BlockGetter level, List<Component> components, TooltipFlag flag) {
+        super.appendHoverText(stack, level, components, flag);
+        CompoundTag tag = stack.getOrCreateTag();
+        if (tag.hasUUID("uuid")) {
+            components.add(Component.translatable("tooltip.short_circuit.circuit", tag.getUUID("uuid").toString()).withStyle(Style.EMPTY.withColor(0x7f7f7f)));
         }
-        if (stack.has(DataComponents.SHORT.get())) {
-            DyeColor color = DyeColor.byId(stack.get(DataComponents.SHORT.get()));
-            components.add(Component.translatable("tooltip.short_circuit.circuit.color", Component.translatable("color.minecraft." + color.getName())).withColor(color.getTextColor()));
+        if (tag.contains("color", CompoundTag.TAG_SHORT)) {
+            DyeColor color = DyeColor.byId(tag.getShort("color"));
+            components.add(Component.translatable("tooltip.short_circuit.circuit.color", Component.translatable("color.minecraft." + color.getName())).withStyle(Style.EMPTY.withColor(color.getTextColor())));
         }
     }
 
@@ -119,9 +113,15 @@ public class CircuitBlock extends HorizontalDirectionalBlock implements EntityBl
     }
 
     @Override
-    protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hitResult) {
+    public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hitResult) {
+        ItemStack stack = player.getItemInHand(hand);
+        if (stack.isEmpty()) return this.useWithoutItem(level, pos, player);
+        else return this.useItemOn(stack, level, pos, player, hand);
+    }
+
+    protected InteractionResult useWithoutItem(Level level, BlockPos pos, Player player) {
         if (level.getBlockEntity(pos) instanceof CircuitBlockEntity blockEntity) {
-            if (blockEntity.isFake()) return super.useWithoutItem(state, level, pos, player, hitResult);
+            if (blockEntity.isFake()) return InteractionResult.PASS;
             else {
                 player.displayClientMessage(Component.translatable("action.circuit.reload"), true);
                 CircuitBlockEntity.RuntimeReloadResult result = blockEntity.reloadRuntime();
@@ -132,40 +132,39 @@ public class CircuitBlock extends HorizontalDirectionalBlock implements EntityBl
         return InteractionResult.sidedSuccess(level.isClientSide);
     }
 
-    @Override
-    protected ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult result) {
-        if (stack.is(Items.POKING_STICK.get()) || stack.is(Items.LABELLING_STICK.get())) return ItemInteractionResult.SKIP_DEFAULT_BLOCK_INTERACTION; // handled by item
+    protected InteractionResult useItemOn(ItemStack stack, Level level, BlockPos pos, Player player, InteractionHand hand) {
+        if (stack.is(Items.POKING_STICK.get()) || stack.is(Items.LABELLING_STICK.get())) return InteractionResult.PASS; // handled by item
         else if ((stack.is(Items.CIRCUIT.get()) || stack.is(Items.INTEGRATED_CIRCUIT.get())) && !player.isCrouching() && level.getBlockEntity(pos) instanceof CircuitBlockEntity blockEntity && blockEntity.isValid()) {
             ItemStack newStack = new ItemStack(Items.CIRCUIT.get(), stack.getCount());
-            newStack.applyComponents(stack.getComponents());
-            newStack.set(DataComponents.UUID.get(), new UUIDDataComponent(blockEntity.getUuid()));
+            if (stack.hasTag()) newStack.setTag(stack.getTag());
+            CompoundTag tag = newStack.getOrCreateTag();
+            tag.putUUID("uuid", blockEntity.getUuid());
             if (blockEntity.getColor() != null)
-                newStack.set(DataComponents.SHORT.get(), (short) blockEntity.getColor().getId());
+                tag.putShort("color", (short) blockEntity.getColor().getId());
             player.setItemInHand(hand, newStack);
             player.playSound(SoundEvents.BEACON_ACTIVATE, 0.5f, 1);
-            return ItemInteractionResult.SUCCESS;
-        }
-        return super.useItemOn(stack, state, level, pos, player, hand, result);
+            return InteractionResult.SUCCESS;
+        } else return this.useWithoutItem(level, pos, player);
     }
 
     @Override
-    protected boolean isSignalSource(BlockState pState) {
+    public boolean isSignalSource(BlockState pState) {
         return true;
     }
 
     @Override
-    protected int getSignal(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
+    public int getSignal(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
         if (!(level.getBlockEntity(pos) instanceof CircuitBlockEntity blockEntity)) return 0;
         return blockEntity.getPower(direction);
     }
 
     @Override
-    protected int getDirectSignal(BlockState pBlockState, BlockGetter pBlockAccess, BlockPos pPos, Direction pSide) {
+    public int getDirectSignal(BlockState pBlockState, BlockGetter pBlockAccess, BlockPos pPos, Direction pSide) {
         return pBlockState.getSignal(pBlockAccess, pPos, pSide);
     }
 
     @Override
-    protected void neighborChanged(BlockState state, Level level, BlockPos pos, Block neighborBlock, BlockPos neighborPos, boolean movedByPiston) {
+    public void neighborChanged(BlockState state, Level level, BlockPos pos, Block neighborBlock, BlockPos neighborPos, boolean movedByPiston) {
         super.neighborChanged(state, level, pos, neighborBlock, neighborPos, movedByPiston);
         if (level.getBlockEntity(pos) instanceof CircuitBlockEntity blockEntity) {
             //ShortCircuitCommon.LOGGER.info("neighbor changed for circuit at {}", pos);
@@ -176,12 +175,13 @@ public class CircuitBlock extends HorizontalDirectionalBlock implements EntityBl
     @Override
     public void setPlacedBy(Level level, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack stack) {
         if (state.hasBlockEntity() && level.getBlockEntity(pos) instanceof CircuitBlockEntity blockEntity) {
-            if (stack.has(DataComponents.UUID.get())) {
-                blockEntity.setUuid(stack.get(DataComponents.UUID.get()).uuid());
-                if (stack.has(net.minecraft.core.component.DataComponents.CUSTOM_NAME))
-                    blockEntity.setName(stack.get(net.minecraft.core.component.DataComponents.CUSTOM_NAME));
-                if (stack.has(DataComponents.SHORT.get()))
-                    blockEntity.setColor(DyeColor.byId(stack.get(DataComponents.SHORT.get())));
+            CompoundTag tag = stack.getOrCreateTag();
+            if (tag.hasUUID("uuid")) {
+                blockEntity.setUuid(tag.getUUID("uuid"));
+                if (stack.hasCustomHoverName())
+                    blockEntity.setName(stack.getHoverName());
+                if (tag.contains("color", Tag.TAG_SHORT))
+                    blockEntity.setColor(DyeColor.byId(tag.getShort("color")));
                 if (!level.dimension().equals(Constants.CIRCUIT_BOARD_DIMENSION)) {
                     blockEntity.reloadRuntime();
                     blockEntity.updateInputs();

@@ -7,14 +7,11 @@ import in.northwestw.shortcircuit.data.TruthTableSavedData;
 import in.northwestw.shortcircuit.properties.RelativeDirection;
 import in.northwestw.shortcircuit.registries.BlockEntities;
 import in.northwestw.shortcircuit.registries.Blocks;
-import in.northwestw.shortcircuit.registries.DataComponents;
 import in.northwestw.shortcircuit.registries.Items;
 import in.northwestw.shortcircuit.registries.blocks.CircuitBoardBlock;
 import in.northwestw.shortcircuit.registries.blocks.TruthAssignerBlock;
-import in.northwestw.shortcircuit.registries.datacomponents.UUIDDataComponent;
 import in.northwestw.shortcircuit.registries.menus.TruthAssignerMenu;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.HolderLookup;
 import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
@@ -24,8 +21,10 @@ import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.Container;
 import net.minecraft.world.ContainerHelper;
 import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ContainerData;
 import net.minecraft.world.inventory.ContainerLevelAccess;
@@ -114,13 +113,43 @@ public class TruthAssignerBlockEntity extends BaseContainerBlockEntity implement
     }
 
     @Override
-    protected NonNullList<ItemStack> getItems() {
-        return this.items;
+    public boolean isEmpty() {
+        for(ItemStack stack : this.items) {
+            if (!stack.isEmpty()) {
+                return false;
+            }
+        }
+        return true;
     }
 
     @Override
-    protected void setItems(NonNullList<ItemStack> items) {
-        this.items = items;
+    public ItemStack getItem(int i) {
+        return this.items.get(i);
+    }
+
+    @Override
+    public ItemStack removeItem(int i, int i1) {
+        return ContainerHelper.removeItem(this.items, i, i1);
+    }
+
+    @Override
+    public ItemStack removeItemNoUpdate(int i) {
+        return ContainerHelper.takeItem(this.items, i);
+    }
+
+    @Override
+    public void setItem(int i, ItemStack itemStack) {
+        ItemStack stack = this.items.get(i);
+        boolean $$3 = !itemStack.isEmpty() && ItemStack.isSameItemSameTags(stack, itemStack);
+        this.items.set(i, itemStack);
+        if (itemStack.getCount() > this.getMaxStackSize()) {
+            itemStack.setCount(this.getMaxStackSize());
+        }
+    }
+
+    @Override
+    public boolean stillValid(Player player) {
+        return Container.stillValidBlockEntity(this, player);
     }
 
     @Override
@@ -134,9 +163,9 @@ public class TruthAssignerBlockEntity extends BaseContainerBlockEntity implement
     }
 
     @Override
-    protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
-        super.loadAdditional(tag, registries);
-        ContainerHelper.loadAllItems(tag, this.items, registries);
+    public void load(CompoundTag tag) {
+        super.load(tag);
+        ContainerHelper.loadAllItems(tag, this.items);
         this.working = tag.getBoolean("working");
         this.wait = tag.getBoolean("wait");
         this.maxDelay = tag.getInt("maxDelay");
@@ -149,9 +178,9 @@ public class TruthAssignerBlockEntity extends BaseContainerBlockEntity implement
     }
 
     @Override
-    protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
-        super.saveAdditional(tag, registries);
-        ContainerHelper.saveAllItems(tag, this.items, registries);
+    protected void saveAdditional(CompoundTag tag) {
+        super.saveAdditional(tag);
+        ContainerHelper.saveAllItems(tag, this.items);
         tag.putBoolean("working", this.working);
         tag.putBoolean("wait", this.wait);
         tag.putInt("maxDelay", this.maxDelay);
@@ -163,9 +192,9 @@ public class TruthAssignerBlockEntity extends BaseContainerBlockEntity implement
     }
 
     @Override
-    public CompoundTag getUpdateTag(HolderLookup.Provider resgitries) {
+    public CompoundTag getUpdateTag() {
         CompoundTag tag = new CompoundTag();
-        this.saveAdditional(tag, resgitries);
+        this.saveAdditional(tag);
         return tag;
     }
 
@@ -184,8 +213,9 @@ public class TruthAssignerBlockEntity extends BaseContainerBlockEntity implement
         CircuitBlockEntity blockEntity = (CircuitBlockEntity) this.level.getBlockEntity(this.getBlockPos().above());
         blockEntity.setFake(true);
         ItemStack input = this.getItem(0);
-        if (input.has(DataComponents.UUID.get()))
-            blockEntity.setUuid(input.get(DataComponents.UUID.get()).uuid());
+        CompoundTag tag = input.getOrCreateTag();
+        if (tag.contains("uuid"))
+            blockEntity.setUuid(tag.getUUID("uuid"));
         Pair<CircuitBlockEntity.RuntimeReloadResult, Map<RelativeDirection, CircuitBoardBlock.Mode>> pair = blockEntity.reloadRuntimeAndModeMap(Sets.newHashSet());
         CircuitBlockEntity.RuntimeReloadResult result = pair.getLeft();
         if (!result.isGood()) {
@@ -214,7 +244,9 @@ public class TruthAssignerBlockEntity extends BaseContainerBlockEntity implement
             // create integrated circuits by amount of circuits
             ItemStack input = this.getItem(0);
             ItemStack outputs = new ItemStack(Items.INTEGRATED_CIRCUIT.get(), input.getCount());
-            outputs.set(DataComponents.UUID.get(), new UUIDDataComponent(uuid));
+            CompoundTag tag = outputs.getOrCreateTag();
+            tag.putUUID("uuid", uuid);
+            outputs.setTag(tag);
             this.setItem(0, ItemStack.EMPTY);
             this.setItem(1, outputs);
         }
@@ -313,4 +345,9 @@ public class TruthAssignerBlockEntity extends BaseContainerBlockEntity implement
 
     @Override
     public void dataChanged(AbstractContainerMenu pContainerMenu, int pDataSlotIndex, int pValue) {}
+
+    @Override
+    public void clearContent() {
+
+    }
 }

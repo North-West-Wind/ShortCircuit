@@ -1,10 +1,8 @@
 package in.northwestw.shortcircuit.registries.blocks;
 
-import com.mojang.serialization.MapCodec;
 import in.northwestw.shortcircuit.properties.DirectionHelper;
 import in.northwestw.shortcircuit.properties.RelativeDirection;
 import in.northwestw.shortcircuit.registries.Blocks;
-import in.northwestw.shortcircuit.registries.Codecs;
 import in.northwestw.shortcircuit.registries.blockentities.CircuitBoardBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -12,7 +10,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.Style;
 import net.minecraft.network.chat.TextColor;
 import net.minecraft.util.StringRepresentable;
-import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.BlockGetter;
@@ -54,32 +51,27 @@ public class CircuitBoardBlock extends Block implements EntityBlock {
     }
 
     @Override
-    protected MapCodec<? extends Block> codec() {
-        return Codecs.CIRCUIT_BOARD.get();
-    }
-
-    @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
         builder.add(DIRECTION, ANNOTATED, MODE, POWER);
     }
 
     @Override
-    protected boolean isSignalSource(BlockState state) {
+    public boolean isSignalSource(BlockState state) {
         return state.getValue(MODE) != Mode.NONE;
     }
 
     @Override
-    protected int getSignal(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
+    public int getSignal(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
         return state.getValue(MODE) == Mode.INPUT && direction == DirectionHelper.circuitBoardFixedDirection(state.getValue(DIRECTION)) ? state.getValue(POWER) : 0;
     }
 
     @Override
-    protected int getDirectSignal(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
+    public int getDirectSignal(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
         return this.getSignal(state, level, pos, direction);
     }
 
     @Override
-    protected void neighborChanged(BlockState state, Level level, BlockPos pos, Block neighborBlock, BlockPos neighborPos, boolean movedByPiston) {
+    public void neighborChanged(BlockState state, Level level, BlockPos pos, Block neighborBlock, BlockPos neighborPos, boolean movedByPiston) {
         super.neighborChanged(state, level, pos, neighborBlock, neighborPos, movedByPiston);
         if (state.getValue(MODE) != Mode.OUTPUT || neighborBlock == Blocks.CIRCUIT_BOARD.get()) return;
         if (level.getBlockEntity(pos) instanceof CircuitBoardBlockEntity blockEntity) {
@@ -92,9 +84,9 @@ public class CircuitBoardBlock extends Block implements EntityBlock {
     }
 
     @Override
-    public void appendHoverText(ItemStack stack, Item.TooltipContext context, List<Component> components, TooltipFlag flag) {
+    public void appendHoverText(ItemStack stack, BlockGetter level, List<Component> components, TooltipFlag flag) {
         components.add(Component.translatable("tooltip.short_circuit.circuit_board").setStyle(Style.EMPTY.withColor(TextColor.fromRgb(0x7f7f7f)).withItalic(true)));
-        super.appendHoverText(stack, context, components, flag);
+        super.appendHoverText(stack, level, components, flag);
     }
 
     @Override

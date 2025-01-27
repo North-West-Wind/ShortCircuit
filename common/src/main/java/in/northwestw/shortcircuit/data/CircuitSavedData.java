@@ -79,7 +79,7 @@ public class CircuitSavedData extends SavedData {
         this.circuits.remove(uuid);
     }
 
-    public static CircuitSavedData load(CompoundTag tag, HolderLookup.Provider lookupProvider) {
+    public static CircuitSavedData load(CompoundTag tag) {
         CircuitSavedData data = new CircuitSavedData();
         for (Tag t : tag.getList("octolets", Tag.TAG_COMPOUND)) {
             CompoundTag tt = (CompoundTag) t;
@@ -93,7 +93,7 @@ public class CircuitSavedData extends SavedData {
     }
 
     @Override
-    public CompoundTag save(CompoundTag tag, HolderLookup.Provider registries) {
+    public CompoundTag save(CompoundTag tag) {
         ListTag list = new ListTag();
         this.octolets.forEach((integer, octolet) -> {
             CompoundTag pair = new CompoundTag();
@@ -117,12 +117,12 @@ public class CircuitSavedData extends SavedData {
     public static CircuitSavedData getCircuitBoardData(ServerLevel level) {
         ServerLevel circuitBoardLevel = level.getServer().getLevel(Constants.CIRCUIT_BOARD_DIMENSION);
         DimensionDataStorage storage = circuitBoardLevel.getDataStorage();
-        return storage.computeIfAbsent(new SavedData.Factory<>(CircuitSavedData::new, CircuitSavedData::load, null), "circuit_pos");
+        return storage.computeIfAbsent(CircuitSavedData::load, CircuitSavedData::new, "circuit_pos");
     }
 
     public static CircuitSavedData getRuntimeData(ServerLevel level) {
         ServerLevel runtimeLevel = level.getServer().getLevel(Constants.RUNTIME_DIMENSION);
         DimensionDataStorage storage = runtimeLevel.getDataStorage();
-        return storage.computeIfAbsent(new SavedData.Factory<>(CircuitSavedData::new, CircuitSavedData::load, null), "circuit_pos");
+        return storage.computeIfAbsent(CircuitSavedData::load, CircuitSavedData::new, "circuit_pos");
     }
 }

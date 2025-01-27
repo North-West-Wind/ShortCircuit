@@ -30,9 +30,9 @@ public class CircuitBoardBlockEntity extends BlockEntity {
     }
 
     @Override
-    protected void loadAdditional(CompoundTag tag, HolderLookup.Provider provider) {
-        super.loadAdditional(tag, provider);
-        if (tag.contains("dim")) this.dimension = ResourceKey.create(Registries.DIMENSION, ResourceLocation.parse(tag.getString("dim")));
+    public void load(CompoundTag tag) {
+        super.load(tag);
+        if (tag.contains("dim")) this.dimension = ResourceKey.create(Registries.DIMENSION, new ResourceLocation(tag.getString("dim")));
         if (tag.contains("pos")) {
             int[] arr = tag.getIntArray("pos");
             this.pos = new BlockPos(arr[0], arr[1], arr[2]);
@@ -41,8 +41,8 @@ public class CircuitBoardBlockEntity extends BlockEntity {
     }
 
     @Override
-    protected void saveAdditional(CompoundTag tag, HolderLookup.Provider provider) {
-        super.saveAdditional(tag, provider);
+    protected void saveAdditional(CompoundTag tag) {
+        super.saveAdditional(tag);
         if (this.dimension != null) tag.putString("dim", this.dimension.location().toString());
         if (this.pos != null) tag.putIntArray("pos", Lists.newArrayList(this.pos.getX(), this.pos.getY(), this.pos.getZ()));
         if (this.runtimeUuid != null) tag.putUUID("uuid", this.runtimeUuid);

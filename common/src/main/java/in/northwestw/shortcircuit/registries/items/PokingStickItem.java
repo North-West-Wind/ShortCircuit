@@ -1,19 +1,21 @@
 package in.northwestw.shortcircuit.registries.items;
 
+import com.google.common.collect.Sets;
 import in.northwestw.shortcircuit.Constants;
 import in.northwestw.shortcircuit.data.CircuitSavedData;
 import in.northwestw.shortcircuit.data.Octolet;
 import in.northwestw.shortcircuit.properties.RelativeDirection;
 import in.northwestw.shortcircuit.registries.Blocks;
-import in.northwestw.shortcircuit.registries.DataComponents;
 import in.northwestw.shortcircuit.registries.blockentities.CircuitBlockEntity;
 import in.northwestw.shortcircuit.registries.blockentities.IntegratedCircuitBlockEntity;
 import in.northwestw.shortcircuit.registries.blocks.CircuitBoardBlock;
-import in.northwestw.shortcircuit.registries.datacomponents.LastPosDataComponent;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtUtils;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -28,7 +30,6 @@ import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.portal.DimensionTransition;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 
@@ -37,7 +38,6 @@ import java.util.UUID;
 public class PokingStickItem extends Item {
     public PokingStickItem(Properties properties) {
         super(properties);
-        properties.component(DataComponents.SHORT.get(), (short) 4);
     }
 
     @Override
@@ -71,7 +71,10 @@ public class PokingStickItem extends Item {
         } else {
             DimensionTransition transition;
             UUID uuid = blockEntity.getUuid();
-            stack.set(DataComponents.LAST_POS.get(), new LastPosDataComponent(level.dimension().location(), player.position()));
+            CompoundTag tag = stack.getOrCreateTag();
+            tag.putString("lastPosDim", level.dimension().location().toString());
+            tag.put("lastPos", NbtUtils.writeBlockPos(player.blockPosition()));
+            stack.setTag(tag);
             if (uuid == null) {
                 blockEntity.setBlockSize(this.getBlockSize(stack));
                 transition = this.getNewDimensionTransition(this.getBlockSize(stack), level, blockEntity);
@@ -79,7 +82,7 @@ public class PokingStickItem extends Item {
                 transition = this.getDimensionTransition(uuid, level);
             }
 
-            if (transition != null) player.changeDimension(transition);
+            if (transition != null) transition.teleportToDimension(player);
         }
 
         return InteractionResult.SUCCESS;
@@ -93,19 +96,21 @@ public class PokingStickItem extends Item {
             level.setBlockAndUpdate(context.getClickedPos(), state.setValue(CircuitBoardBlock.MODE, state.getValue(CircuitBoardBlock.MODE).nextMode()));
         } else {
             ItemStack stack = context.getItemInHand();
-            MinecraftServer server = level.getServer();
-            if (server == null) return InteractionResult.CONSUME;
-            if (stack.has(DataComponents.LAST_POS.get())) {
-                LastPosDataComponent component = stack.get(DataComponents.LAST_POS.get());
-                ServerLevel serverLevel = server.getLevel(ResourceKey.create(Registries.DIMENSION, component.rl()));
-                player.changeDimension(new DimensionTransition(serverLevel, component.pos(), Vec3.ZERO, 0, 0, DimensionTransition.DO_NOTHING));
-                stack.remove(DataComponents.LAST_POS.get());
+            CompoundTag tag = stack.getOrCreateTag();
+            if (tag.contains("lastPosDim", CompoundTag.TAG_STRING) && tag.contains("lastPos")) {
+                MinecraftServer server = level.getServer();
+                if (server == null) return InteractionResult.CONSUME;
+                ServerLevel serverLevel = server.getLevel(ResourceKey.create(Registries.DIMENSION, new ResourceLocation(tag.getString("lastPosDim"))));
+                new DimensionTransition(serverLevel, NbtUtils.readBlockPos(tag.getCompound("lastPos")).getCenter()).teleportToDimension(player);
+                tag.remove("lastPosDim");
+                tag.remove("lastPos");
+                stack.setTag(tag);
             } else {
                 ServerPlayer serverPlayer = (ServerPlayer) player;
                 ServerLevel serverLevel = server.getLevel(serverPlayer.getRespawnDimension());
                 BlockPos respawn = serverPlayer.getRespawnPosition();
                 if (respawn == null) respawn = serverLevel.getSharedSpawnPos();
-                player.changeDimension(new DimensionTransition(serverLevel, respawn.getCenter(), Vec3.ZERO, 0, 0, DimensionTransition.DO_NOTHING));
+                new DimensionTransition(serverLevel, respawn.getCenter()).teleportToDimension(player);
             }
         }
         return InteractionResult.SUCCESS;
@@ -123,13 +128,16 @@ public class PokingStickItem extends Item {
     }
 
     private short getBlockSize(ItemStack stack) {
-        return stack.getOrDefault(DataComponents.SHORT.get(), (short) 4);
+        short size = stack.getOrCreateTag().getShort("size");
+        return size < 4 ? 4 : size;
     }
 
     private InteractionResultHolder<ItemStack> cycleBlockSize(ItemStack stack, Player player) {
-        short old = stack.getOrDefault(DataComponents.SHORT.get(), (short) 4);
+        CompoundTag tag = stack.getOrCreateTag();
+        short old = tag.contains("size", CompoundTag.TAG_SHORT) ? tag.getShort("size") : 4;
         short newVal = old == 256 ? 4 : (short) (old * 2);
-        stack.set(DataComponents.SHORT.get(), newVal);
+        tag.putShort("size", newVal);
+        stack.setTag(tag);
         player.displayClientMessage(Component.translatable("action.poking_stick.change", newVal), true);
         player.playSound(SoundEvents.CHICKEN_EGG);
         return InteractionResultHolder.success(stack);
@@ -141,7 +149,7 @@ public class PokingStickItem extends Item {
         ServerLevel circuitBoardLevel = server.getLevel(Constants.CIRCUIT_BOARD_DIMENSION);
         if (circuitBoardLevel == null) return null;
         CircuitSavedData data = CircuitSavedData.getCircuitBoardData(circuitBoardLevel);
-        return new DimensionTransition(circuitBoardLevel, data.getCircuitStartingPos(uuid).offset(1, 1, 1).getCenter(), Vec3.ZERO, 0, 0, DimensionTransition.DO_NOTHING);
+        return new DimensionTransition(circuitBoardLevel, data.getCircuitStartingPos(uuid).offset(1, 1, 1).getCenter());
     }
 
     private DimensionTransition getNewDimensionTransition(short blockSize, Level level, CircuitBlockEntity blockEntity) {
@@ -175,7 +183,7 @@ public class PokingStickItem extends Item {
                 }
             }
         }
-        return new DimensionTransition(circuitBoardLevel, startingPos.offset(1, 1, 1).getCenter(), Vec3.ZERO, 0, 0, DimensionTransition.DO_NOTHING);
+        return new DimensionTransition(circuitBoardLevel, startingPos.offset(1, 1, 1).getCenter());
     }
 
     private boolean isMiddleFour(int ii, int jj, int kk, short blockSize) {
@@ -187,5 +195,11 @@ public class PokingStickItem extends Item {
                 (iiHalf && jjHalf) && (kk == 0 || kk == blockSize - 1) ||
                 (jjHalf && kkHalf) && (ii == 0 || ii == blockSize - 1) ||
                 (kkHalf && iiHalf) && (jj == 0 || jj == blockSize - 1);
+    }
+
+    private record DimensionTransition(ServerLevel level, Vec3 pos) {
+        private void teleportToDimension(Player player) {
+            player.teleportTo(this.level, this.pos.x, this.pos.y, this.pos.z, Sets.newHashSet(), 0, 0);
+        }
     }
 }

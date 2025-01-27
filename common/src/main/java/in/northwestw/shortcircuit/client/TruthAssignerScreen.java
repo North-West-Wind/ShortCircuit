@@ -11,6 +11,7 @@ import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.Style;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.AbstractContainerMenu;
@@ -18,8 +19,8 @@ import net.minecraft.world.inventory.ContainerListener;
 import net.minecraft.world.item.ItemStack;
 
 public class TruthAssignerScreen extends AbstractContainerScreen<TruthAssignerMenu> implements ContainerListener {
-    private static final ResourceLocation BASE_BACKGROUND = ResourceLocation.fromNamespaceAndPath(ShortCircuitCommon.MOD_ID, "textures/gui/container/truth_assigner.png");
-    private static final ResourceLocation BURN_PROGRESS_SPRITE = ResourceLocation.withDefaultNamespace("container/furnace/burn_progress");
+    private static final ResourceLocation BASE_BACKGROUND = new ResourceLocation(ShortCircuitCommon.MOD_ID, "textures/gui/container/truth_assigner.png");
+    private static final ResourceLocation BURN_PROGRESS_SPRITE = new ResourceLocation("textures/gui/container/furnace.png");
     private EditBox maxDelay;
     private Button wait, start, bits;
     private StringWidget error, currentInput;
@@ -71,12 +72,13 @@ public class TruthAssignerScreen extends AbstractContainerScreen<TruthAssignerMe
         graphics.blit(BASE_BACKGROUND, this.leftPos, this.topPos, 0, 0, this.imageWidth, this.imageHeight, 256, 256);
         if (this.menu.isWorking()) {
             // if we are working, color the arrow
-            graphics.blitSprite(BURN_PROGRESS_SPRITE, 24, 16, 0, 0, this.leftPos + 37, this.topPos + 34, 24, 16);
+            graphics.blit(BURN_PROGRESS_SPRITE, this.leftPos + 37, this.topPos + 34, 176, 14, 25, 16);
         }
     }
 
     @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
+        this.renderBackground(graphics);
         super.render(graphics, mouseX, mouseY, partialTick);
         this.renderTooltip(graphics, mouseX, mouseY);
     }
@@ -170,7 +172,7 @@ public class TruthAssignerScreen extends AbstractContainerScreen<TruthAssignerMe
     private void updateError() {
         int errorCode = this.menu.getError();
         if (errorCode == 0) this.error.setMessage(Component.empty());
-        else this.error.setMessage(Component.translatable("container.short_circuit.truth_assigner.error." + errorCode).withColor(0xff0000));
+        else this.error.setMessage(Component.translatable("container.short_circuit.truth_assigner.error." + errorCode).withStyle(Style.EMPTY.withColor(0xff0000)));
     }
 
     private void updateCurrentInput() {

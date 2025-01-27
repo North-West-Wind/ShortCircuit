@@ -168,7 +168,7 @@ public class CircuitBlock extends HorizontalDirectionalBlock implements EntityBl
         super.neighborChanged(state, level, pos, neighborBlock, orientation, movedByPiston);
         if (level.getBlockEntity(pos) instanceof CircuitBlockEntity blockEntity) {
             //ShortCircuitCommon.LOGGER.info("neighbor changed for circuit at {}", pos);
-            blockEntity.getInputSignals();
+            blockEntity.updateInputs();
         }
     }
 
@@ -183,7 +183,7 @@ public class CircuitBlock extends HorizontalDirectionalBlock implements EntityBl
                     blockEntity.setColor(DyeColor.byId(stack.get(DataComponents.SHORT.get())));
                 if (!level.dimension().equals(Constants.CIRCUIT_BOARD_DIMENSION)) {
                     blockEntity.reloadRuntime();
-                    blockEntity.getInputSignals();
+                    blockEntity.updateInputs();
                 } else if (placer instanceof Player player)
                     player.displayClientMessage(Component.translatable("warning.circuit.place.circuit_board").withStyle(Style.EMPTY.withColor(0xffff00)), true);
             }

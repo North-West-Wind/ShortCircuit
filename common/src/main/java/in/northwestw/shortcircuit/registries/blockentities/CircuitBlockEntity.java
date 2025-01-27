@@ -10,43 +10,33 @@ import in.northwestw.shortcircuit.properties.DirectionHelper;
 import in.northwestw.shortcircuit.properties.RelativeDirection;
 import in.northwestw.shortcircuit.registries.BlockEntities;
 import in.northwestw.shortcircuit.registries.Blocks;
-import in.northwestw.shortcircuit.registries.DataComponents;
+import in.northwestw.shortcircuit.registries.blockentities.common.CommonCircuitBlockEntity;
 import in.northwestw.shortcircuit.registries.blocks.CircuitBlock;
 import in.northwestw.shortcircuit.registries.blocks.CircuitBoardBlock;
-import in.northwestw.shortcircuit.registries.datacomponents.UUIDDataComponent;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
-import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.NbtUtils;
 import net.minecraft.nbt.Tag;
-import net.minecraft.network.chat.Component;
-import net.minecraft.network.protocol.Packet;
-import net.minecraft.network.protocol.game.ClientGamePacketListener;
-import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import org.apache.commons.lang3.tuple.Pair;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class CircuitBlockEntity extends BlockEntity {
-    private UUID uuid, runtimeUuid;
+public class CircuitBlockEntity extends CommonCircuitBlockEntity {
+    private UUID runtimeUuid;
     private short blockSize, ticks;
-    private boolean hidden, fake;
+    private boolean fake;
     private byte[] powers, inputs;
-    private Component name;
-    private DyeColor color;
     public Map<BlockPos, BlockState> blocks; // 8x8x8
 
     public CircuitBlockEntity(BlockPos pos, BlockState state) {
@@ -57,7 +47,9 @@ public class CircuitBlockEntity extends BlockEntity {
         this.inputs = new byte[6];
     }
 
+    @Override
     public void tick() {
+        super.tick();
         if (this.shouldTick())
             this.updateInnerBlocks();
     }
@@ -92,8 +84,9 @@ public class CircuitBlockEntity extends BlockEntity {
         level.sendBlockUpdated(this.getBlockPos(), this.getBlockState(), this.getBlockState(), Block.UPDATE_CLIENTS);
     }
 
+    @Override
     public boolean isValid() {
-        return this.uuid != null && !this.fake;
+        return super.isValid() && !this.fake;
     }
 
     public void resetRuntime() {
@@ -186,7 +179,7 @@ public class CircuitBlockEntity extends BlockEntity {
                 }
             }
         }
-        this.getInputSignals();
+        this.updateInputs();
         outputBlockPos.forEach(pos -> runtimeLevel.neighborChanged(pos, runtimeLevel.getBlockState(pos).getBlock(), null));
         this.updateInnerBlocks();
         return Pair.of(RuntimeReloadResult.SUCCESS, modeMap);
@@ -263,38 +256,29 @@ public class CircuitBlockEntity extends BlockEntity {
     @Override
     protected void loadAdditional(CompoundTag tag, HolderLookup.Provider provider) {
         super.loadAdditional(tag, provider);
-        if (tag.hasUUID("uuid")) this.uuid = tag.getUUID("uuid");
         this.runtimeUuid = tag.getUUID("runtimeUuid");
         this.blockSize = tag.getShort("blockSize");
-        this.hidden = tag.getBoolean("hidden");
         this.fake = tag.getBoolean("fake");
         this.powers = tag.getByteArray("powers");
         if (this.powers.length != 6) this.powers = new byte[6];
         this.inputs = tag.getByteArray("inputs");
         if (this.inputs.length != 6) this.inputs = new byte[6];
-        if (tag.contains("customName", Tag.TAG_STRING)) this.name = Component.Serializer.fromJson(tag.getString("customName"), provider);
-        if (tag.contains("color", Tag.TAG_BYTE)) this.color = DyeColor.byId(tag.getByte("color"));
         this.loadExtraFromData(tag);
     }
 
     @Override
     protected void saveAdditional(CompoundTag tag, HolderLookup.Provider provider) {
         super.saveAdditional(tag, provider);
-        if (this.uuid != null) tag.putUUID("uuid", this.uuid);
         tag.putUUID("runtimeUuid", this.runtimeUuid);
         tag.putShort("blockSize", this.blockSize);
-        tag.putBoolean("hidden", this.hidden);
         tag.putBoolean("fake", this.fake);
         tag.putByteArray("powers", this.powers);
         tag.putByteArray("inputs", this.inputs);
-        if (this.name != null) tag.putString("customName", Component.Serializer.toJson(this.name, provider));
-        if (this.color != null) tag.putByte("color", (byte) this.color.getId());
     }
 
     @Override
     public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
-        CompoundTag tag = new CompoundTag();
-        this.saveAdditional(tag, registries);
+        CompoundTag tag = super.getUpdateTag(registries);
         ListTag list = new ListTag();
         for (Map.Entry<BlockPos, BlockState> entry : this.blocks.entrySet()) {
             CompoundTag tuple = new CompoundTag();
@@ -320,30 +304,8 @@ public class CircuitBlockEntity extends BlockEntity {
         this.blocks = blocks;
     }
 
-    @Override
-    public @Nullable Packet<ClientGamePacketListener> getUpdatePacket() {
-        return ClientboundBlockEntityDataPacket.create(this);
-    }
-
-    @Override
-    protected void collectImplicitComponents(DataComponentMap.Builder components) {
-        super.collectImplicitComponents(components);
-        components.set(DataComponents.UUID.get(), new UUIDDataComponent(this.uuid));
-        if (this.color != null) components.set(DataComponents.SHORT.get(), (short) this.color.getId());
-        if (this.name != null) components.set(net.minecraft.core.component.DataComponents.CUSTOM_NAME, this.name);
-    }
-
     public UUID getRuntimeUuid() {
         return runtimeUuid;
-    }
-
-    public UUID getUuid() {
-        return uuid;
-    }
-
-    public void setUuid(UUID uuid) {
-        this.uuid = uuid;
-        this.setChanged();
     }
 
     public short getBlockSize() {
@@ -355,48 +317,9 @@ public class CircuitBlockEntity extends BlockEntity {
         this.setChanged();
     }
 
-    public boolean isHidden() {
-        return hidden;
-    }
-
-    public void setHidden(boolean hidden) {
-        this.hidden = hidden;
-        this.setChanged();
-        if (!this.hidden && !this.level.isClientSide) this.level.sendBlockUpdated(this.getBlockPos(), this.getBlockState(), this.getBlockState(), Block.UPDATE_CLIENTS);
-    }
-
     public void setFake(boolean fake) {
         this.fake = fake;
         this.setChanged();
-    }
-
-    public void setName(Component name) {
-        this.name = name;
-        this.setChanged();
-    }
-
-    public void cycleColor(boolean backwards) {
-        if (this.color == null) {
-            this.color = DyeColor.byId(backwards ? 15 : 0);
-            this.level.setBlock(this.getBlockPos(), this.getBlockState().setValue(CircuitBlock.COLORED, true), Block.UPDATE_CLIENTS);
-        }
-        else if (this.color.getId() < 15 && !backwards) this.color = DyeColor.byId(this.color.getId() + 1);
-        else if (this.color.getId() > 0 && backwards) this.color = DyeColor.byId(this.color.getId() - 1);
-        else {
-            this.color = null;
-            this.level.setBlock(this.getBlockPos(), this.getBlockState().setValue(CircuitBlock.COLORED, false), Block.UPDATE_CLIENTS);
-        }
-        this.setChanged();
-    }
-
-    public void setColor(DyeColor color) {
-        this.color = color;
-        this.level.setBlock(this.getBlockPos(), this.getBlockState().setValue(CircuitBlock.COLORED, this.color != null), Block.UPDATE_CLIENTS);
-        this.setChanged();
-    }
-
-    public DyeColor getColor() {
-        return color;
     }
 
     public boolean matchRuntimeUuid(UUID uuid) {
@@ -444,13 +367,17 @@ public class CircuitBlockEntity extends BlockEntity {
         return this.powers[direction.getId()];
     }
 
-    public void getInputSignals() {
+    @Override
+    public void updateInputs() {
+        // stop infinite updates when a side has ticked over n times
+        if (this.maxUpdateReached()) return;
         BlockPos pos = this.getBlockPos();
         BlockState state = this.getBlockState();
         for (Direction direction : Direction.values()) {
             RelativeDirection relDir = DirectionHelper.directionToRelativeDirection(state.getValue(HorizontalDirectionalBlock.FACING), direction);
             int signal = level.getSignal(pos.relative(direction), direction);
             if (this.inputs[relDir.getId()] != signal) {
+                this.sideUpdated(relDir);
                 this.inputs[relDir.getId()] = (byte) signal;
                 this.updateRuntimeBlock(signal, relDir);
             }

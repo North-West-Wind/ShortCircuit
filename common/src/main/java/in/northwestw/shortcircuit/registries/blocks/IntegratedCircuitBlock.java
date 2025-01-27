@@ -2,10 +2,7 @@ package in.northwestw.shortcircuit.registries.blocks;
 
 import com.mojang.serialization.MapCodec;
 import in.northwestw.shortcircuit.ShortCircuitCommon;
-import in.northwestw.shortcircuit.registries.Blocks;
-import in.northwestw.shortcircuit.registries.Codecs;
-import in.northwestw.shortcircuit.registries.DataComponents;
-import in.northwestw.shortcircuit.registries.Items;
+import in.northwestw.shortcircuit.registries.*;
 import in.northwestw.shortcircuit.registries.blockentities.IntegratedCircuitBlockEntity;
 import in.northwestw.shortcircuit.registries.datacomponents.UUIDDataComponent;
 import net.minecraft.core.BlockPos;
@@ -30,6 +27,8 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.EntityBlock;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityTicker;
+import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
@@ -116,10 +115,8 @@ public class IntegratedCircuitBlock extends HorizontalDirectionalBlock implement
     @Override
     protected void neighborChanged(BlockState state, Level level, BlockPos pos, Block neighborBlock, @Nullable Orientation orientation, boolean movedByPiston) {
         super.neighborChanged(state, level, pos, neighborBlock, orientation, movedByPiston);
-        if (level.getBlockEntity(pos) instanceof IntegratedCircuitBlockEntity blockEntity) {
-            blockEntity.getInputSignals();
-            blockEntity.updateChangedNeighbors();
-        }
+        if (level.getBlockEntity(pos) instanceof IntegratedCircuitBlockEntity blockEntity)
+            blockEntity.updateInputs();
     }
 
     @Override
@@ -143,6 +140,11 @@ public class IntegratedCircuitBlock extends HorizontalDirectionalBlock implement
     }
 
     @Override
+    public @Nullable <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
+        return type == BlockEntities.INTEGRATED_CIRCUIT.get() ? (pLevel, pos, pState, blockEntity) -> ((IntegratedCircuitBlockEntity) pLevel.getBlockEntity(pos)).tick() : null;
+    }
+
+    @Override
     public void setPlacedBy(Level level, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack stack) {
         if (state.hasBlockEntity() && level.getBlockEntity(pos) instanceof IntegratedCircuitBlockEntity blockEntity)
             if (stack.has(DataComponents.UUID.get())) {
@@ -151,7 +153,7 @@ public class IntegratedCircuitBlock extends HorizontalDirectionalBlock implement
                     blockEntity.setName(stack.get(net.minecraft.core.component.DataComponents.CUSTOM_NAME));
                 if (stack.has(DataComponents.SHORT.get()))
                     blockEntity.setColor(DyeColor.byId(stack.get(DataComponents.SHORT.get())));
-                blockEntity.getInputSignals();
+                blockEntity.updateInputs();
             }
         super.setPlacedBy(level, pos, state, placer, stack);
     }

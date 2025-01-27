@@ -7,10 +7,18 @@
     "iRi"
   ],
   "key": {
-    "I": "minecraft:iron_block",
-    "D": "minecraft:diamond",
-    "R": "minecraft:redstone",
-    "i": "minecraft:iron_ingot"
+    "I": {
+      "item": "minecraft:iron_block"
+    },
+    "D": {
+      "item": "minecraft:diamond"
+    },
+    "R": {
+      "item": "minecraft:redstone"
+    },
+    "i": {
+      "item": "minecraft:iron_ingot"
+    }
   },
   "result": {
     "id": "short_circuit:truth_assigner",

@@ -7,8 +7,12 @@
     "I  "
   ],
   "key": {
-    "N": "minecraft:name_tag",
-    "I": "minecraft:iron_ingot"
+    "N": {
+      "item": "minecraft:name_tag"
+    },
+    "I": {
+      "item": "minecraft:iron_ingot"
+    }
   },
   "result": {
     "id": "short_circuit:labelling_stick",

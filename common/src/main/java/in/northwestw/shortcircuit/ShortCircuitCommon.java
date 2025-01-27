@@ -16,8 +16,6 @@ public class ShortCircuitCommon {
         // blocks must be registered before block entities for fabric
         Blocks.trigger();
         BlockEntities.trigger();
-        Codecs.trigger();
-        DataComponents.trigger();
         Items.trigger();
         Menus.trigger();
         SoundEvents.trigger();
@@ -25,6 +23,6 @@ public class ShortCircuitCommon {
     }
 
     public static ResourceLocation rl(String name) {
-        return ResourceLocation.fromNamespaceAndPath(MOD_ID, name);
+        return new ResourceLocation(MOD_ID, name);
     }
 }

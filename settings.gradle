@@ -47,5 +47,4 @@ plugins {
 rootProject.name = 'ShortCircuit'
 include('common')
 include('fabric')
-include('neoforge')
 include('forge')

@@ -1,15 +1,14 @@
 package in.northwestw.shortcircuit.registries.blocks;
 
-import com.mojang.serialization.MapCodec;
 import in.northwestw.shortcircuit.registries.BlockEntities;
 import in.northwestw.shortcircuit.registries.Blocks;
-import in.northwestw.shortcircuit.registries.Codecs;
 import in.northwestw.shortcircuit.registries.blockentities.TruthAssignerBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.player.Player;
@@ -26,6 +25,7 @@ import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
 import org.jetbrains.annotations.Nullable;
 
 public class TruthAssignerBlock extends HorizontalDirectionalBlock implements EntityBlock {
@@ -37,11 +37,6 @@ public class TruthAssignerBlock extends HorizontalDirectionalBlock implements En
                 .setValue(FACING, Direction.NORTH)
                 .setValue(LIT, false)
         );
-    }
-
-    @Override
-    protected MapCodec<TruthAssignerBlock> codec() {
-        return Codecs.TRUTH_ASSIGNER.get();
     }
 
     @Override
@@ -65,16 +60,16 @@ public class TruthAssignerBlock extends HorizontalDirectionalBlock implements En
     }
 
     @Override
-    protected @Nullable MenuProvider getMenuProvider(BlockState state, Level level, BlockPos pos) {
+    public @Nullable MenuProvider getMenuProvider(BlockState state, Level level, BlockPos pos) {
         if (level.getBlockEntity(pos) instanceof TruthAssignerBlockEntity blockEntity) return blockEntity;
         else return null;
     }
 
     @Override
-    protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult result) {
+    public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hitResult) {
         if (!level.isClientSide && player instanceof ServerPlayer serverPlayer)
             serverPlayer.openMenu(state.getMenuProvider(level, pos));
-        return InteractionResult.SUCCESS_NO_ITEM_USED;
+        return InteractionResult.SUCCESS;
     }
 
     @Override
@@ -104,7 +99,7 @@ public class TruthAssignerBlock extends HorizontalDirectionalBlock implements En
     }
 
     @Override
-    protected void neighborChanged(BlockState state, Level level, BlockPos pos, Block neighborBlock, BlockPos neighborPos, boolean movedByPiston) {
+    public void neighborChanged(BlockState state, Level level, BlockPos pos, Block neighborBlock, BlockPos neighborPos, boolean movedByPiston) {
         super.neighborChanged(state, level, pos, neighborBlock, neighborPos, movedByPiston);
         if (pos.above().equals(neighborPos) && level.getBlockEntity(pos) instanceof TruthAssignerBlockEntity blockEntity) {
             if (!blockEntity.isWorking()) blockEntity.setErrorCode(1, level.getBlockState(neighborPos).isAir());

@@ -11,10 +11,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.saveddata.SavedData;
 import net.minecraft.world.level.storage.DimensionDataStorage;
 
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 public class TruthTableSavedData extends SavedData {
     private final Map<UUID, TruthTable> truthTables;
@@ -23,7 +20,7 @@ public class TruthTableSavedData extends SavedData {
         this.truthTables = Maps.newHashMap();
     }
 
-    public static TruthTableSavedData load(CompoundTag tag, HolderLookup.Provider lookupProvider) {
+    public static TruthTableSavedData load(CompoundTag tag) {
         TruthTableSavedData data = new TruthTableSavedData();
         for (Tag tt : tag.getList("tables", Tag.TAG_COMPOUND)) {
             CompoundTag tuple = (CompoundTag) tt;
@@ -34,7 +31,7 @@ public class TruthTableSavedData extends SavedData {
     }
 
     @Override
-    public CompoundTag save(CompoundTag tag, HolderLookup.Provider registries) {
+    public CompoundTag save(CompoundTag tag) {
         ListTag list = new ListTag();
         this.truthTables.forEach((uuid, table) -> {
             CompoundTag tuple = new CompoundTag();
@@ -61,7 +58,9 @@ public class TruthTableSavedData extends SavedData {
             else input |= val > 0 ? 1 : 0;
         }
         int output = table.signals.getOrDefault(input, table.defaultValue);
-        for (RelativeDirection dir: table.outputs.reversed()) {
+        List<RelativeDirection> reversed = new ArrayList<>(table.outputs);
+        Collections.reverse(reversed);
+        for (RelativeDirection dir: reversed) {
             signals.put(dir, output & 0xF);
             output >>= 4;
         }
@@ -94,6 +93,6 @@ public class TruthTableSavedData extends SavedData {
     public static TruthTableSavedData getTruthTableData(ServerLevel level) {
         ServerLevel circuitBoardLevel = level.getServer().getLevel(Constants.CIRCUIT_BOARD_DIMENSION);
         DimensionDataStorage storage = circuitBoardLevel.getDataStorage();
-        return storage.computeIfAbsent(new SavedData.Factory<>(TruthTableSavedData::new, TruthTableSavedData::load, null), "truth_table");
+        return storage.computeIfAbsent(TruthTableSavedData::load, TruthTableSavedData::new, "truth_table");
     }
 }

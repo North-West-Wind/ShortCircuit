@@ -20,15 +20,13 @@ import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 @Mod(ShortCircuitCommon.MOD_ID)
 public class ShortCircuitForge {
 
-    public ShortCircuitForge(FMLJavaModLoadingContext context) {
+    public ShortCircuitForge() {
         ShortCircuitCommon.init();
 
         // register
-        IEventBus bus = context.getModEventBus();
+        IEventBus bus = FMLJavaModLoadingContext.get().getModEventBus();
         ForgeRegistryHelper.BLOCK_ENTITIES.register(bus);
         ForgeRegistryHelper.BLOCKS.register(bus);
-        ForgeRegistryHelper.CODECS.register(bus);
-        ForgeRegistryHelper.DATA_COMPONENTS.register(bus);
         ForgeRegistryHelper.ITEMS.register(bus);
         ForgeRegistryHelper.MENUS.register(bus);
         ForgeRegistryHelper.SOUND_EVENTS.register(bus);

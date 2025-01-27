@@ -147,9 +147,9 @@ public class CircuitBlockEntity extends CommonCircuitBlockEntity {
                     runtimeLevel.setBlock(newPos, oldState, Block.UPDATE_KNOWN_SHAPE | Block.UPDATE_CLIENTS); // no neighbor update to prevent things from breaking
                     BlockEntity oldBlockEntity = circuitBoardLevel.getBlockEntity(oldPos);
                     if (oldBlockEntity != null) {
-                        CompoundTag save = oldBlockEntity.saveCustomOnly(circuitBoardLevel.registryAccess());
+                        CompoundTag save = oldBlockEntity.saveWithoutMetadata();
                         BlockEntity be = runtimeLevel.getBlockEntity(newPos);
-                        be.loadCustomOnly(save, runtimeLevel.registryAccess());
+                        be.load(save);
                         if (be instanceof CircuitBoardBlockEntity blockEntity) {
                             RelativeDirection dir = oldState.getValue(CircuitBoardBlock.DIRECTION);
                             CircuitBoardBlock.Mode mode = oldState.getValue(CircuitBoardBlock.MODE);
@@ -270,8 +270,8 @@ public class CircuitBlockEntity extends CommonCircuitBlockEntity {
     }
 
     @Override
-    protected void loadAdditional(CompoundTag tag, HolderLookup.Provider provider) {
-        super.loadAdditional(tag, provider);
+    public void load(CompoundTag tag) {
+        super.load(tag);
         this.runtimeUuid = tag.getUUID("runtimeUuid");
         this.blockSize = tag.getShort("blockSize");
         this.fake = tag.getBoolean("fake");
@@ -283,8 +283,8 @@ public class CircuitBlockEntity extends CommonCircuitBlockEntity {
     }
 
     @Override
-    protected void saveAdditional(CompoundTag tag, HolderLookup.Provider provider) {
-        super.saveAdditional(tag, provider);
+    protected void saveAdditional(CompoundTag tag) {
+        super.saveAdditional(tag);
         tag.putUUID("runtimeUuid", this.runtimeUuid);
         tag.putShort("blockSize", this.blockSize);
         tag.putBoolean("fake", this.fake);
@@ -293,8 +293,8 @@ public class CircuitBlockEntity extends CommonCircuitBlockEntity {
     }
 
     @Override
-    public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
-        CompoundTag tag = super.getUpdateTag(registries);
+    public CompoundTag getUpdateTag() {
+        CompoundTag tag = super.getUpdateTag();
         if (this.hidden) return tag;
         ListTag list = new ListTag(), testList = new ListTag();
         long size = tag.sizeInBytes() + (48 + 28 + 2 * 6 + 36) + (48 + 28 + 2 * 7 + 36 + 9);
@@ -331,9 +331,8 @@ public class CircuitBlockEntity extends CommonCircuitBlockEntity {
         Map<BlockPos, BlockState> blocks = Maps.newHashMap();
         for (Tag t : tag.getList("blocks", Tag.TAG_COMPOUND)) {
             CompoundTag tuple = (CompoundTag) t;
-            Optional<BlockPos> opt = NbtUtils.readBlockPos(tuple, "pos");
-            if (opt.isEmpty()) continue;
-            BlockPos pos = opt.get();
+            if (!tuple.contains("pos", Tag.TAG_COMPOUND)) continue;
+            BlockPos pos = NbtUtils.readBlockPos(tuple.getCompound("pos"));
             BlockState state = NbtUtils.readBlockState(this.level.holderLookup(Registries.BLOCK), tuple.getCompound("block"));
             blocks.put(pos, state);
         }

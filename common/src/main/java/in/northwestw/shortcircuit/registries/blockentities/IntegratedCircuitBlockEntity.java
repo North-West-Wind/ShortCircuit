@@ -66,9 +66,9 @@ public class IntegratedCircuitBlockEntity extends CommonCircuitBlockEntity {
     }
 
     @Override
-    protected void loadAdditional(CompoundTag tag, HolderLookup.Provider provider) {
+    public void load(CompoundTag tag) {
         UUID oldUuid = this.uuid;
-        super.loadAdditional(tag, provider);
+        super.load(tag);
         this.loadSignalMap(tag, "inputs", this.inputs);
         this.loadSignalMap(tag, "outputs", this.outputs);
         // upgrade to v1.0.2, default hidden to true
@@ -84,8 +84,8 @@ public class IntegratedCircuitBlockEntity extends CommonCircuitBlockEntity {
     }
 
     @Override
-    protected void saveAdditional(CompoundTag tag, HolderLookup.Provider provider) {
-        super.saveAdditional(tag, provider);
+    protected void saveAdditional(CompoundTag tag) {
+        super.saveAdditional(tag);
         this.saveSignalMap(tag, "inputs", this.inputs);
         this.saveSignalMap(tag, "outputs", this.outputs);
     }

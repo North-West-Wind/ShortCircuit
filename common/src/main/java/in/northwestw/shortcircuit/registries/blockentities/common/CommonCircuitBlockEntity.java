@@ -2,12 +2,8 @@ package in.northwestw.shortcircuit.registries.blockentities.common;
 
 import in.northwestw.shortcircuit.config.Config;
 import in.northwestw.shortcircuit.properties.RelativeDirection;
-import in.northwestw.shortcircuit.registries.DataComponents;
 import in.northwestw.shortcircuit.registries.blocks.CircuitBlock;
-import in.northwestw.shortcircuit.registries.datacomponents.UUIDDataComponent;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.HolderLookup;
-import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
@@ -15,6 +11,7 @@ import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.world.item.DyeColor;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -37,28 +34,28 @@ public class CommonCircuitBlockEntity extends BlockEntity {
     }
 
     @Override
-    protected void loadAdditional(CompoundTag tag, HolderLookup.Provider provider) {
-        super.loadAdditional(tag, provider);
+    public void load(CompoundTag tag) {
+        super.load(tag);
         if (tag.hasUUID("uuid")) this.uuid = tag.getUUID("uuid");
         else this.uuid = null;
         this.hidden = tag.getBoolean("hidden");
-        if (tag.contains("customName", Tag.TAG_STRING)) this.name = Component.Serializer.fromJson(tag.getString("customName"), provider);
+        if (tag.contains("customName", Tag.TAG_STRING)) this.name = Component.Serializer.fromJson(tag.getString("customName"));
         if (tag.contains("color", Tag.TAG_BYTE)) this.color = DyeColor.byId(tag.getByte("color"));
     }
 
     @Override
-    protected void saveAdditional(CompoundTag tag, HolderLookup.Provider provider) {
-        super.saveAdditional(tag, provider);
+    protected void saveAdditional(CompoundTag tag) {
+        super.saveAdditional(tag);
         if (this.uuid != null) tag.putUUID("uuid", this.uuid);
         tag.putBoolean("hidden", this.hidden);
-        if (this.name != null) tag.putString("customName", Component.Serializer.toJson(this.name, provider));
+        if (this.name != null) tag.putString("customName", Component.Serializer.toJson(this.name));
         if (this.color != null) tag.putByte("color", (byte) this.color.getId());
     }
 
     @Override
-    public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
+    public CompoundTag getUpdateTag() {
         CompoundTag tag = new CompoundTag();
-        this.saveAdditional(tag, registries);
+        this.saveAdditional(tag);
         return tag;
     }
 
@@ -68,11 +65,13 @@ public class CommonCircuitBlockEntity extends BlockEntity {
     }
 
     @Override
-    protected void collectImplicitComponents(DataComponentMap.Builder components) {
-        super.collectImplicitComponents(components);
-        components.set(DataComponents.UUID.get(), new UUIDDataComponent(this.uuid));
-        if (this.color != null) components.set(DataComponents.SHORT.get(), (short) this.color.getId());
-        if (this.name != null) components.set(net.minecraft.core.component.DataComponents.CUSTOM_NAME, this.name);
+    public void saveToItem(ItemStack stack) {
+        super.saveToItem(stack);
+        CompoundTag tag = stack.getOrCreateTag();
+        tag.putUUID("uuid", this.uuid);
+        if (this.color != null) tag.putShort("color", (short) this.color.getId());
+        stack.setTag(tag);
+        if (this.name != null) stack.setHoverName(this.name);
     }
 
     public boolean isValid() {

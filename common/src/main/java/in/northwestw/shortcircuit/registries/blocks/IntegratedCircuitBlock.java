@@ -1,22 +1,22 @@
 package in.northwestw.shortcircuit.registries.blocks;
 
-import com.mojang.serialization.MapCodec;
 import in.northwestw.shortcircuit.registries.*;
 import in.northwestw.shortcircuit.registries.blockentities.IntegratedCircuitBlockEntity;
-import in.northwestw.shortcircuit.registries.datacomponents.UUIDDataComponent;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.DustParticleOptions;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.Style;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.ItemInteractionResult;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.DyeColor;
-import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.context.BlockPlaceContext;
@@ -33,6 +33,7 @@ import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
@@ -52,11 +53,6 @@ public class IntegratedCircuitBlock extends HorizontalDirectionalBlock implement
     }
 
     @Override
-    protected MapCodec<IntegratedCircuitBlock> codec() {
-        return Codecs.INTEGRATED_CIRCUIT.get();
-    }
-
-    @Override
     public BlockState getStateForPlacement(BlockPlaceContext pContext) {
         return this.defaultBlockState().setValue(FACING, pContext.getHorizontalDirection());
     }
@@ -67,11 +63,11 @@ public class IntegratedCircuitBlock extends HorizontalDirectionalBlock implement
     }
 
     @Override
-    public BlockState playerWillDestroy(Level level, BlockPos pos, BlockState state, Player player) {
+    public void playerWillDestroy(Level level, BlockPos pos, BlockState state, Player player) {
         if (level.getBlockEntity(pos) instanceof IntegratedCircuitBlockEntity blockEntity) {
             if (!player.isCreative() && blockEntity.isValid()) {
                 ItemStack stack = new ItemStack(Blocks.INTEGRATED_CIRCUIT.get());
-                stack.applyComponents(blockEntity.collectComponents());
+                blockEntity.saveToItem(stack);
                 ItemEntity itementity = new ItemEntity(
                         level, (double)pos.getX() + 0.5, (double)pos.getY() + 0.5, (double)pos.getZ() + 0.5, stack
                 );
@@ -80,55 +76,66 @@ public class IntegratedCircuitBlock extends HorizontalDirectionalBlock implement
             }
         }
 
-        return super.playerWillDestroy(level, pos, state, player);
+        super.playerWillDestroy(level, pos, state, player);
     }
 
     @Override
-    public void appendHoverText(ItemStack stack, Item.TooltipContext ctx, List<Component> components, TooltipFlag flag) {
-        super.appendHoverText(stack, ctx, components, flag);
-        if (stack.has(DataComponents.UUID.get())) {
-            components.add(Component.translatable("tooltip.short_circuit.circuit", stack.get(DataComponents.UUID.get()).uuid().toString()).withColor(0x7f7f7f));
+    public void appendHoverText(ItemStack stack, BlockGetter level, List<Component> components, TooltipFlag flag) {
+        super.appendHoverText(stack, level, components, flag);
+        CompoundTag tag = stack.getOrCreateTag();
+        if (tag.hasUUID("uuid")) {
+            components.add(Component.translatable("tooltip.short_circuit.circuit", tag.getUUID("uuid").toString()).withStyle(Style.EMPTY.withColor(0x7f7f7f)));
         }
-        if (stack.has(DataComponents.SHORT.get())) {
-            DyeColor color = DyeColor.byId(stack.get(DataComponents.SHORT.get()));
-            components.add(Component.translatable("tooltip.short_circuit.circuit.color", Component.translatable("color.minecraft." + color.getName())).withColor(color.getTextColor()));
+        if (tag.contains("color", CompoundTag.TAG_SHORT)) {
+            DyeColor color = DyeColor.byId(tag.getShort("color"));
+            components.add(Component.translatable("tooltip.short_circuit.circuit.color", Component.translatable("color.minecraft." + color.getName())).withStyle(Style.EMPTY.withColor(color.getTextColor())));
         }
     }
 
     @Override
-    protected ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult result) {
+    public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hitResult) {
+        ItemStack stack = player.getItemInHand(hand);
+        if (!stack.isEmpty()) {
+            InteractionResult result = this.useItemOn(player.getItemInHand(hand), level, pos, player, hand);
+            if (result != null) return result;
+        }
+        return super.use(state, level, pos, player, hand, hitResult);
+    }
+
+    protected InteractionResult useItemOn(ItemStack stack, Level level, BlockPos pos, Player player, InteractionHand hand) {
         if ((stack.is(Items.CIRCUIT.get()) || stack.is(Items.INTEGRATED_CIRCUIT.get())) && !player.isCrouching() && level.getBlockEntity(pos) instanceof IntegratedCircuitBlockEntity blockEntity && blockEntity.isValid()) {
             ItemStack newStack = new ItemStack(Items.INTEGRATED_CIRCUIT.get(), stack.getCount());
-            newStack.applyComponents(stack.getComponents());
-            newStack.set(DataComponents.UUID.get(), new UUIDDataComponent(blockEntity.getUuid()));
+            if (stack.hasTag()) newStack.setTag(stack.getTag());
+            CompoundTag tag = newStack.getOrCreateTag();
+            tag.putUUID("uuid", blockEntity.getUuid());
             if (blockEntity.getColor() != null)
-                newStack.set(DataComponents.SHORT.get(), (short) blockEntity.getColor().getId());
+                tag.putShort("color", (short) blockEntity.getColor().getId());
             player.setItemInHand(hand, newStack);
             player.playSound(SoundEvents.BEACON_ACTIVATE, 0.5f, 1);
-            return ItemInteractionResult.SUCCESS;
+            return InteractionResult.SUCCESS;
         }
-        return super.useItemOn(stack, state, level, pos, player, hand, result);
+        return null;
     }
 
     @Override
-    protected void neighborChanged(BlockState state, Level level, BlockPos pos, Block neighborBlock, BlockPos neighborPos, boolean movedByPiston) {
+    public void neighborChanged(BlockState state, Level level, BlockPos pos, Block neighborBlock, BlockPos neighborPos, boolean movedByPiston) {
         super.neighborChanged(state, level, pos, neighborBlock, neighborPos, movedByPiston);
         if (level.getBlockEntity(pos) instanceof IntegratedCircuitBlockEntity blockEntity)
             blockEntity.updateInputs();
     }
 
     @Override
-    protected boolean isSignalSource(BlockState pState) {
+    public boolean isSignalSource(BlockState pState) {
         return true;
     }
 
     @Override
-    protected int getSignal(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
+    public int getSignal(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
         return ((IntegratedCircuitBlockEntity) level.getBlockEntity(pos)).getPower(direction);
     }
 
     @Override
-    protected int getDirectSignal(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
+    public int getDirectSignal(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
         return state.getSignal(level, pos, direction);
     }
 
@@ -144,15 +151,17 @@ public class IntegratedCircuitBlock extends HorizontalDirectionalBlock implement
 
     @Override
     public void setPlacedBy(Level level, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack stack) {
-        if (state.hasBlockEntity() && level.getBlockEntity(pos) instanceof IntegratedCircuitBlockEntity blockEntity)
-            if (stack.has(DataComponents.UUID.get())) {
-                blockEntity.setUuid(stack.get(DataComponents.UUID.get()).uuid());
-                if (stack.has(net.minecraft.core.component.DataComponents.CUSTOM_NAME))
-                    blockEntity.setName(stack.get(net.minecraft.core.component.DataComponents.CUSTOM_NAME));
-                if (stack.has(DataComponents.SHORT.get()))
-                    blockEntity.setColor(DyeColor.byId(stack.get(DataComponents.SHORT.get())));
+        if (state.hasBlockEntity() && level.getBlockEntity(pos) instanceof IntegratedCircuitBlockEntity blockEntity) {
+            CompoundTag tag = stack.getOrCreateTag();
+            if (tag.hasUUID("uuid")) {
+                blockEntity.setUuid(tag.getUUID("uuid"));
+                if (stack.hasCustomHoverName())
+                    blockEntity.setName(stack.getHoverName());
+                if (tag.contains("color", Tag.TAG_SHORT))
+                    blockEntity.setColor(DyeColor.byId(tag.getShort("color")));
                 blockEntity.updateInputs();
             }
+        }
         super.setPlacedBy(level, pos, state, placer, stack);
     }
 

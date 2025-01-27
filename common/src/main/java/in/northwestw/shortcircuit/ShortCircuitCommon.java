@@ -1,5 +1,6 @@
 package in.northwestw.shortcircuit;
 
+import in.northwestw.shortcircuit.config.Config;
 import in.northwestw.shortcircuit.registries.*;
 import net.minecraft.resources.ResourceLocation;
 import org.apache.logging.log4j.LogManager;
@@ -10,6 +11,8 @@ public class ShortCircuitCommon {
     public static final Logger LOGGER = LogManager.getLogger();
 
     public static void init() {
+        Config.load();
+
         // blocks must be registered before block entities for fabric
         Blocks.trigger();
         BlockEntities.trigger();

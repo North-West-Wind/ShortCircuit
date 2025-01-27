@@ -1,5 +1,6 @@
 package in.northwestw.shortcircuit.registries.blockentities.common;
 
+import in.northwestw.shortcircuit.config.Config;
 import in.northwestw.shortcircuit.properties.RelativeDirection;
 import in.northwestw.shortcircuit.registries.DataComponents;
 import in.northwestw.shortcircuit.registries.blocks.CircuitBlock;
@@ -24,8 +25,6 @@ import java.util.Arrays;
 import java.util.UUID;
 
 public class CommonCircuitBlockEntity extends BlockEntity {
-    // this should be a config
-    private static final int SAME_SIDE_TICK_LIMIT = 5;
     protected UUID uuid;
     protected boolean hidden;
     protected Component name;
@@ -142,7 +141,7 @@ public class CommonCircuitBlockEntity extends BlockEntity {
     }
 
     protected boolean maxUpdateReached() {
-        return Arrays.stream(this.sameTickUpdates).anyMatch(t -> t >= SAME_SIDE_TICK_LIMIT);
+        return Config.SAME_SIDE_TICK_LIMIT > 0 && Arrays.stream(this.sameTickUpdates).anyMatch(t -> t >= Config.SAME_SIDE_TICK_LIMIT);
     }
 
     protected void sideUpdated(RelativeDirection direction) {

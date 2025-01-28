@@ -31,7 +31,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import java.util.*;
 
 public class CircuitBlockEntity extends CommonCircuitBlockEntity {
-    private static final long MAX_TAG_BYTE_SIZE = 2097152L; // copied from NbtAccounter
+    private static final long MAX_TAG_SIZE = 20480L; // ideally this should be byte size, but it's too hard to track in 1.19
     private UUID runtimeUuid;
     private short blockSize, ticks;
     private boolean fake;
@@ -294,19 +294,22 @@ public class CircuitBlockEntity extends CommonCircuitBlockEntity {
     public CompoundTag getUpdateTag() {
         CompoundTag tag = super.getUpdateTag();
         if (this.hidden) return tag;
-        ListTag list = new ListTag(), testList = new ListTag();
-        long size = tag.sizeInBytes() + (48 + 28 + 2 * 6 + 36) + (48 + 28 + 2 * 7 + 36 + 9);
+        ListTag list = new ListTag();
         boolean broke = false, oldChunked = this.chunked;
         int ii = 0;
+        long size = tag.size();
         for (Map.Entry<BlockPos, BlockState> entry : this.blocks.entrySet()) {
             if (ii++ < this.chunkedOffset) continue;
             CompoundTag tuple = new CompoundTag();
             tuple.put("pos", NbtUtils.writeBlockPos(entry.getKey()));
-            tuple.put("block", NbtUtils.writeBlockState(entry.getValue()));
-            testList.add(tuple);
+            CompoundTag stateTag = NbtUtils.writeBlockState(entry.getValue());
+            tuple.put("block", stateTag);
+
+            size += 5; // 1 for pos key, 3 for pos, 1 for block key, 1 for block name
+            if (stateTag.contains("Properties")) size += 1 + stateTag.getCompound("Properties").size();
 
             this.chunkedOffset++;
-            if (testList.sizeInBytes() + size >= MAX_TAG_BYTE_SIZE) {
+            if (size >= MAX_TAG_SIZE) {
                 this.chunked = true;
                 broke = true;
                 break;

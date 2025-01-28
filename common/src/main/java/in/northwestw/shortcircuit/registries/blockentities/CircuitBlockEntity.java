@@ -33,15 +33,19 @@ import org.apache.commons.lang3.tuple.Pair;
 import java.util.*;
 
 public class CircuitBlockEntity extends CommonCircuitBlockEntity {
+    private static final long MAX_TAG_BYTE_SIZE = 2097152L; // copied from NbtAccounter
     private UUID runtimeUuid;
     private short blockSize, ticks;
     private boolean fake;
     private byte[] powers, inputs;
     public Map<BlockPos, BlockState> blocks; // 8x8x8
+    // chunking
+    private long chunkedOffset;
+    private boolean chunked;
 
     public CircuitBlockEntity(BlockPos pos, BlockState state) {
         super(BlockEntities.CIRCUIT.get(), pos, state);
-        this.blocks = Maps.newHashMap();
+        this.blocks = Maps.newTreeMap();
         this.runtimeUuid = UUID.randomUUID();
         this.powers = new byte[6];
         this.inputs = new byte[6];
@@ -52,6 +56,9 @@ public class CircuitBlockEntity extends CommonCircuitBlockEntity {
         super.tick();
         if (this.shouldTick())
             this.updateInnerBlocks();
+        // This should trigger getUpdateTag, which will figure out if inner blocks are chunked
+        if (this.chunked && this.chunkedOffset != 0)
+            this.level.sendBlockUpdated(this.getBlockPos(), this.getBlockState(), this.getBlockState(), Block.UPDATE_CLIENTS);
     }
 
     public boolean shouldTick() {
@@ -87,6 +94,10 @@ public class CircuitBlockEntity extends CommonCircuitBlockEntity {
     @Override
     public boolean isValid() {
         return super.isValid() && !this.fake;
+    }
+
+    public boolean isFake() {
+        return fake;
     }
 
     public void resetRuntime() {
@@ -181,6 +192,8 @@ public class CircuitBlockEntity extends CommonCircuitBlockEntity {
         }
         this.updateInputs();
         outputBlockPos.forEach(pos -> runtimeLevel.neighborChanged(pos, runtimeLevel.getBlockState(pos).getBlock(), null));
+        this.chunkedOffset = 0;
+        this.chunked = false;
         this.updateInnerBlocks();
         return Pair.of(RuntimeReloadResult.SUCCESS, modeMap);
     }
@@ -263,7 +276,7 @@ public class CircuitBlockEntity extends CommonCircuitBlockEntity {
         if (this.powers.length != 6) this.powers = new byte[6];
         this.inputs = tag.getByteArray("inputs");
         if (this.inputs.length != 6) this.inputs = new byte[6];
-        this.loadExtraFromData(tag);
+        if (!this.hidden) this.loadExtraFromData(tag);
     }
 
     @Override
@@ -279,19 +292,39 @@ public class CircuitBlockEntity extends CommonCircuitBlockEntity {
     @Override
     public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
         CompoundTag tag = super.getUpdateTag(registries);
-        ListTag list = new ListTag();
+        if (this.hidden) return tag;
+        ListTag list = new ListTag(), testList = new ListTag();
+        long size = tag.sizeInBytes() + (48 + 28 + 2 * 6 + 36) + (48 + 28 + 2 * 7 + 36 + 9);
+        boolean broke = false, oldChunked = this.chunked;
+        int ii = 0;
         for (Map.Entry<BlockPos, BlockState> entry : this.blocks.entrySet()) {
+            if (ii++ < this.chunkedOffset) continue;
             CompoundTag tuple = new CompoundTag();
             tuple.put("pos", NbtUtils.writeBlockPos(entry.getKey()));
             tuple.put("block", NbtUtils.writeBlockState(entry.getValue()));
-            list.add(tuple);
+            testList.add(tuple);
+
+            this.chunkedOffset++;
+            if (testList.sizeInBytes() + size >= MAX_TAG_BYTE_SIZE) {
+                this.chunked = true;
+                broke = true;
+                break;
+            } else {
+                list.add(tuple);
+            }
         }
+        // keep chunked true. will reset on reload
+        if (!broke)
+            this.chunkedOffset = 0;
         tag.put("blocks", list);
+        // chunked only changes from false to true after first update of reload. we want to clear out old blocks
+        tag.putBoolean("chunked", oldChunked == this.chunked && this.chunked);
         return tag;
     }
 
     public void loadExtraFromData(CompoundTag tag) {
         if (this.level == null) return;
+        this.chunked = tag.getBoolean("chunked");
         Map<BlockPos, BlockState> blocks = Maps.newHashMap();
         for (Tag t : tag.getList("blocks", Tag.TAG_COMPOUND)) {
             CompoundTag tuple = (CompoundTag) t;
@@ -301,7 +334,8 @@ public class CircuitBlockEntity extends CommonCircuitBlockEntity {
             BlockState state = NbtUtils.readBlockState(this.level.holderLookup(Registries.BLOCK), tuple.getCompound("block"));
             blocks.put(pos, state);
         }
-        this.blocks = blocks;
+        if (!this.chunked) this.blocks = blocks;
+        else this.blocks.putAll(blocks);
     }
 
     public UUID getRuntimeUuid() {

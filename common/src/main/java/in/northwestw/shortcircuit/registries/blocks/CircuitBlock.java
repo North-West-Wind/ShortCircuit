@@ -122,10 +122,12 @@ public class CircuitBlock extends HorizontalDirectionalBlock implements EntityBl
 
     @Override
     protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hitResult) {
-        player.displayClientMessage(Component.translatable("action.circuit.reload"), true);
         if (level.getBlockEntity(pos) instanceof CircuitBlockEntity blockEntity) {
+            if (blockEntity.isFake()) return super.useWithoutItem(state, level, pos, player, hitResult);
+            player.displayClientMessage(Component.translatable("action.circuit.reload"), true);
             CircuitBlockEntity.RuntimeReloadResult result = blockEntity.reloadRuntime();
-            player.displayClientMessage(Component.translatable(result.getTranslationKey()).withStyle(Style.EMPTY.withColor(result.isGood() ? 0x00ff00 : 0xff0000)), true);
+            if (result != CircuitBlockEntity.RuntimeReloadResult.FAIL_NO_SERVER)
+                player.displayClientMessage(Component.translatable(result.getTranslationKey()).withStyle(Style.EMPTY.withColor(result.isGood() ? 0x00ff00 : 0xff0000)), true);
         }
         return InteractionResult.SUCCESS_SERVER;
     }

@@ -1,5 +1,6 @@
 package in.northwestw.shortcircuit.registries.blocks;
 
+import com.mojang.math.Vector3f;
 import in.northwestw.shortcircuit.registries.*;
 import in.northwestw.shortcircuit.registries.blockentities.IntegratedCircuitBlockEntity;
 import net.minecraft.core.BlockPos;
@@ -42,7 +43,7 @@ import java.util.List;
 public class IntegratedCircuitBlock extends HorizontalDirectionalBlock implements EntityBlock {
     public static final BooleanProperty POWERED = BlockStateProperties.POWERED;
     public static final BooleanProperty COLORED = BooleanProperty.create("colored");
-    public static final DustParticleOptions PARTICLE = new DustParticleOptions(Vec3.fromRGB24(0xFFDD00).toVector3f(), 1.0F);
+    public static final DustParticleOptions PARTICLE = new DustParticleOptions(new Vector3f(Vec3.fromRGB24(0xFFDD00)), 1.0F);
 
     public IntegratedCircuitBlock(Properties pProperties) {
         super(pProperties);

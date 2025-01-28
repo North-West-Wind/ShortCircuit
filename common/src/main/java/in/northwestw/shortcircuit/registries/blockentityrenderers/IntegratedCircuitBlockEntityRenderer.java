@@ -1,6 +1,7 @@
 package in.northwestw.shortcircuit.registries.blockentityrenderers;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.math.Quaternion;
 import in.northwestw.shortcircuit.properties.ColorHelper;
 import in.northwestw.shortcircuit.registries.blockentities.IntegratedCircuitBlockEntity;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -13,7 +14,6 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
-import org.joml.Quaternionf;
 
 public class IntegratedCircuitBlockEntityRenderer implements BlockEntityRenderer<IntegratedCircuitBlockEntity> {
     private static final float HIDDEN_SCALE = 0.875f; // 14/16
@@ -36,9 +36,9 @@ public class IntegratedCircuitBlockEntityRenderer implements BlockEntityRenderer
         // direction handling. move to the center and rotate, then move back
         poseStack.translate(0.5, 0.5, 0.5);
         switch (blockEntity.getBlockState().getValue(HorizontalDirectionalBlock.FACING)) {
-            case SOUTH -> poseStack.mulPose(new Quaternionf(0, 0.7071068, 0, 0.7071068));
-            case EAST -> poseStack.mulPose(new Quaternionf(0, 1, 0, 0));
-            case NORTH -> poseStack.mulPose(new Quaternionf(0, 0.7071068, 0, -0.7071068));
+            case SOUTH -> poseStack.mulPose(new Quaternion(0, 0.7071068f, 0, 0.7071068f));
+            case EAST -> poseStack.mulPose(new Quaternion(0, 1, 0, 0));
+            case NORTH -> poseStack.mulPose(new Quaternion(0, 0.7071068f, 0, -0.7071068f));
         }
         poseStack.translate(-0.5, -0.5, -0.5);
 

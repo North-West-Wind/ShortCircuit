@@ -15,8 +15,6 @@ import in.northwestw.shortcircuit.registries.blocks.CircuitBlock;
 import in.northwestw.shortcircuit.registries.blocks.CircuitBoardBlock;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.HolderLookup;
-import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.NbtUtils;
@@ -333,7 +331,7 @@ public class CircuitBlockEntity extends CommonCircuitBlockEntity {
             CompoundTag tuple = (CompoundTag) t;
             if (!tuple.contains("pos", Tag.TAG_COMPOUND)) continue;
             BlockPos pos = NbtUtils.readBlockPos(tuple.getCompound("pos"));
-            BlockState state = NbtUtils.readBlockState(this.level.holderLookup(Registries.BLOCK), tuple.getCompound("block"));
+            BlockState state = NbtUtils.readBlockState(tuple.getCompound("block"));
             blocks.put(pos, state);
         }
         if (!this.chunked) this.blocks = blocks;

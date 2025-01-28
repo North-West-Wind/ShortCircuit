@@ -6,8 +6,7 @@ import in.northwestw.shortcircuit.properties.RelativeDirection;
 import in.northwestw.shortcircuit.registries.BlockEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.HolderLookup;
-import net.minecraft.core.registries.Registries;
+import net.minecraft.core.Registry;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
@@ -32,7 +31,7 @@ public class CircuitBoardBlockEntity extends BlockEntity {
     @Override
     public void load(CompoundTag tag) {
         super.load(tag);
-        if (tag.contains("dim")) this.dimension = ResourceKey.create(Registries.DIMENSION, new ResourceLocation(tag.getString("dim")));
+        if (tag.contains("dim")) this.dimension = ResourceKey.create(Registry.DIMENSION_REGISTRY, new ResourceLocation(tag.getString("dim")));
         if (tag.contains("pos")) {
             int[] arr = tag.getIntArray("pos");
             this.pos = new BlockPos(arr[0], arr[1], arr[2]);

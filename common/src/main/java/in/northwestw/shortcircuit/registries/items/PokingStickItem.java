@@ -1,6 +1,5 @@
 package in.northwestw.shortcircuit.registries.items;
 
-import com.google.common.collect.Sets;
 import in.northwestw.shortcircuit.Constants;
 import in.northwestw.shortcircuit.data.CircuitSavedData;
 import in.northwestw.shortcircuit.data.Octolet;
@@ -10,7 +9,7 @@ import in.northwestw.shortcircuit.registries.blockentities.CircuitBlockEntity;
 import in.northwestw.shortcircuit.registries.blockentities.IntegratedCircuitBlockEntity;
 import in.northwestw.shortcircuit.registries.blocks.CircuitBoardBlock;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.registries.Registries;
+import net.minecraft.core.Registry;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtUtils;
 import net.minecraft.network.chat.Component;
@@ -100,8 +99,8 @@ public class PokingStickItem extends Item {
             if (tag.contains("lastPosDim", CompoundTag.TAG_STRING) && tag.contains("lastPos")) {
                 MinecraftServer server = level.getServer();
                 if (server == null) return InteractionResult.CONSUME;
-                ServerLevel serverLevel = server.getLevel(ResourceKey.create(Registries.DIMENSION, new ResourceLocation(tag.getString("lastPosDim"))));
-                new DimensionTransition(serverLevel, NbtUtils.readBlockPos(tag.getCompound("lastPos")).getCenter()).teleportToDimension(player);
+                ServerLevel serverLevel = server.getLevel(ResourceKey.create(Registry.DIMENSION_REGISTRY, new ResourceLocation(tag.getString("lastPosDim"))));
+                new DimensionTransition(serverLevel, NbtUtils.readBlockPos(tag.getCompound("lastPos"))).teleportToDimension(player);
                 tag.remove("lastPosDim");
                 tag.remove("lastPos");
                 stack.setTag(tag);
@@ -112,7 +111,7 @@ public class PokingStickItem extends Item {
                 ServerLevel serverLevel = server.getLevel(serverPlayer.getRespawnDimension());
                 BlockPos respawn = serverPlayer.getRespawnPosition();
                 if (respawn == null) respawn = serverLevel.getSharedSpawnPos();
-                new DimensionTransition(serverLevel, respawn.getCenter()).teleportToDimension(player);
+                new DimensionTransition(serverLevel, respawn).teleportToDimension(player);
             }
         }
         return InteractionResult.SUCCESS;
@@ -151,7 +150,7 @@ public class PokingStickItem extends Item {
         ServerLevel circuitBoardLevel = server.getLevel(Constants.CIRCUIT_BOARD_DIMENSION);
         if (circuitBoardLevel == null) return null;
         CircuitSavedData data = CircuitSavedData.getCircuitBoardData(circuitBoardLevel);
-        return new DimensionTransition(circuitBoardLevel, data.getCircuitStartingPos(uuid).offset(1, 1, 1).getCenter());
+        return new DimensionTransition(circuitBoardLevel, data.getCircuitStartingPos(uuid).offset(1, 1, 1));
     }
 
     private DimensionTransition getNewDimensionTransition(short blockSize, Level level, CircuitBlockEntity blockEntity) {
@@ -185,7 +184,7 @@ public class PokingStickItem extends Item {
                 }
             }
         }
-        return new DimensionTransition(circuitBoardLevel, startingPos.offset(1, 1, 1).getCenter());
+        return new DimensionTransition(circuitBoardLevel, startingPos.offset(1, 1, 1));
     }
 
     private boolean isMiddleFour(int ii, int jj, int kk, short blockSize) {
@@ -199,9 +198,10 @@ public class PokingStickItem extends Item {
                 (kkHalf && iiHalf) && (jj == 0 || jj == blockSize - 1);
     }
 
-    private record DimensionTransition(ServerLevel level, Vec3 pos) {
+    private record DimensionTransition(ServerLevel level, BlockPos pos) {
         private void teleportToDimension(Player player) {
-            player.teleportTo(this.level, this.pos.x, this.pos.y, this.pos.z, Sets.newHashSet(), 0, 0);
+            if (player instanceof ServerPlayer serverPlayer)
+                serverPlayer.teleportTo(this.level, this.pos.getX() + 0.5, this.pos.getY() + 0.5, this.pos.getZ() + 0.5, 0, 0);
         }
     }
 }

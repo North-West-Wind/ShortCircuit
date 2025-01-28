@@ -30,7 +30,6 @@ public class ShortCircuitForge {
         ForgeRegistryHelper.ITEMS.register(bus);
         ForgeRegistryHelper.MENUS.register(bus);
         ForgeRegistryHelper.SOUND_EVENTS.register(bus);
-        ForgeRegistryHelper.CREATIVE_MODE_TABS.register(bus);
     }
 
     @Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.MOD)

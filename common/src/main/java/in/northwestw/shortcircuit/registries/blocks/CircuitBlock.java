@@ -19,6 +19,7 @@ import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Explosion;
 import net.minecraft.world.level.Level;
@@ -116,7 +117,7 @@ public class CircuitBlock extends HorizontalDirectionalBlock implements EntityBl
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hitResult) {
         ItemStack stack = player.getItemInHand(hand);
         if (stack.isEmpty()) return this.useWithoutItem(level, pos, player);
-        else return this.useItemOn(stack, level, pos, player, hand);
+        else return this.useItemOn(stack, level, pos, player, hand, hitResult);
     }
 
     protected InteractionResult useWithoutItem(Level level, BlockPos pos, Player player) {
@@ -130,8 +131,8 @@ public class CircuitBlock extends HorizontalDirectionalBlock implements EntityBl
         return InteractionResult.sidedSuccess(level.isClientSide);
     }
 
-    protected InteractionResult useItemOn(ItemStack stack, Level level, BlockPos pos, Player player, InteractionHand hand) {
-        if (stack.is(Items.POKING_STICK.get()) || stack.is(Items.LABELLING_STICK.get())) return InteractionResult.PASS; // handled by item
+    protected InteractionResult useItemOn(ItemStack stack, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hitResult) {
+        if (stack.is(Items.POKING_STICK.get()) || stack.is(Items.LABELLING_STICK.get())) return stack.useOn(new UseOnContext(player, hand, hitResult)); // handled by item
         else if ((stack.is(Items.CIRCUIT.get()) || stack.is(Items.INTEGRATED_CIRCUIT.get())) && !player.isCrouching() && level.getBlockEntity(pos) instanceof CircuitBlockEntity blockEntity && blockEntity.isValid()) {
             ItemStack newStack = new ItemStack(Items.CIRCUIT.get(), stack.getCount());
             if (stack.hasTag()) newStack.setTag(stack.getTag());

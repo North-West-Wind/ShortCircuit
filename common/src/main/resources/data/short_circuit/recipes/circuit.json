@@ -2,20 +2,23 @@
   "type": "minecraft:crafting_shaped",
   "category": "redstone",
   "pattern": [
-    "  R",
-    " I ",
-    "I  "
+    "G",
+    "P",
+    "R"
   ],
   "key": {
-    "I": {
-      "item": "minecraft:iron_ingot"
+    "G": {
+      "item": "minecraft:glass"
+    },
+    "P": {
+      "item": "minecraft:ender_pearl"
     },
     "R": {
       "item": "minecraft:redstone"
     }
   },
   "result": {
-    "id": "short_circuit:poking_stick",
-    "count": 1
+    "item": "short_circuit:circuit",
+    "count": 4
   }
 }

@@ -21,7 +21,7 @@
     }
   },
   "result": {
-    "id": "short_circuit:truth_assigner",
+    "item": "short_circuit:truth_assigner",
     "count": 1
   }
 }

@@ -1,0 +1,52 @@
+{
+  "block.short_circuit.circuit": "Devre",
+  "block.short_circuit.circuit_board": "Devre Tahtası",
+  "block.short_circuit.truth_assigner": "Doğruluk Atayıcı",
+  "block.short_circuit.integrated_circuit": "Entegre Devre",
+
+  "item.short_circuit.poking_stick": "Kurcalama Çubuğu",
+  "item.short_circuit.labelling_stick": "Etiketleme Çubuğu",
+  "item.short_circuit.circuit": "Devre",
+  "item.short_circuit.circuit_board": "Devre Tahtası",
+  "item.short_circuit.truth_assigner": "Doğruluk Atayıcı",
+  "item.short_circuit.integrated_circuit": "Entegre Devre",
+
+  "container.short_circuit.truth_assigner": "Doğruluk Atayıcı",
+  "container.short_circuit.truth_assigner.max_delay": "Maksimum Gecikme",
+  "container.short_circuit.truth_assigner.max_delay.desc": "Devrenin sonucuna karar vermeden önce beklenilecek en fazla (oyun) birim zamanı(tick)",
+  "container.short_circuit.truth_assigner.bits": "%d-Bit",
+  "container.short_circuit.truth_assigner.bits.desc": "Her girdi sinyali %d durum gibi davranılır",
+  "container.short_circuit.truth_assigner.wait": "İlk Değişim",
+  "container.short_circuit.truth_assigner.wait.on": "Tam Gecikme",
+  "container.short_circuit.truth_assigner.wait.desc": "İlk çıktı değişimi ile değer atar",
+  "container.short_circuit.truth_assigner.wait.on.desc": "Tam gecikmeden sonra çıktıdan değer atar",
+  "container.short_circuit.truth_assigner.start": "Başla",
+  "container.short_circuit.truth_assigner.start.desc": "Devre için doğruluk masası oluştur",
+  "container.short_circuit.truth_assigner.current_input.desc": "İterasyon: %d",
+
+  "container.short_circuit.truth_assigner.error": "",
+  "container.short_circuit.truth_assigner.error.1": "Üstünde boş blok gerekiyor",
+  "container.short_circuit.truth_assigner.error.2": "Bu devre sorunlu",
+  "container.short_circuit.truth_assigner.error.3": "Devre yok edilmiş",
+
+  "tooltip.short_circuit.circuit": "UUID: %s",
+  "tooltip.short_circuit.circuit.color": "Renk: %s",
+  "tooltip.short_circuit.circuit_board": "Bunu elde edememeniz gerek.",
+
+  "action.poking_stick.change": "Dış boyut: %d",
+  "action.labelling_stick.change.cycle": "Mod: Döndür",
+  "action.labelling_stick.change.copy": "Mod: Kopyala Yapıştır",
+  "action.labelling_stick.copy": "Kopyalanan renk",
+
+  "action.circuit.reload": "Devre yeniden yükleniyor...",
+  "action.circuit.reload.success": "Başarılı!",
+  "action.circuit.reload.fail.not_exist": "Önce Kurcalama Çubuğunu kullan!",
+  "action.circuit.reload.fail.no_server": "Sunucuda yok!",
+  "action.circuit.reload.fail.recurrence": "Recurrence kapalı!",
+  "action.circuit.reload.fail.multi_mode": "Her kenarda sadece bir mod olmalı!",
+  "warning.circuit.place.circuit_board": "Devre Tahtasına yerleştirilen Devreler otomatik olarak kurulmazlar.",
+
+  "itemGroup.short_circuit": "Short Circuit",
+
+  "subtitle.short_circuit.truth_assigned": "Doğruluk Atayıcı bitirdi"
+}

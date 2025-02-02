@@ -2,7 +2,7 @@
 name: Circuit-related bug report
 about: Report a seemingly unintentional circuit behaviour
 title: 'circuit-bug: <title>'
-labels: bug
+labels: bug, circuit
 assignees: ''
 
 ---

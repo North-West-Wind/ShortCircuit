@@ -1,0 +1,52 @@
+{
+  "block.short_circuit.circuit": "電路",
+  "block.short_circuit.circuit_board": "電路板方塊",
+  "block.short_circuit.truth_assigner": "邏輯洗衣機",
+  "block.short_circuit.integrated_circuit": "高速電路",
+
+  "item.short_circuit.poking_stick": "焫雞",
+  "item.short_circuit.labelling_stick": "棉花棒",
+  "item.short_circuit.circuit": "電路",
+  "item.short_circuit.circuit_board": "電路板方塊",
+  "item.short_circuit.truth_assigner": "邏輯洗衣機",
+  "item.short_circuit.integrated_circuit": "高速電路",
+
+  "container.short_circuit.truth_assigner": "邏輯洗衣機",
+  "container.short_circuit.truth_assigner.max_delay": "最高延遲",
+  "container.short_circuit.truth_assigner.max_delay.desc": "決定最終輸出前等候時間（遊戲刻）",
+  "container.short_circuit.truth_assigner.bits": "%d位元",
+  "container.short_circuit.truth_assigner.bits.desc": "每邊輸入有%d個信號強度",
+  "container.short_circuit.truth_assigner.wait": "快速",
+  "container.short_circuit.truth_assigner.wait.on": "耐心",
+  "container.short_circuit.truth_assigner.wait.desc": "輸出改變時記錄",
+  "container.short_circuit.truth_assigner.wait.on.desc": "時限過後記錄",
+  "container.short_circuit.truth_assigner.start": "開始",
+  "container.short_circuit.truth_assigner.start.desc": "轉換成高速電路",
+  "container.short_circuit.truth_assigner.current_input.desc": "模擬：%d",
+
+  "container.short_circuit.truth_assigner.error": "",
+  "container.short_circuit.truth_assigner.error.1": "方塊上方必須為空氣",
+  "container.short_circuit.truth_assigner.error.2": "此電路有問題",
+  "container.short_circuit.truth_assigner.error.3": "電路被摧毀",
+
+  "tooltip.short_circuit.circuit": "UUID：%s",
+  "tooltip.short_circuit.circuit.color": "顏色：%s",
+  "tooltip.short_circuit.circuit_board": "此物品不能被獲取",
+
+  "action.poking_stick.change": "外殼大小：%d",
+  "action.labelling_stick.change.cycle": "循環模式",
+  "action.labelling_stick.change.copy": "複製模式",
+  "action.labelling_stick.copy": "成功複製顏色",
+
+  "action.circuit.reload": "重載電路中…",
+  "action.circuit.reload.success": "成功重載！",
+  "action.circuit.reload.fail.not_exist": "請先使用焫雞！",
+  "action.circuit.reload.fail.no_server": "並非伺服器方！",
+  "action.circuit.reload.fail.recurrence": "不准自我循環！",
+  "action.circuit.reload.fail.multi_mode": "每個方向只能是輸出或輸入！",
+  "warning.circuit.place.circuit_board": "電路板上的電路不會自動初始化",
+
+  "itemGroup.short_circuit": "超短路",
+
+  "subtitle.short_circuit.truth_assigned": "邏輯洗衣機模擬完成"
+}

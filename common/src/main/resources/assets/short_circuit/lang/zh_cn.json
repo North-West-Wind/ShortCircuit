@@ -1,0 +1,52 @@
+{
+  "block.short_circuit.circuit": "电路",
+  "block.short_circuit.circuit_board": "电路板方块",
+  "block.short_circuit.truth_assigner": "逻辑洗衣机",
+  "block.short_circuit.integrated_circuit": "高速电路",
+
+  "item.short_circuit.poking_stick": "焊铁",
+  "item.short_circuit.labelling_stick": "棉花棒",
+  "item.short_circuit.circuit": "电路",
+  "item.short_circuit.circuit_board": "电路板方块",
+  "item.short_circuit.truth_assigner": "逻辑洗衣机",
+  "item.short_circuit.integrated_circuit": "高速电路",
+
+  "container.short_circuit.truth_assigner": "逻辑洗衣机",
+  "container.short_circuit.truth_assigner.max_delay": "最高延迟",
+  "container.short_circuit.truth_assigner.max_delay.desc": "决定最终输出前等候时间（游戏刻）",
+  "container.short_circuit.truth_assigner.bits": "%d位元",
+  "container.short_circuit.truth_assigner.bits.desc": "每边输入有%d个信号强度",
+  "container.short_circuit.truth_assigner.wait": "快速",
+  "container.short_circuit.truth_assigner.wait.on": "耐心",
+  "container.short_circuit.truth_assigner.wait.desc": "输出改变时记录",
+  "container.short_circuit.truth_assigner.wait.on.desc": "时限过後记录",
+  "container.short_circuit.truth_assigner.start": "开始",
+  "container.short_circuit.truth_assigner.start.desc": "转换成高速电路",
+  "container.short_circuit.truth_assigner.current_input.desc": "模拟：%d",
+
+  "container.short_circuit.truth_assigner.error": "",
+  "container.short_circuit.truth_assigner.error.1": "方块上方必须为空气",
+  "container.short_circuit.truth_assigner.error.2": "此电路有问题",
+  "container.short_circuit.truth_assigner.error.3": "电路被摧毁",
+
+  "tooltip.short_circuit.circuit": "UUID：%s",
+  "tooltip.short_circuit.circuit.color": "颜色：%s",
+  "tooltip.short_circuit.circuit_board": "此物品不能被获取",
+
+  "action.poking_stick.change": "外壳大小：%d",
+  "action.labelling_stick.change.cycle": "循环模式",
+  "action.labelling_stick.change.copy": "复制模式",
+  "action.labelling_stick.copy": "成功复制颜色",
+
+  "action.circuit.reload": "重载电路中…",
+  "action.circuit.reload.success": "成功重载！",
+  "action.circuit.reload.fail.not_exist": "请先使用焊铁！",
+  "action.circuit.reload.fail.no_server": "并非伺服器方！",
+  "action.circuit.reload.fail.recurrence": "不准自我循环！",
+  "action.circuit.reload.fail.multi_mode": "每个方向只能是输出或输入！",
+  "warning.circuit.place.circuit_board": "电路板上的电路不会自动初始化",
+
+  "itemGroup.short_circuit": "超短路",
+
+  "subtitle.short_circuit.truth_assigned": "逻辑洗衣机模拟完成"
+}

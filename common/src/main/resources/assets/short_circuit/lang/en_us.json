@@ -27,7 +27,7 @@
   "container.short_circuit.truth_assigner.error": "",
   "container.short_circuit.truth_assigner.error.1": "Need empty block above",
   "container.short_circuit.truth_assigner.error.2": "This circuit has problems",
-  "container.short_circuit.truth_assigner.error.3": "Circuit was detroyed",
+  "container.short_circuit.truth_assigner.error.3": "Circuit was destroyed",
 
   "tooltip.short_circuit.circuit": "UUID: %s",
   "tooltip.short_circuit.circuit.color": "Color: %s",
@@ -48,5 +48,5 @@
 
   "itemGroup.short_circuit": "Short Circuit",
 
-  "subtitle.short_circuit.truth_assigned": "Truth Assigner Finishes"
+  "subtitle.short_circuit.truth_assigned": "Truth Assigner finishes"
 }

@@ -70,7 +70,7 @@ public class CommonCircuitBlockEntity extends BlockEntity {
     @Override
     protected void collectImplicitComponents(DataComponentMap.Builder components) {
         super.collectImplicitComponents(components);
-        components.set(DataComponents.UUID.get(), new UUIDDataComponent(this.uuid));
+        if (this.uuid != null) components.set(DataComponents.UUID.get(), new UUIDDataComponent(this.uuid));
         if (this.color != null) components.set(DataComponents.SHORT.get(), (short) this.color.getId());
         if (this.name != null) components.set(net.minecraft.core.component.DataComponents.CUSTOM_NAME, this.name);
     }

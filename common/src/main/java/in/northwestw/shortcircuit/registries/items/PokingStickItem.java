@@ -23,6 +23,8 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.InteractionResultHolder;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -33,6 +35,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 
+import java.util.Collection;
 import java.util.UUID;
 
 public class PokingStickItem extends Item {
@@ -199,7 +202,12 @@ public class PokingStickItem extends Item {
 
     private record DimensionTransition(ServerLevel level, Vec3 pos) {
         private void teleportToDimension(Player player) {
+            // minecraft itself has broken effects on changing dimension. this is a workaround
+            Collection<MobEffectInstance> effects = player.getActiveEffects();
             player.teleportTo(this.level, this.pos.x, this.pos.y, this.pos.z, Sets.newHashSet(), 0, 0);
+            Entity entity = this.level.getEntity(player.getUUID());
+            if (entity instanceof Player newPlayer)
+                effects.forEach(effect -> newPlayer.forceAddEffect(effect, null));
         }
     }
 }

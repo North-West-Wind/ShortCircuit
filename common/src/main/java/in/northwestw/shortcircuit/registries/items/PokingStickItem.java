@@ -22,6 +22,8 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.InteractionResultHolder;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -32,6 +34,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 
+import java.util.Collection;
 import java.util.UUID;
 
 public class PokingStickItem extends Item {
@@ -96,17 +99,15 @@ public class PokingStickItem extends Item {
         } else {
             ItemStack stack = context.getItemInHand();
             CompoundTag tag = stack.getOrCreateTag();
+            MinecraftServer server = level.getServer();
+            if (server == null) return InteractionResult.CONSUME;
             if (tag.contains("lastPosDim", CompoundTag.TAG_STRING) && tag.contains("lastPos")) {
-                MinecraftServer server = level.getServer();
-                if (server == null) return InteractionResult.CONSUME;
                 ServerLevel serverLevel = server.getLevel(ResourceKey.create(Registry.DIMENSION_REGISTRY, new ResourceLocation(tag.getString("lastPosDim"))));
                 new DimensionTransition(serverLevel, NbtUtils.readBlockPos(tag.getCompound("lastPos"))).teleportToDimension(player);
                 tag.remove("lastPosDim");
                 tag.remove("lastPos");
                 stack.setTag(tag);
             } else {
-                MinecraftServer server = level.getServer();
-                if (server == null) return InteractionResult.CONSUME;
                 ServerPlayer serverPlayer = (ServerPlayer) player;
                 ServerLevel serverLevel = server.getLevel(serverPlayer.getRespawnDimension());
                 BlockPos respawn = serverPlayer.getRespawnPosition();
@@ -200,8 +201,14 @@ public class PokingStickItem extends Item {
 
     private record DimensionTransition(ServerLevel level, BlockPos pos) {
         private void teleportToDimension(Player player) {
-            if (player instanceof ServerPlayer serverPlayer)
+            if (player instanceof ServerPlayer serverPlayer) {
+                // minecraft itself has broken effects on changing dimension. this is a workaround
+                Collection<MobEffectInstance> effects = player.getActiveEffects();
                 serverPlayer.teleportTo(this.level, this.pos.getX() + 0.5, this.pos.getY() + 0.5, this.pos.getZ() + 0.5, 0, 0);
+                Entity entity = this.level.getEntity(player.getUUID());
+                if (entity instanceof Player newPlayer)
+                    effects.forEach(effect -> newPlayer.forceAddEffect(effect, null));
+            }
         }
     }
 }

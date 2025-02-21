@@ -92,16 +92,14 @@ public class PokingStickItem extends Item {
             level.setBlockAndUpdate(context.getClickedPos(), state.setValue(CircuitBoardBlock.MODE, state.getValue(CircuitBoardBlock.MODE).nextMode()));
         } else {
             ItemStack stack = context.getItemInHand();
+            MinecraftServer server = level.getServer();
+            if (server == null) return InteractionResult.CONSUME;
             if (stack.has(DataComponents.LAST_POS.get())) {
-                MinecraftServer server = level.getServer();
-                if (server == null) return InteractionResult.CONSUME;
                 LastPosDataComponent component = stack.get(DataComponents.LAST_POS.get());
                 ServerLevel serverLevel = server.getLevel(ResourceKey.create(Registries.DIMENSION, component.rl()));
                 player.teleport(new TeleportTransition(serverLevel, component.pos(), Vec3.ZERO, 0, 0, TeleportTransition.DO_NOTHING));
                 stack.remove(DataComponents.LAST_POS.get());
             } else {
-                MinecraftServer server = level.getServer();
-                if (server == null) return InteractionResult.CONSUME;
                 ServerPlayer serverPlayer = (ServerPlayer) player;
                 ServerLevel serverLevel = server.getLevel(serverPlayer.getRespawnDimension());
                 BlockPos respawn = serverPlayer.getRespawnPosition();

@@ -97,9 +97,9 @@ public class PokingStickItem extends Item {
         } else {
             ItemStack stack = context.getItemInHand();
             CompoundTag tag = stack.getOrCreateTag();
+            MinecraftServer server = level.getServer();
+            if (server == null) return InteractionResult.CONSUME;
             if (tag.contains("lastPosDim", CompoundTag.TAG_STRING) && tag.contains("lastPos")) {
-                MinecraftServer server = level.getServer();
-                if (server == null) return InteractionResult.CONSUME;
                 ServerLevel serverLevel = server.getLevel(ResourceKey.create(Registries.DIMENSION, new ResourceLocation(tag.getString("lastPosDim"))));
                 new DimensionTransition(serverLevel, NbtUtils.readBlockPos(tag.getCompound("lastPos")).getCenter()).teleportToDimension(player);
                 tag.remove("lastPosDim");

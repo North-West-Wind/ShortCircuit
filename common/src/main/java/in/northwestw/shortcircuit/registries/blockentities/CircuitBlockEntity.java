@@ -4,6 +4,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import in.northwestw.shortcircuit.Constants;
+import in.northwestw.shortcircuit.ShortCircuitCommon;
 import in.northwestw.shortcircuit.data.CircuitSavedData;
 import in.northwestw.shortcircuit.data.Octolet;
 import in.northwestw.shortcircuit.properties.DirectionHelper;
@@ -23,19 +24,24 @@ import net.minecraft.nbt.NbtUtils;
 import net.minecraft.nbt.Tag;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.*;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.*;
+import java.util.function.Consumer;
 
 public class CircuitBlockEntity extends CommonCircuitBlockEntity {
     private static final long MAX_TAG_BYTE_SIZE = 2097152L; // copied from NbtAccounter
     private UUID runtimeUuid;
-    private short blockSize, ticks;
+    private short blockSize, ticks, cloningEntities;
     private boolean fake;
     private byte[] powers, inputs;
     public Map<BlockPos, BlockState> blocks; // 8x8x8
@@ -54,6 +60,10 @@ public class CircuitBlockEntity extends CommonCircuitBlockEntity {
     @Override
     public void tick() {
         super.tick();
+        if (this.cloningEntities > 0) {
+            if (--this.cloningEntities == 0)
+                this.cloneEntities();
+        }
         if (this.shouldTick())
             this.updateInnerBlocks();
         // This should trigger getUpdateTag, which will figure out if inner blocks are chunked
@@ -136,6 +146,11 @@ public class CircuitBlockEntity extends CommonCircuitBlockEntity {
         for (ChunkPos pos : octolet.getLoadedChunks())
             runtimeLevel.setChunkForced(start.getX() / 16 + pos.x, start.getZ() / 16 + pos.z, true);
         BlockPos runtimePos = runtimeData.getCircuitStartingPos(this.runtimeUuid);
+        // remove previous entities
+        List<Entity> entities = runtimeLevel.getEntities(null, new AABB(new Vec3(runtimePos), new Vec3(runtimePos.offset(this.blockSize - 1, this.blockSize - 1, this.blockSize - 1))));
+        for (Entity entity : entities)
+            if (!(entity instanceof Player))
+                entity.remove(Entity.RemovalReason.DISCARDED);
         Map<RelativeDirection, CircuitBoardBlock.Mode> modeMap = Maps.newHashMap();
         List<BlockPos> outputBlockPos = Lists.newArrayList();
         for (int ii = 0; ii < this.blockSize; ii++) {
@@ -180,22 +195,80 @@ public class CircuitBlockEntity extends CommonCircuitBlockEntity {
                 }
             }
         }
-        // tick everything inside once
-        for (int ii = 1; ii < this.blockSize - 1; ii++) {
-            for (int jj = 1; jj < this.blockSize - 1; jj++) {
-                for (int kk = 1; kk < this.blockSize - 1; kk++) {
-                    BlockPos pos = runtimePos.offset(ii, jj, kk);
-                    BlockState state = runtimeLevel.getBlockState(pos);
-                    if (!state.isAir()) runtimeLevel.blockUpdated(pos, state.getBlock());
-                }
-            }
-        }
+        // add chunk to force load to get entities later
+        this.setForceLoad(circuitBoardLevel, boardPos, true);
+        this.cloningEntities = 2;
+        this.tickOnce(runtimeLevel, runtimePos);
         this.updateInputs();
         outputBlockPos.forEach(pos -> runtimeLevel.neighborChanged(pos, runtimeLevel.getBlockState(pos).getBlock(), null));
         this.chunkedOffset = 0;
         this.chunked = false;
         this.updateInnerBlocks();
         return Pair.of(RuntimeReloadResult.SUCCESS, modeMap);
+    }
+
+    public void cloneEntities() {
+        if (this.uuid == null) return;
+        MinecraftServer server = this.level.getServer();
+        if (server == null) return;
+        ServerLevel circuitBoardLevel = level.getServer().getLevel(Constants.CIRCUIT_BOARD_DIMENSION);
+        ServerLevel runtimeLevel = level.getServer().getLevel(Constants.RUNTIME_DIMENSION);
+        if (circuitBoardLevel == null || runtimeLevel == null) return;
+        CircuitSavedData boardData = CircuitSavedData.getCircuitBoardData(circuitBoardLevel);
+        CircuitSavedData runtimeData = CircuitSavedData.getRuntimeData(runtimeLevel);
+        BlockPos boardPos = boardData.getCircuitStartingPos(this.uuid);
+        BlockPos runtimePos = runtimeData.getCircuitStartingPos(this.runtimeUuid);
+        if (boardPos == null || runtimePos == null) return;
+        // check if chunk is loaded
+        for (int ii = 0; ii <= this.blockSize; ii += 16)
+            for (int kk = 0; kk <= this.blockSize; kk += 16)
+                if (!circuitBoardLevel.isLoaded(boardPos.offset(ii, 0, kk))) {
+                    this.cloningEntities = 1;
+                    return;
+                }
+        // copy entities
+        ShortCircuitCommon.LOGGER.info("Getting entities between {} and {}", boardPos, boardPos.offset(this.blockSize, this.blockSize, this.blockSize));
+        List<Entity> entities = circuitBoardLevel.getEntities(null, new AABB(new Vec3(boardPos), new Vec3(boardPos.offset(this.blockSize, this.blockSize, this.blockSize))));
+        ShortCircuitCommon.LOGGER.info("copying {} entities", entities.size());
+        for (Entity entity : entities) {
+            if (entity instanceof Player) continue;
+            CompoundTag tag = new CompoundTag();
+            entity.save(tag);
+            Entity clone = EntityType.loadEntityRecursive(tag, runtimeLevel, EntitySpawnReason.COMMAND, en -> {
+                en.setPos(en.position().subtract(new Vec3(boardPos)).add(new Vec3(runtimePos)));
+                return en;
+            });
+            if (clone != null) {
+                if (!runtimeLevel.tryAddFreshEntityWithPassengers(clone))
+                    ShortCircuitCommon.LOGGER.info("Add clone failed");
+            }
+            else ShortCircuitCommon.LOGGER.info("Clone is null");
+        }
+        if (!entities.isEmpty()) this.tickOnce(runtimeLevel, runtimePos);
+        this.setForceLoad(circuitBoardLevel, boardPos, false);
+        this.cloningEntities = 0;
+    }
+
+    private void tickOnce(ServerLevel level, BlockPos startPos) {
+        for (int ii = 1; ii < this.blockSize - 1; ii++) {
+            for (int jj = 1; jj < this.blockSize - 1; jj++) {
+                for (int kk = 1; kk < this.blockSize - 1; kk++) {
+                    BlockPos pos = startPos.offset(ii, jj, kk);
+                    BlockState state = level.getBlockState(pos);
+                    if (!state.isAir()) level.blockUpdated(pos, state.getBlock());
+                }
+            }
+        }
+    }
+
+    private void setForceLoad(ServerLevel level, BlockPos startPos, boolean add) {
+        for (int ii = 0; ii <= this.blockSize; ii += 16) {
+            for (int kk = 0; kk <= this.blockSize; kk += 16) {
+                ChunkPos chunkPos = new ChunkPos(startPos.offset(ii, 0, kk));
+                level.setChunkForced(chunkPos.x, chunkPos.z, add);
+                ShortCircuitCommon.LOGGER.info("{}-loading {}", add ? "Force" : "Un", chunkPos);
+            }
+        }
     }
 
     private Pair<RuntimeReloadResult, Map<RelativeDirection, CircuitBoardBlock.Mode>> emptyMapResult(RuntimeReloadResult result) {
@@ -244,6 +317,11 @@ public class CircuitBlockEntity extends CommonCircuitBlockEntity {
                     }
                 }
             }
+            // remove all entities
+            List<Entity> entities = runtimeLevel.getEntities(null, new AABB(new Vec3(runtimePos.offset(1, 1, 1)), new Vec3(runtimePos.offset(this.blockSize - 2, this.blockSize - 2, this.blockSize - 2))));
+            for (Entity entity : entities)
+                if (!(entity instanceof Player))
+                    entity.remove(Entity.RemovalReason.DISCARDED);
             Set<ChunkPos> chunks = octolet.getBlockChunk(octolet.blocks.get(this.runtimeUuid));
             BlockPos start = Octolet.getOctoletPos(runtimeData.circuits.get(this.runtimeUuid));
             runtimeData.removeCircuit(this.runtimeUuid);

@@ -100,12 +100,13 @@ public class CircuitBlock extends HorizontalDirectionalBlock implements EntityBl
 
     @Override
     public void wasExploded(Level level, BlockPos pos, Explosion explosion) {
-        if (level.getBlockEntity(pos) instanceof CircuitBlockEntity blockEntity)
+        if (level.getBlockEntity(pos) instanceof CircuitBlockEntity blockEntity) {
             blockEntity.removeRuntime();
 
             UUID owner = blockEntity.getOwnerUuid();
-            if (owner != null)
-                CircuitLimitSavedData.getRuntimeData(level).remove(owner);
+            MinecraftServer server = level.getServer();
+            if (owner != null && server != null)
+                CircuitLimitSavedData.getRuntimeData(server).remove(owner);
         }
         super.wasExploded(level, pos, explosion);
     }

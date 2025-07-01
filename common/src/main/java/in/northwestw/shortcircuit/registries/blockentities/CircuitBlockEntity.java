@@ -4,6 +4,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import in.northwestw.shortcircuit.Constants;
+import in.northwestw.shortcircuit.config.Config;
 import in.northwestw.shortcircuit.data.CircuitSavedData;
 import in.northwestw.shortcircuit.data.Octolet;
 import in.northwestw.shortcircuit.properties.DirectionHelper;
@@ -34,7 +35,7 @@ import java.util.*;
 
 public class CircuitBlockEntity extends CommonCircuitBlockEntity {
     private static final long MAX_TAG_BYTE_SIZE = 2097152L; // copied from NbtAccounter
-    private UUID runtimeUuid;
+    private UUID runtimeUuid, ownerUuid;
     private short blockSize, ticks;
     private boolean fake;
     private byte[] powers, inputs;
@@ -342,11 +343,21 @@ public class CircuitBlockEntity extends CommonCircuitBlockEntity {
         return runtimeUuid;
     }
 
+    public UUID getOwnerUuid() {
+        return ownerUuid;
+    }
+
+    public void setOwnerUuid(UUID ownerUuid) {
+        this.ownerUuid = ownerUuid;
+    }
+
     public short getBlockSize() {
         return blockSize;
     }
 
     public void setBlockSize(short blockSize) {
+        // If block size is cheesed, set to smallest
+        if (blockSize > Config.MAX_CIRCUIT_SIZE) blockSize = 4;
         this.blockSize = blockSize;
         this.setChanged();
     }

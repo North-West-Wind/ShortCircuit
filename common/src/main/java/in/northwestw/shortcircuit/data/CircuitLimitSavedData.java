@@ -22,7 +22,7 @@ public class CircuitLimitSavedData extends SavedData {
         this.placements = Maps.newHashMap();
     }
 
-    public static CircuitLimitSavedData load(CompoundTag tag, HolderLookup.Provider lookupProvider) {
+    public static CircuitLimitSavedData load(CompoundTag tag) {
         CircuitLimitSavedData data = new CircuitLimitSavedData();
         for (Tag tt : tag.getList("placements", ListTag.TAG_COMPOUND)) {
             CompoundTag pair = (CompoundTag) tt;
@@ -32,7 +32,7 @@ public class CircuitLimitSavedData extends SavedData {
     }
 
     @Override
-    public CompoundTag save(CompoundTag tag, HolderLookup.Provider provider) {
+    public CompoundTag save(CompoundTag tag) {
         ListTag list = new ListTag();
         this.placements.forEach((uuid, amount) -> {
             CompoundTag pair = new CompoundTag();
@@ -65,6 +65,6 @@ public class CircuitLimitSavedData extends SavedData {
     public static CircuitLimitSavedData getRuntimeData(MinecraftServer server) {
         ServerLevel runtimeLevel = server.getLevel(Constants.RUNTIME_DIMENSION);
         DimensionDataStorage storage = runtimeLevel.getDataStorage();
-        return storage.computeIfAbsent(new SavedData.Factory<>(CircuitLimitSavedData::new, CircuitLimitSavedData::load, null), "circuit_limit");
+        return storage.computeIfAbsent(CircuitLimitSavedData::load, CircuitLimitSavedData::new, "circuit_limit");
     }
 }

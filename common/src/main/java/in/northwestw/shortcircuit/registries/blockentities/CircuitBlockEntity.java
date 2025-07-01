@@ -335,7 +335,7 @@ public class CircuitBlockEntity extends CommonCircuitBlockEntity {
             CompoundTag tuple = (CompoundTag) t;
             if (!tuple.contains("pos", Tag.TAG_COMPOUND)) continue;
             BlockPos pos = NbtUtils.readBlockPos(tuple.getCompound("pos"));
-            BlockState state = NbtUtils.readBlockState(this.level.holderLookup(Registries.BLOCK), tuple.getCompound("block"));
+            BlockState state = NbtUtils.readBlockState(tuple.getCompound("block"));
             blocks.put(pos, state);
         }
         if (!this.chunked) this.blocks = blocks;

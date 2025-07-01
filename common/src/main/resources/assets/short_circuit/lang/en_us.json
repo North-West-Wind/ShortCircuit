@@ -45,6 +45,7 @@
   "action.circuit.reload.fail.recurrence": "Recurrence is not allowed!",
   "action.circuit.reload.fail.multi_mode": "Each side should only have one mode!",
   "warning.circuit.place.circuit_board": "Circuits placed in Circuit Board will not be initialized automatically.",
+  "warning.circuit.place.circuit_board.limit": "You've reached the dynamic circuit limit.",
 
   "itemGroup.short_circuit": "Short Circuit",
 

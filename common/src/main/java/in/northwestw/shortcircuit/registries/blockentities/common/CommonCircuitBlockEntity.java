@@ -2,6 +2,7 @@ package in.northwestw.shortcircuit.registries.blockentities.common;
 
 import in.northwestw.shortcircuit.config.Config;
 import in.northwestw.shortcircuit.properties.RelativeDirection;
+import in.northwestw.shortcircuit.registries.blockentities.CircuitBlockEntity;
 import in.northwestw.shortcircuit.registries.blocks.CircuitBlock;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -16,6 +17,7 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
@@ -102,23 +104,28 @@ public class CommonCircuitBlockEntity extends BlockEntity {
         this.setChanged();
     }
 
+    private BooleanProperty colorBooleanProperty() {
+        return this instanceof CircuitBlockEntity ? CircuitBlock.COLORED : IntegratedCircuitBlock.COLORED;
+    }
+
     public void cycleColor(boolean backwards) {
+        BooleanProperty property = this.colorBooleanProperty();
         if (this.color == null) {
             this.color = DyeColor.byId(backwards ? 15 : 0);
-            this.level.setBlock(this.getBlockPos(), this.getBlockState().setValue(CircuitBlock.COLORED, true), Block.UPDATE_CLIENTS);
+            this.level.setBlock(this.getBlockPos(), this.getBlockState().setValue(property, true), Block.UPDATE_CLIENTS);
         }
         else if (this.color.getId() < 15 && !backwards) this.color = DyeColor.byId(this.color.getId() + 1);
         else if (this.color.getId() > 0 && backwards) this.color = DyeColor.byId(this.color.getId() - 1);
         else {
             this.color = null;
-            this.level.setBlock(this.getBlockPos(), this.getBlockState().setValue(CircuitBlock.COLORED, false), Block.UPDATE_CLIENTS);
+            this.level.setBlock(this.getBlockPos(), this.getBlockState().setValue(property, false), Block.UPDATE_CLIENTS);
         }
         this.setChanged();
     }
 
     public void setColor(DyeColor color) {
         this.color = color;
-        this.level.setBlock(this.getBlockPos(), this.getBlockState().setValue(CircuitBlock.COLORED, this.color != null), Block.UPDATE_CLIENTS);
+        this.level.setBlock(this.getBlockPos(), this.getBlockState().setValue(this.colorBooleanProperty(), this.color != null), Block.UPDATE_CLIENTS);
         this.setChanged();
     }
 

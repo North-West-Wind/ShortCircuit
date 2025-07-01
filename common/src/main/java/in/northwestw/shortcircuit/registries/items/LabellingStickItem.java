@@ -51,8 +51,8 @@ public class LabellingStickItem extends Item {
         Level level = context.getLevel();
         BlockPos pos = context.getClickedPos();
         Player player = context.getPlayer();
-        if (level.getBlockEntity(pos) instanceof CircuitBlockEntity blockEntity) blockEntity.cycleColor(player != null && player.isCrouching());
-        else if (level.getBlockEntity(pos) instanceof IntegratedCircuitBlockEntity blockEntity) blockEntity.cycleColor(player != null && player.isCrouching());
+        if (level.getBlockEntity(pos) instanceof CircuitBlockEntity blockEntity) blockEntity.cycleColor(player != null && (player.isCrouching() || player.isShiftKeyDown()));
+        else if (level.getBlockEntity(pos) instanceof IntegratedCircuitBlockEntity blockEntity) blockEntity.cycleColor(player != null && (player.isCrouching() || player.isShiftKeyDown()));
         return InteractionResult.SUCCESS;
     }
 
@@ -62,6 +62,7 @@ public class LabellingStickItem extends Item {
         Player player = context.getPlayer();
         ItemStack stack = context.getItemInHand();
         CompoundTag tag = stack.getOrCreateTag();
+        if (player.isCrouching() || player.isShiftKeyDown()) {
         if (player.isCrouching()) {
             // copy color
             DyeColor color = null;

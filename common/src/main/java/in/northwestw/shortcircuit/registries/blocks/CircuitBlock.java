@@ -194,7 +194,8 @@ public class CircuitBlock extends HorizontalDirectionalBlock implements EntityBl
         if (state.hasBlockEntity() && level.getBlockEntity(pos) instanceof CircuitBlockEntity blockEntity) {
             boolean disallowed = false;
             MinecraftServer server = level.getServer();
-            if (server != null && placer instanceof Player player) {
+            if (server == null) return;
+            if (placer instanceof Player player) {
                 blockEntity.setOwnerUuid(placer.getUUID());
                 CircuitLimitSavedData data = CircuitLimitSavedData.getRuntimeData(server);
                 if (!data.canAdd(placer.getUUID())) {

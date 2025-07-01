@@ -4,6 +4,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import in.northwestw.shortcircuit.Constants;
+import in.northwestw.shortcircuit.config.Config;
 import in.northwestw.shortcircuit.data.CircuitSavedData;
 import in.northwestw.shortcircuit.data.Octolet;
 import in.northwestw.shortcircuit.properties.DirectionHelper;
@@ -32,7 +33,7 @@ import java.util.*;
 
 public class CircuitBlockEntity extends CommonCircuitBlockEntity {
     private static final long MAX_TAG_SIZE = 20480L; // ideally this should be byte size, but it's too hard to track in 1.19
-    private UUID runtimeUuid;
+    private UUID runtimeUuid, ownerUuid;
     private short blockSize, ticks;
     private boolean fake;
     private byte[] powers, inputs;
@@ -334,7 +335,7 @@ public class CircuitBlockEntity extends CommonCircuitBlockEntity {
             CompoundTag tuple = (CompoundTag) t;
             if (!tuple.contains("pos", Tag.TAG_COMPOUND)) continue;
             BlockPos pos = NbtUtils.readBlockPos(tuple.getCompound("pos"));
-            BlockState state = NbtUtils.readBlockState(tuple.getCompound("block"));
+            BlockState state = NbtUtils.readBlockState(this.level.holderLookup(Registries.BLOCK), tuple.getCompound("block"));
             blocks.put(pos, state);
         }
         if (!this.chunked) this.blocks = blocks;
@@ -345,11 +346,21 @@ public class CircuitBlockEntity extends CommonCircuitBlockEntity {
         return runtimeUuid;
     }
 
+    public UUID getOwnerUuid() {
+        return ownerUuid;
+    }
+
+    public void setOwnerUuid(UUID ownerUuid) {
+        this.ownerUuid = ownerUuid;
+    }
+
     public short getBlockSize() {
         return blockSize;
     }
 
     public void setBlockSize(short blockSize) {
+        // If block size is cheesed, set to smallest
+        if (blockSize > Config.MAX_CIRCUIT_SIZE) blockSize = 4;
         this.blockSize = blockSize;
         this.setChanged();
     }

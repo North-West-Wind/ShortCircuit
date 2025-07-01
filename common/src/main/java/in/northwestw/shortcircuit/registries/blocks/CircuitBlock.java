@@ -1,6 +1,8 @@
 package in.northwestw.shortcircuit.registries.blocks;
 
 import in.northwestw.shortcircuit.Constants;
+import in.northwestw.shortcircuit.ShortCircuitCommon;
+import in.northwestw.shortcircuit.data.CircuitLimitSavedData;
 import in.northwestw.shortcircuit.registries.*;
 import in.northwestw.shortcircuit.registries.blockentities.CircuitBlockEntity;
 import net.minecraft.core.BlockPos;
@@ -9,6 +11,8 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.Style;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -39,6 +43,7 @@ import net.minecraft.world.phys.HitResult;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.UUID;
 
 public class CircuitBlock extends HorizontalDirectionalBlock implements EntityBlock {
     public static final BooleanProperty POWERED = BlockStateProperties.POWERED;
@@ -77,6 +82,11 @@ public class CircuitBlock extends HorizontalDirectionalBlock implements EntityBl
                 level.addFreshEntity(itementity);
             }
             circuitBlockEntity.removeRuntime();
+
+            UUID owner = circuitBlockEntity.getOwnerUuid();
+            MinecraftServer server = player.getServer();
+            if (owner != null && server != null)
+                CircuitLimitSavedData.getRuntimeData(server).remove(owner);
         }
 
         super.playerWillDestroy(level, pos, state, player);
@@ -84,8 +94,14 @@ public class CircuitBlock extends HorizontalDirectionalBlock implements EntityBl
 
     @Override
     public void wasExploded(Level level, BlockPos pos, Explosion explosion) {
-        if (level.getBlockEntity(pos) instanceof CircuitBlockEntity blockEntity)
+        if (level.getBlockEntity(pos) instanceof CircuitBlockEntity blockEntity) {
             blockEntity.removeRuntime();
+
+            UUID owner = blockEntity.getOwnerUuid();
+            MinecraftServer server = level.getServer();
+            if (owner != null && server != null)
+                CircuitLimitSavedData.getRuntimeData(server).remove(owner);
+        }
         super.wasExploded(level, pos, explosion);
     }
 
@@ -135,7 +151,7 @@ public class CircuitBlock extends HorizontalDirectionalBlock implements EntityBl
 
     protected InteractionResult useItemOn(ItemStack stack, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hitResult) {
         if (stack.is(Items.POKING_STICK.get()) || stack.is(Items.LABELLING_STICK.get())) return stack.useOn(new UseOnContext(player, hand, hitResult)); // handled by item
-        else if ((stack.is(Items.CIRCUIT.get()) || stack.is(Items.INTEGRATED_CIRCUIT.get())) && !player.isCrouching() && level.getBlockEntity(pos) instanceof CircuitBlockEntity blockEntity && blockEntity.isValid()) {
+        else if ((stack.is(Items.CIRCUIT.get()) || stack.is(Items.INTEGRATED_CIRCUIT.get())) && !player.isCrouching() && !player.isShiftKeyDown() && level.getBlockEntity(pos) instanceof CircuitBlockEntity blockEntity && blockEntity.isValid()) {
             ItemStack newStack = new ItemStack(Items.CIRCUIT.get(), stack.getCount());
             if (stack.hasTag()) newStack.setTag(stack.getTag());
             CompoundTag tag = newStack.getOrCreateTag();
@@ -176,8 +192,21 @@ public class CircuitBlock extends HorizontalDirectionalBlock implements EntityBl
     @Override
     public void setPlacedBy(Level level, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack stack) {
         if (state.hasBlockEntity() && level.getBlockEntity(pos) instanceof CircuitBlockEntity blockEntity) {
+            boolean disallowed = false;
+            MinecraftServer server = level.getServer();
+            if (server == null) return;
+            if (placer instanceof Player player) {
+                blockEntity.setOwnerUuid(placer.getUUID());
+                CircuitLimitSavedData data = CircuitLimitSavedData.getRuntimeData(server);
+                if (!data.canAdd(placer.getUUID())) {
+                    player.displayClientMessage(Component.translatable("warning.circuit.place.circuit_board.limit").withStyle(Style.EMPTY.withColor(0xffff00)), true);
+                    disallowed = true;
+                } else
+                    data.add(placer.getUUID());
+            }
+
             CompoundTag tag = stack.getOrCreateTag();
-            if (tag.hasUUID("uuid")) {
+            if (!disallowed && tag.hasUUID("uuid")) {
                 blockEntity.setUuid(tag.getUUID("uuid"));
                 if (stack.hasCustomHoverName())
                     blockEntity.setName(stack.getHoverName());

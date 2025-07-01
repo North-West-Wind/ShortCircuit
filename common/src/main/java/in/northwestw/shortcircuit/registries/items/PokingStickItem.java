@@ -1,6 +1,7 @@
 package in.northwestw.shortcircuit.registries.items;
 
 import in.northwestw.shortcircuit.Constants;
+import in.northwestw.shortcircuit.config.Config;
 import in.northwestw.shortcircuit.data.CircuitSavedData;
 import in.northwestw.shortcircuit.data.Octolet;
 import in.northwestw.shortcircuit.properties.RelativeDirection;
@@ -68,7 +69,7 @@ public class PokingStickItem extends Item {
         if (!(level.getBlockEntity(context.getClickedPos()) instanceof CircuitBlockEntity blockEntity)) return InteractionResult.FAIL;
         Player player = context.getPlayer();
         ItemStack stack = context.getItemInHand();
-        if (player.isCrouching()) {
+        if (player.isCrouching() || player.isShiftKeyDown()) {
             blockEntity.setHidden(!blockEntity.isHidden());
         } else {
             DimensionTransition transition;
@@ -93,7 +94,7 @@ public class PokingStickItem extends Item {
     private InteractionResult useOnCircuitBoardBlock(UseOnContext context) {
         Player player = context.getPlayer();
         Level level = context.getLevel();
-        if (player.isCrouching()) {
+        if (player.isCrouching() || player.isShiftKeyDown()) {
             BlockState state = level.getBlockState(context.getClickedPos());
             level.setBlockAndUpdate(context.getClickedPos(), state.setValue(CircuitBoardBlock.MODE, state.getValue(CircuitBoardBlock.MODE).nextMode()));
         } else {
@@ -122,7 +123,7 @@ public class PokingStickItem extends Item {
         Level level = context.getLevel();
         Player player = context.getPlayer();
         if (!(level.getBlockEntity(context.getClickedPos()) instanceof IntegratedCircuitBlockEntity blockEntity)) return InteractionResult.FAIL;
-        if (player.isCrouching()) {
+        if (player.isCrouching() || player.isShiftKeyDown()) {
             blockEntity.setHidden(!blockEntity.isHidden());
             return InteractionResult.SUCCESS;
         }

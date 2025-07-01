@@ -63,7 +63,6 @@ public class LabellingStickItem extends Item {
         ItemStack stack = context.getItemInHand();
         CompoundTag tag = stack.getOrCreateTag();
         if (player.isCrouching() || player.isShiftKeyDown()) {
-        if (player.isCrouching()) {
             // copy color
             DyeColor color = null;
             if (level.getBlockEntity(pos) instanceof CircuitBlockEntity blockEntity) color = blockEntity.getColor();

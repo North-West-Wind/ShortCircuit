@@ -4,6 +4,7 @@ import in.northwestw.shortcircuit.config.Config;
 import in.northwestw.shortcircuit.properties.RelativeDirection;
 import in.northwestw.shortcircuit.registries.blockentities.CircuitBlockEntity;
 import in.northwestw.shortcircuit.registries.blocks.CircuitBlock;
+import in.northwestw.shortcircuit.registries.blocks.IntegratedCircuitBlock;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;

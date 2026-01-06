@@ -74,7 +74,7 @@ public class TruthAssignerBlock extends HorizontalDirectionalBlock implements En
 
     @Override
     protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult result) {
-        if (!level.isClientSide && player instanceof ServerPlayer serverPlayer)
+        if (!level.isClientSide() && player instanceof ServerPlayer serverPlayer)
             serverPlayer.openMenu(state.getMenuProvider(level, pos));
         return InteractionResult.SUCCESS_SERVER;
     }

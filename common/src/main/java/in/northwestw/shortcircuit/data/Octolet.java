@@ -2,19 +2,35 @@ package in.northwestw.shortcircuit.data;
 
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import com.mojang.datafixers.util.Either;
+import com.mojang.datafixers.util.Pair;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.DataResult;
+import com.mojang.serialization.MapCodec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
+import com.mojang.serialization.codecs.UnboundedMapCodec;
+import in.northwestw.shortcircuit.Constants;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.UUIDUtil;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.IntTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.world.level.ChunkPos;
+import org.apache.commons.compress.utils.Lists;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
 // It's call Octolet because it is 2^8 for side
 public class Octolet {
+    public static final Codec<Octolet> CODEC = RecordCodecBuilder.create(instance -> instance.group(
+            Codec.SHORT.fieldOf("value").forGetter(octolet -> octolet.blockSize),
+            Codec.INT.listOf().fieldOf("occupied").forGetter(octolet -> octolet.occupied.stream().toList()),
+            Constants.backwardsCompatMapCodec(UUIDUtil.CODEC, Codec.INT, "uuid", "id").fieldOf("blocks").forGetter(octolet -> octolet.blocks)
+    ).apply(instance, Octolet::new));
     public static final short MAX_SIZE = 256;
 
     public short blockSize;
@@ -31,41 +47,14 @@ public class Octolet {
         this.blocks = Maps.newHashMap();
     }
 
+    public Octolet(short blockSize, List<Integer> occupied, Map<UUID, Integer> blocks) {
+        this.blockSize = blockSize;
+        this.occupied = Sets.newHashSet(occupied);
+        this.blocks = Maps.newHashMap(blocks);
+    }
+
     public boolean isFull() {
         return occupied.size() == Math.pow(MAX_SIZE / this.blockSize, 3);
-    }
-
-    public static Octolet fromTag(CompoundTag tag) {
-        Octolet octo = new Octolet();
-        octo.load(tag);
-        return octo;
-    }
-
-    public Octolet load(CompoundTag tag) {
-        this.blockSize = tag.getShort("value");
-        for (Tag t : tag.getList("occupied", Tag.TAG_INT))
-            occupied.add(((IntTag) t).getAsInt());
-        for (Tag t : tag.getList("blocks", Tag.TAG_COMPOUND)) {
-            CompoundTag pair = (CompoundTag) t;
-            this.blocks.put(pair.getUUID("uuid"), pair.getInt("id"));
-        }
-        return this;
-    }
-
-    public CompoundTag save(CompoundTag tag) {
-        tag.putShort("value", this.blockSize);
-        ListTag list = new ListTag();
-        occupied.forEach(s -> list.add(IntTag.valueOf(s)));
-        tag.put("occupied", list);
-        ListTag blockList = new ListTag();
-        this.blocks.forEach((uuid, id) -> {
-            CompoundTag pair = new CompoundTag();
-            pair.putUUID("uuid", uuid);
-            pair.putInt("id", id);
-            blockList.add(pair);
-        });
-        tag.put("blocks", blockList);
-        return tag;
     }
 
     public static BlockPos getOctoletPos(int outerIndex) {

@@ -3,6 +3,9 @@ package in.northwestw.shortcircuit.registries.blockentities;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.mojang.logging.LogUtils;
+import com.mojang.serialization.Codec;
 import in.northwestw.shortcircuit.Constants;
 import in.northwestw.shortcircuit.config.Config;
 import in.northwestw.shortcircuit.data.CircuitSavedData;
@@ -17,18 +20,21 @@ import in.northwestw.shortcircuit.registries.blocks.CircuitBoardBlock;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
+import net.minecraft.core.UUIDUtil;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
-import net.minecraft.nbt.NbtUtils;
-import net.minecraft.nbt.Tag;
+import net.minecraft.nbt.*;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.ProblemReporter;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.storage.TagValueInput;
+import net.minecraft.world.level.storage.TagValueOutput;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.*;
@@ -150,7 +156,10 @@ public class CircuitBlockEntity extends CommonCircuitBlockEntity {
                     if (oldBlockEntity != null) {
                         CompoundTag save = oldBlockEntity.saveCustomOnly(circuitBoardLevel.registryAccess());
                         BlockEntity be = runtimeLevel.getBlockEntity(newPos);
-                        be.loadCustomOnly(save, runtimeLevel.registryAccess());
+                        try (ProblemReporter.ScopedCollector problemreporter$scopedcollector = new ProblemReporter.ScopedCollector(this.problemPath(), LogUtils.getLogger())) {
+                            ValueInput input = TagValueInput.create(problemreporter$scopedcollector, runtimeLevel.registryAccess(), save);
+                            be.loadCustomOnly(input);
+                        }
                         if (be instanceof CircuitBoardBlockEntity blockEntity) {
                             RelativeDirection dir = oldState.getValue(CircuitBoardBlock.DIRECTION);
                             CircuitBoardBlock.Mode mode = oldState.getValue(CircuitBoardBlock.MODE);
@@ -187,7 +196,7 @@ public class CircuitBlockEntity extends CommonCircuitBlockEntity {
                 for (int kk = 1; kk < this.blockSize - 1; kk++) {
                     BlockPos pos = runtimePos.offset(ii, jj, kk);
                     BlockState state = runtimeLevel.getBlockState(pos);
-                    if (!state.isAir()) runtimeLevel.blockUpdated(pos, state.getBlock());
+                    if (!state.isAir()) runtimeLevel.sendBlockUpdated(pos, state, state, 3);
                 }
             }
         }
@@ -268,26 +277,45 @@ public class CircuitBlockEntity extends CommonCircuitBlockEntity {
     }
 
     @Override
-    protected void loadAdditional(CompoundTag tag, HolderLookup.Provider provider) {
-        super.loadAdditional(tag, provider);
-        this.runtimeUuid = tag.getUUID("runtimeUuid");
-        this.blockSize = tag.getShort("blockSize");
-        this.fake = tag.getBoolean("fake");
-        this.powers = tag.getByteArray("powers");
-        if (this.powers.length != 6) this.powers = new byte[6];
-        this.inputs = tag.getByteArray("inputs");
-        if (this.inputs.length != 6) this.inputs = new byte[6];
-        if (!this.hidden) this.loadExtraFromData(tag);
+    protected void loadAdditional(ValueInput input) {
+        super.loadAdditional(input);
+        this.runtimeUuid = UUIDUtil.uuidFromIntArray(input.getIntArray("runtimeUuid").orElseThrow());
+        this.blockSize = (short) input.getShortOr("blockSize", (short) 4);
+        this.fake = input.getBooleanOr("fake", false);
+        this.powers = new byte[6];
+        input.read("powers", Codec.BYTE.listOf()).ifPresent(list -> {
+            if (list.size() == 6)
+                for (int ii = 0; ii < list.size(); ii++)
+                    this.powers[ii] = list.get(ii);
+        });
+        this.inputs = new byte[6];
+        input.read("inputs", Codec.BYTE.listOf()).ifPresent(list -> {
+            if (list.size() == 6)
+                for (int ii = 0; ii < list.size(); ii++)
+                    this.inputs[ii] = list.get(ii);
+        });
+        if (!this.hidden) {
+            try {
+                this.loadExtraFromData(input);
+            } catch (CommandSyntaxException e) {
+                throw new RuntimeException(e);
+            }
+        }
     }
 
     @Override
-    protected void saveAdditional(CompoundTag tag, HolderLookup.Provider provider) {
-        super.saveAdditional(tag, provider);
-        tag.putUUID("runtimeUuid", this.runtimeUuid);
-        tag.putShort("blockSize", this.blockSize);
-        tag.putBoolean("fake", this.fake);
-        tag.putByteArray("powers", this.powers);
-        tag.putByteArray("inputs", this.inputs);
+    protected void saveAdditional(ValueOutput output) {
+        super.saveAdditional(output);
+        output.putIntArray("runtimeUuid", UUIDUtil.uuidToIntArray(this.runtimeUuid));
+        output.putShort("blockSize", this.blockSize);
+        output.putBoolean("fake", this.fake);
+        int[] arr = new int[6];
+        for (int ii = 0; ii < this.powers.length; ii++)
+            arr[ii] = this.powers[ii];
+        output.putIntArray("powers", arr);
+        for (int ii = 0; ii < this.inputs.length; ii++)
+            arr[ii] = this.inputs[ii];
+        output.putIntArray("inputs", arr);
     }
 
     @Override
@@ -301,8 +329,10 @@ public class CircuitBlockEntity extends CommonCircuitBlockEntity {
         for (Map.Entry<BlockPos, BlockState> entry : this.blocks.entrySet()) {
             if (ii++ < this.chunkedOffset) continue;
             CompoundTag tuple = new CompoundTag();
-            tuple.put("pos", NbtUtils.writeBlockPos(entry.getKey()));
-            tuple.put("block", NbtUtils.writeBlockState(entry.getValue()));
+            BlockPos pos = entry.getKey();
+            tuple.put("pos", new IntArrayTag(new int[] { pos.getX(), pos.getY(), pos.getZ() }));
+            // use string to cheese ValueInput
+            tuple.putString("block", NbtUtils.structureToSnbt(NbtUtils.writeBlockState(entry.getValue())));
             testList.add(tuple);
 
             this.chunkedOffset++;
@@ -323,16 +353,17 @@ public class CircuitBlockEntity extends CommonCircuitBlockEntity {
         return tag;
     }
 
-    public void loadExtraFromData(CompoundTag tag) {
+    public void loadExtraFromData(ValueInput input) throws CommandSyntaxException {
         if (this.level == null) return;
-        this.chunked = tag.getBoolean("chunked");
+        this.chunked = input.getBooleanOr("chunked", false);
         Map<BlockPos, BlockState> blocks = Maps.newHashMap();
-        for (Tag t : tag.getList("blocks", Tag.TAG_COMPOUND)) {
-            CompoundTag tuple = (CompoundTag) t;
-            Optional<BlockPos> opt = NbtUtils.readBlockPos(tuple, "pos");
+        for (ValueInput t : input.childrenListOrEmpty("blocks")) {
+            Optional<int[]> opt = t.getIntArray("pos");
             if (opt.isEmpty()) continue;
-            BlockPos pos = opt.get();
-            BlockState state = NbtUtils.readBlockState(this.level.holderLookup(Registries.BLOCK), tuple.getCompound("block"));
+            int[] arr = opt.get();
+            BlockPos pos = new BlockPos(arr[0], arr[1], arr[2]);
+            // use string to cheese ValueInput
+            BlockState state = NbtUtils.readBlockState(this.level.holderLookup(Registries.BLOCK), NbtUtils.snbtToStructure(t.getString("block").orElseThrow()));
             blocks.put(pos, state);
         }
         if (!this.chunked) this.blocks = blocks;

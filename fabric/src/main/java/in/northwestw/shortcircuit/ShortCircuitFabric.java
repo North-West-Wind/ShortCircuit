@@ -5,16 +5,25 @@ import in.northwestw.shortcircuit.platform.FabricRegistryHelper;
 import in.northwestw.shortcircuit.registries.BlockEntities;
 import in.northwestw.shortcircuit.registries.Blocks;
 import in.northwestw.shortcircuit.registries.Menus;
+import in.northwestw.shortcircuit.registries.blockentities.CircuitBlockEntity;
 import in.northwestw.shortcircuit.registries.blockentityrenderers.CircuitBlockEntityRenderer;
 import in.northwestw.shortcircuit.registries.blockentityrenderers.IntegratedCircuitBlockEntityRenderer;
+import in.northwestw.shortcircuit.registries.blockentityrenderers.renderstates.CircuitBlockEntityRenderState;
+import in.northwestw.shortcircuit.registries.blocks.common.CommonCircuitBlock;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.api.ModInitializer;
-import net.fabricmc.fabric.api.blockrenderlayer.v1.BlockRenderLayerMap;
+import net.fabricmc.fabric.api.client.item.v1.ItemTooltipCallback;
+import net.fabricmc.fabric.api.client.rendering.v1.BlockRenderLayerMap;
 import net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents;
 import net.minecraft.client.gui.screens.MenuScreens;
-import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
+import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderers;
+import net.minecraft.client.renderer.blockentity.state.BlockEntityRenderState;
+import net.minecraft.client.renderer.chunk.ChunkSectionLayer;
+import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
 
@@ -38,7 +47,11 @@ public class ShortCircuitFabric implements ModInitializer, ClientModInitializer 
         BlockEntityRenderers.register(BlockEntities.CIRCUIT.get(), CircuitBlockEntityRenderer::new);
         BlockEntityRenderers.register(BlockEntities.INTEGRATED_CIRCUIT.get(), IntegratedCircuitBlockEntityRenderer::new);
         MenuScreens.register(Menus.TRUTH_ASSIGNER.get(), TruthAssignerScreen::new);
-        BlockRenderLayerMap.INSTANCE.putBlock(Blocks.CIRCUIT.get(), RenderType.cutout());
-        BlockRenderLayerMap.INSTANCE.putBlock(Blocks.INTEGRATED_CIRCUIT.get(), RenderType.cutout());
+        BlockRenderLayerMap.putBlock(Blocks.CIRCUIT.get(), ChunkSectionLayer.CUTOUT);
+        BlockRenderLayerMap.putBlock(Blocks.INTEGRATED_CIRCUIT.get(), ChunkSectionLayer.CUTOUT);
+        ItemTooltipCallback.EVENT.register(((itemStack, tooltipContext, tooltipFlag, list) -> {
+            if (itemStack.getItem() instanceof BlockItem item && item.getBlock() instanceof CommonCircuitBlock block)
+                list.addAll(block.extraTooltip(itemStack));
+        }));
     }
 }

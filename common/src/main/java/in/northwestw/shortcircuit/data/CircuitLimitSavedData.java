@@ -1,47 +1,50 @@
 package in.northwestw.shortcircuit.data;
 
 import com.google.common.collect.Maps;
+import com.mojang.datafixers.util.Pair;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 import in.northwestw.shortcircuit.Constants;
 import in.northwestw.shortcircuit.config.Config;
 import net.minecraft.core.HolderLookup;
+import net.minecraft.core.UUIDUtil;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.saveddata.SavedData;
+import net.minecraft.world.level.saveddata.SavedDataType;
 import net.minecraft.world.level.storage.DimensionDataStorage;
 
 import java.util.Map;
 import java.util.UUID;
 
 public class CircuitLimitSavedData extends SavedData {
+    private static final Codec<Pair<UUID, Long>> PAIR_CODEC = RecordCodecBuilder.create(instance -> instance.group(
+            UUIDUtil.CODEC.fieldOf("uuid").forGetter(Pair::getFirst),
+            Codec.LONG.fieldOf("amount").forGetter(Pair::getSecond)
+    ).apply(instance, Pair::of));
+    public static final Codec<CircuitLimitSavedData> CODEC = RecordCodecBuilder.create(instance -> instance.group(
+            Codec.withAlternative(
+                    Codec.unboundedMap(UUIDUtil.CODEC, Codec.LONG),
+                    PAIR_CODEC.listOf().xmap(list -> {
+                        Map<UUID, Long> map = Maps.newHashMap();
+                        for (Pair<UUID, Long> pair : list)
+                            map.put(pair.getFirst(), pair.getSecond());
+                        return map;
+                    }, map -> map.entrySet().stream().map(entry -> Pair.of(entry.getKey(), entry.getValue())).toList())
+            ).fieldOf("placements").forGetter(data -> data.placements)
+    ).apply(instance, CircuitLimitSavedData::new));
+    public static final SavedDataType<CircuitLimitSavedData> TYPE = new SavedDataType<>("circuit_limit", CircuitLimitSavedData::new, CODEC, null);
     public final Map<UUID, Long> placements;
 
     public CircuitLimitSavedData() {
-        this.placements = Maps.newHashMap();
+        this(Maps.newHashMap());
     }
 
-    public static CircuitLimitSavedData load(CompoundTag tag, HolderLookup.Provider lookupProvider) {
-        CircuitLimitSavedData data = new CircuitLimitSavedData();
-        for (Tag tt : tag.getList("placements", ListTag.TAG_COMPOUND)) {
-            CompoundTag pair = (CompoundTag) tt;
-            data.placements.put(pair.getUUID("uuid"), pair.getLong("amount"));
-        }
-        return data;
-    }
-
-    @Override
-    public CompoundTag save(CompoundTag tag, HolderLookup.Provider provider) {
-        ListTag list = new ListTag();
-        this.placements.forEach((uuid, amount) -> {
-            CompoundTag pair = new CompoundTag();
-            pair.putUUID("uuid", uuid);
-            pair.putLong("amount", amount);
-            list.add(pair);
-        });
-        tag.put("placements", list);
-        return tag;
+    public CircuitLimitSavedData(Map<UUID, Long> placements) {
+        this.placements = placements;
     }
 
     public boolean canAdd(UUID uuid) {
@@ -65,6 +68,6 @@ public class CircuitLimitSavedData extends SavedData {
     public static CircuitLimitSavedData getRuntimeData(MinecraftServer server) {
         ServerLevel runtimeLevel = server.getLevel(Constants.RUNTIME_DIMENSION);
         DimensionDataStorage storage = runtimeLevel.getDataStorage();
-        return storage.computeIfAbsent(new SavedData.Factory<>(CircuitLimitSavedData::new, CircuitLimitSavedData::load, null), "circuit_limit");
+        return storage.computeIfAbsent(TYPE);
     }
 }

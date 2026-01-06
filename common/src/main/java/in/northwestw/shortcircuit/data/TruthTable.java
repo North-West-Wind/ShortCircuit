@@ -4,15 +4,40 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.mojang.datafixers.util.Pair;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
+import in.northwestw.shortcircuit.ShortCircuitCommon;
 import in.northwestw.shortcircuit.properties.RelativeDirection;
+import net.minecraft.core.UUIDUtil;
 import net.minecraft.nbt.CompoundTag;
 
+import java.io.ByteArrayOutputStream;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.UUID;
+import java.util.function.IntFunction;
+import java.util.stream.Collectors;
 
 // The goal is to reduce memory & storage by using more brain
 public class TruthTable {
+    public static final Codec<TruthTable> CODEC = RecordCodecBuilder.create(instance -> instance.group(
+            Codec.BYTE.listOf().fieldOf("input").forGetter(table -> table.inputs.stream().map(RelativeDirection::getId).toList()),
+            Codec.BYTE.listOf().fieldOf("output").forGetter(table -> table.outputs.stream().map(RelativeDirection::getId).toList()),
+            Codec.INT.listOf().fieldOf("map").forGetter(TruthTable::flattenSignals),
+            Codec.INT.fieldOf("defaultValue").forGetter(table -> table.defaultValue),
+            Codec.BYTE.fieldOf("bits").forGetter(table -> (byte) table.bits)
+    ).apply(instance, TruthTable::new));
+    public static final Codec<WithUUID> CODEC_WITH_UUID = RecordCodecBuilder.create(instance -> instance.group(
+            UUIDUtil.CODEC.fieldOf("uuid").forGetter(merged -> merged.uuid),
+            Codec.BYTE.listOf().fieldOf("input").forGetter(merged -> merged.table.inputs.stream().map(RelativeDirection::getId).toList()),
+            Codec.BYTE.listOf().fieldOf("output").forGetter(merged -> merged.table.outputs.stream().map(RelativeDirection::getId).toList()),
+            Codec.INT.listOf().fieldOf("map").forGetter(merged -> merged.table.flattenSignals()),
+            Codec.INT.fieldOf("defaultValue").forGetter(merged -> merged.table.defaultValue),
+            Codec.BYTE.fieldOf("bits").forGetter(merged -> (byte) merged.table.bits)
+    ).apply(instance, WithUUID::new));
+
     public final List<RelativeDirection> inputs, outputs;
     public final Map<Integer, Integer> signals;
     public final int defaultValue, bits;
@@ -26,32 +51,25 @@ public class TruthTable {
         else this.bits = bits;
     }
 
-    public static TruthTable load(CompoundTag tag) {
-        List<RelativeDirection> input = Lists.newArrayList();
-        for (byte id : tag.getByteArray("input"))
-            input.add(RelativeDirection.fromId(id));
-        List<RelativeDirection> output = Lists.newArrayList();
-        for (byte id : tag.getByteArray("output"))
-            output.add(RelativeDirection.fromId(id));
+    public TruthTable(List<Byte> inputs, List<Byte> outputs, List<Integer> pairedSignals, int defaultValue, byte bits) {
+        this.inputs = inputs.stream().map(RelativeDirection::fromId).toList();
+        this.outputs = outputs.stream().map(RelativeDirection::fromId).toList();
+        this.defaultValue = defaultValue;
+        if (bits == 0) this.bits = 4;
+        else this.bits = bits;
         Map<Integer, Integer> signalMap = Maps.newHashMap();
-        int[] mergedMap = tag.getIntArray("map");
-        for (int ii = 0; ii < mergedMap.length / 2; ii++)
-            signalMap.put(mergedMap[ii * 2], mergedMap[ii * 2 + 1]);
-        return new TruthTable(input, output, signalMap, tag.getInt("defaultValue"), tag.getByte("bits"));
+        for (int ii = 0; ii < pairedSignals.size() / 2; ii++)
+            signalMap.put(pairedSignals.get(ii * 2), pairedSignals.get(ii * 2 + 1));
+        this.signals = ImmutableMap.copyOf(signalMap);
     }
 
-    public CompoundTag save(CompoundTag tag) {
-        tag.putByteArray("input", this.inputs.stream().map(RelativeDirection::getId).toList());
-        tag.putByteArray("output", this.outputs.stream().map(RelativeDirection::getId).toList());
-        List<Integer> mergedMap = Lists.newArrayList();
+    public List<Integer> flattenSignals() {
+        List<Integer> list = Lists.newArrayList();
         this.signals.forEach((input, output) -> {
-            mergedMap.add(input);
-            mergedMap.add(output);
+            list.add(input);
+            list.add(output);
         });
-        tag.putIntArray("map", mergedMap);
-        tag.putInt("defaultValue", this.defaultValue);
-        tag.putByte("bits", (byte) this.bits);
-        return tag;
+        return list;
     }
 
     public boolean isSame(List<RelativeDirection> inputs, List<RelativeDirection> outputs, Map<Integer, Integer> signals, int defaultValue, int bits) {
@@ -86,5 +104,19 @@ public class TruthTable {
             }
         }
         return false;
+    }
+
+    public static class WithUUID {
+        public final UUID uuid;
+        public final TruthTable table;
+
+        public WithUUID(UUID uuid, TruthTable table) {
+            this.uuid = uuid;
+            this.table = table;
+        }
+
+        public WithUUID(UUID uuid, List<Byte> inputs, List<Byte> outputs, List<Integer> pairedSignals, int defaultValue, byte bits) {
+            this(uuid, new TruthTable(inputs, outputs, pairedSignals, defaultValue, bits));
+        }
     }
 }

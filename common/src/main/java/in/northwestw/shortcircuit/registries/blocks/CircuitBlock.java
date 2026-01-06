@@ -6,6 +6,7 @@ import in.northwestw.shortcircuit.ShortCircuitCommon;
 import in.northwestw.shortcircuit.data.CircuitLimitSavedData;
 import in.northwestw.shortcircuit.registries.*;
 import in.northwestw.shortcircuit.registries.blockentities.CircuitBlockEntity;
+import in.northwestw.shortcircuit.registries.blocks.common.CommonCircuitBlock;
 import in.northwestw.shortcircuit.registries.datacomponents.UUIDDataComponent;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -40,38 +41,21 @@ import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.redstone.Orientation;
 import net.minecraft.world.phys.BlockHitResult;
+import org.apache.commons.compress.utils.Lists;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.UUID;
 
-public class CircuitBlock extends HorizontalDirectionalBlock implements EntityBlock {
-    public static final BooleanProperty POWERED = BlockStateProperties.POWERED;
-    public static final BooleanProperty COLORED = BooleanProperty.create("colored");
-
+public class CircuitBlock extends CommonCircuitBlock {
     public CircuitBlock(BlockBehaviour.Properties properties) {
         super(properties);
-        this.registerDefaultState(this.stateDefinition.any()
-                .setValue(FACING, Direction.NORTH)
-                .setValue(POWERED, false)
-                .setValue(COLORED, false));
     }
 
     @Override
     protected @NotNull MapCodec<CircuitBlock> codec() {
         return Codecs.CIRCUIT.get();
-    }
-
-    @Override
-    public BlockState getStateForPlacement(BlockPlaceContext pContext) {
-        return this.defaultBlockState().setValue(FACING, pContext.getHorizontalDirection());
-    }
-
-    @Override
-    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-        //builder.add(FACING, UP_POWER, DOWN_POWER, LEFT_POWER, RIGHT_POWER, FRONT_POWER, BACK_POWER);
-        builder.add(FACING, POWERED, COLORED);
     }
 
     @Override
@@ -90,7 +74,7 @@ public class CircuitBlock extends HorizontalDirectionalBlock implements EntityBl
             circuitBlockEntity.removeRuntime();
 
             UUID owner = circuitBlockEntity.getOwnerUuid();
-            MinecraftServer server = player.getServer();
+            MinecraftServer server = circuitBlockEntity.getLevel().getServer();
             if (owner != null && server != null)
                 CircuitLimitSavedData.getRuntimeData(server).remove(owner);
         }
@@ -111,23 +95,10 @@ public class CircuitBlock extends HorizontalDirectionalBlock implements EntityBl
     }
 
     @Override
-    public void appendHoverText(ItemStack stack, Item.TooltipContext ctx, List<Component> components, TooltipFlag flag) {
-        super.appendHoverText(stack, ctx, components, flag);
-        if (stack.has(DataComponents.UUID.get())) {
-            components.add(Component.translatable("tooltip.short_circuit.circuit", stack.get(DataComponents.UUID.get()).uuid().toString()).withColor(0x7f7f7f));
-        }
-        if (stack.has(DataComponents.SHORT.get())) {
-            DyeColor color = DyeColor.byId(stack.get(DataComponents.SHORT.get()));
-            components.add(Component.translatable("tooltip.short_circuit.circuit.color", Component.translatable("color.minecraft." + color.getName())).withColor(color.getTextColor()));
-        }
-    }
-
-    @Override
     public @Nullable BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
         return new CircuitBlockEntity(pos, state);
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public @Nullable <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
         return type == BlockEntities.CIRCUIT.get() ? (pLevel, pPos, pState, blockEntity) -> ((CircuitBlockEntity) blockEntity).tick() : null;
@@ -208,7 +179,7 @@ public class CircuitBlock extends HorizontalDirectionalBlock implements EntityBl
             if (!disallowed && stack.has(DataComponents.UUID.get())) {
                 blockEntity.setUuid(stack.get(DataComponents.UUID.get()).uuid());
                 if (stack.has(net.minecraft.core.component.DataComponents.CUSTOM_NAME))
-                    blockEntity.setName(stack.get(net.minecraft.core.component.DataComponents.CUSTOM_NAME));
+                    blockEntity.setName(stack.get(net.minecraft.core.component.DataComponents.CUSTOM_NAME).getString());
                 if (stack.has(DataComponents.SHORT.get()))
                     blockEntity.setColor(DyeColor.byId(stack.get(DataComponents.SHORT.get())));
                 if (!level.dimension().equals(Constants.CIRCUIT_BOARD_DIMENSION)) {

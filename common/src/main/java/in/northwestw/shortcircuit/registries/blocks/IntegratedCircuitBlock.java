@@ -4,6 +4,7 @@ import com.mojang.serialization.MapCodec;
 import in.northwestw.shortcircuit.ShortCircuitCommon;
 import in.northwestw.shortcircuit.registries.*;
 import in.northwestw.shortcircuit.registries.blockentities.IntegratedCircuitBlockEntity;
+import in.northwestw.shortcircuit.registries.blocks.common.CommonCircuitBlock;
 import in.northwestw.shortcircuit.registries.datacomponents.UUIDDataComponent;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -39,32 +40,16 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class IntegratedCircuitBlock extends HorizontalDirectionalBlock implements EntityBlock {
-    public static final BooleanProperty POWERED = BlockStateProperties.POWERED;
-    public static final BooleanProperty COLORED = BooleanProperty.create("colored");
+public class IntegratedCircuitBlock extends CommonCircuitBlock {
     public static final DustParticleOptions PARTICLE = new DustParticleOptions(0xFFDD00, 1.0F);
 
     public IntegratedCircuitBlock(Properties pProperties) {
         super(pProperties);
-        this.registerDefaultState(this.stateDefinition.any()
-                .setValue(FACING, Direction.NORTH)
-                .setValue(POWERED, false)
-                .setValue(COLORED, false));
     }
 
     @Override
     protected MapCodec<IntegratedCircuitBlock> codec() {
         return Codecs.INTEGRATED_CIRCUIT.get();
-    }
-
-    @Override
-    public BlockState getStateForPlacement(BlockPlaceContext pContext) {
-        return this.defaultBlockState().setValue(FACING, pContext.getHorizontalDirection());
-    }
-
-    @Override
-    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(FACING, POWERED, COLORED);
     }
 
     @Override
@@ -82,18 +67,6 @@ public class IntegratedCircuitBlock extends HorizontalDirectionalBlock implement
         }
 
         return super.playerWillDestroy(level, pos, state, player);
-    }
-
-    @Override
-    public void appendHoverText(ItemStack stack, Item.TooltipContext ctx, List<Component> components, TooltipFlag flag) {
-        super.appendHoverText(stack, ctx, components, flag);
-        if (stack.has(DataComponents.UUID.get())) {
-            components.add(Component.translatable("tooltip.short_circuit.circuit", stack.get(DataComponents.UUID.get()).uuid().toString()).withColor(0x7f7f7f));
-        }
-        if (stack.has(DataComponents.SHORT.get())) {
-            DyeColor color = DyeColor.byId(stack.get(DataComponents.SHORT.get()));
-            components.add(Component.translatable("tooltip.short_circuit.circuit.color", Component.translatable("color.minecraft." + color.getName())).withColor(color.getTextColor()));
-        }
     }
 
     @Override
@@ -150,7 +123,7 @@ public class IntegratedCircuitBlock extends HorizontalDirectionalBlock implement
             if (stack.has(DataComponents.UUID.get())) {
                 blockEntity.setUuid(stack.get(DataComponents.UUID.get()).uuid());
                 if (stack.has(net.minecraft.core.component.DataComponents.CUSTOM_NAME))
-                    blockEntity.setName(stack.get(net.minecraft.core.component.DataComponents.CUSTOM_NAME));
+                    blockEntity.setName(stack.get(net.minecraft.core.component.DataComponents.CUSTOM_NAME).getString());
                 if (stack.has(DataComponents.SHORT.get()))
                     blockEntity.setColor(DyeColor.byId(stack.get(DataComponents.SHORT.get())));
                 blockEntity.updateInputs();

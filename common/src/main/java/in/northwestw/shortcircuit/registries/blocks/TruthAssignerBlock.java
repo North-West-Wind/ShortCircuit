@@ -101,11 +101,10 @@ public class TruthAssignerBlock extends HorizontalDirectionalBlock implements En
     @Override
     public void neighborChanged(BlockState state, Level level, BlockPos pos, Block neighborBlock, BlockPos neighborPos, boolean movedByPiston) {
         super.neighborChanged(state, level, pos, neighborBlock, neighborPos, movedByPiston);
-        if (pos.above().equals(neighborPos) && level.getBlockEntity(pos) instanceof TruthAssignerBlockEntity blockEntity) {
-            if (!blockEntity.isWorking()) blockEntity.setErrorCode(1, level.getBlockState(neighborPos).isAir());
-            else if (level.getBlockState(neighborPos).is(Blocks.CIRCUIT.get())) {
-                blockEntity.checkAndRecord();
-            }
+        BlockPos above = pos.above();
+        if (level.getBlockEntity(pos) instanceof TruthAssignerBlockEntity blockEntity && neighborBlock == Blocks.CIRCUIT.get() && level.getBlockState(above).is(Blocks.CIRCUIT.get())) {
+            if (!blockEntity.isWorking()) blockEntity.setErrorCode(1, level.getBlockState(above).isAir());
+            else blockEntity.checkAndRecord();
         }
     }
 }

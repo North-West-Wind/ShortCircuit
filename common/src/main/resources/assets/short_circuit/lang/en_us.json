@@ -14,6 +14,8 @@
   "container.short_circuit.truth_assigner": "Truth Assigner",
   "container.short_circuit.truth_assigner.max_delay": "Max Delay",
   "container.short_circuit.truth_assigner.max_delay.desc": "Maximum (game) ticks to wait for before determining the output of the circuit",
+  "container.short_circuit.truth_assigner.extra_delay": "Extra Delay",
+  "container.short_circuit.truth_assigner.extra_delay.desc": "Extra (game) ticks to wait for after detecting first change",
   "container.short_circuit.truth_assigner.bits": "%d-Bit",
   "container.short_circuit.truth_assigner.bits.desc": "Each input signal will be treated as %d states",
   "container.short_circuit.truth_assigner.wait": "First Change",

@@ -18,7 +18,7 @@ public class TruthAssignerMenu extends AbstractContainerMenu {
 
     // Client constructor
     public TruthAssignerMenu(int containerId, Inventory inventory) {
-        this(containerId, inventory, ContainerLevelAccess.NULL, null, new SimpleContainerData(6));
+        this(containerId, inventory, ContainerLevelAccess.NULL, null, new SimpleContainerData(7));
     }
 
     // Server constructor
@@ -126,6 +126,10 @@ public class TruthAssignerMenu extends AbstractContainerMenu {
         return this.containerData.get(2);
     }
 
+    public int getExtraDelay() {
+        return this.containerData.get(6);
+    }
+
     public int getError() {
         return this.containerData.get(3);
     }
@@ -145,6 +149,14 @@ public class TruthAssignerMenu extends AbstractContainerMenu {
     public boolean setMaxDelay(int maxDelay) {
         if (maxDelay != this.getMaxDelay()) {
             this.setData(2, maxDelay);
+            return true;
+        }
+        return false;
+    }
+
+    public boolean setExtraDelay(int extraDelay) {
+        if (extraDelay != this.getExtraDelay()) {
+            this.setData(6, extraDelay);
             return true;
         }
         return false;
@@ -191,8 +203,11 @@ public class TruthAssignerMenu extends AbstractContainerMenu {
             this.setNextBits();
             return true;
         } else {
-            // cheese-iest strat ever to transfer int without implementing my own packet
-            this.setMaxDelay(id);
+            // cheese-iest strat ever to transfer different int without implementing my own packet
+            int type = id & 0x1;
+            id >>= 1;
+            if (type == 0) this.setMaxDelay(id);
+            else this.setExtraDelay(id);
         }
         return super.clickMenuButton(player, id);
     }

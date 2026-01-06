@@ -14,6 +14,8 @@
   "container.short_circuit.truth_assigner": "逻辑洗衣机",
   "container.short_circuit.truth_assigner.max_delay": "最高延迟",
   "container.short_circuit.truth_assigner.max_delay.desc": "决定最终输出前等候时间（游戏刻）",
+  "container.short_circuit.truth_assigner.extra_delay": "额外延迟",
+  "container.short_circuit.truth_assigner.extra_delay.desc": "快速模式决定最终输出前额外等候时间（游戏刻）",
   "container.short_circuit.truth_assigner.bits": "%d位元",
   "container.short_circuit.truth_assigner.bits.desc": "每边输入有%d个信号强度",
   "container.short_circuit.truth_assigner.wait": "快速",

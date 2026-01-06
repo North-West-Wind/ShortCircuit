@@ -4,6 +4,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.mojang.logging.LogUtils;
+import in.northwestw.shortcircuit.ShortCircuitCommon;
 import in.northwestw.shortcircuit.data.TruthTableSavedData;
 import in.northwestw.shortcircuit.properties.RelativeDirection;
 import in.northwestw.shortcircuit.registries.BlockEntities;
@@ -51,7 +52,7 @@ public class TruthAssignerBlockEntity extends BaseContainerBlockEntity implement
     public static final int SIZE = 2;
     private NonNullList<ItemStack> items = NonNullList.withSize(SIZE, ItemStack.EMPTY);
     private boolean working, wait;
-    private int maxDelay, ticks, errorCode, bits;
+    private int maxDelay, extraDelay, ticks, extraTicks, errorCode, bits;
     private final ContainerData containerData;
     // For assigning
     private final List<RelativeDirection> inputOrder, outputOrder;
@@ -63,6 +64,7 @@ public class TruthAssignerBlockEntity extends BaseContainerBlockEntity implement
         super(BlockEntities.TRUTH_ASSIGNER.get(), pos, state);
         this.wait = true;
         this.maxDelay = 20;
+        this.extraDelay = 0;
         this.bits = 4;
         this.inputOrder = Lists.newArrayList();
         this.outputOrder = Lists.newArrayList();
@@ -77,6 +79,7 @@ public class TruthAssignerBlockEntity extends BaseContainerBlockEntity implement
                     case 3 -> TruthAssignerBlockEntity.this.errorCode;
                     case 4 -> TruthAssignerBlockEntity.this.currentInput;
                     case 5 -> TruthAssignerBlockEntity.this.bits;
+                    case 6 -> TruthAssignerBlockEntity.this.extraDelay;
                     default -> 0;
                 };
             }
@@ -103,13 +106,16 @@ public class TruthAssignerBlockEntity extends BaseContainerBlockEntity implement
                         if (value == 1 || value == 2 || value == 4)
                             TruthAssignerBlockEntity.this.bits = value;
                         break;
+                    case 6:
+                        TruthAssignerBlockEntity.this.extraDelay = value;
+                        break;
                 }
                 TruthAssignerBlockEntity.this.setChanged();
             }
 
             @Override
             public int getCount() {
-                return 6;
+                return 7;
             }
         };
     }
@@ -146,9 +152,11 @@ public class TruthAssignerBlockEntity extends BaseContainerBlockEntity implement
         this.working = input.getBooleanOr("working", false);
         this.wait = input.getBooleanOr("wait", false);
         this.maxDelay = input.getIntOr("maxDelay", 0);
+        this.extraDelay = input.getIntOr("extraDelay", 0);
         this.bits = input.getIntOr("bits", 0);
         if (this.bits == 0) this.bits = 4;
         this.ticks = input.getIntOr("ticks", 0);
+        this.extraTicks = input.getIntOr("extraTicks", 0);
         this.errorCode = input.getIntOr("errorCode", 0);
         input.getIntArray("workingUuid").ifPresent(arr -> this.workingUuid = UUIDUtil.uuidFromIntArray(arr));
         this.lastOutput = input.getIntOr("lastOutput", 0);
@@ -161,8 +169,10 @@ public class TruthAssignerBlockEntity extends BaseContainerBlockEntity implement
         output.putBoolean("working", this.working);
         output.putBoolean("wait", this.wait);
         output.putInt("maxDelay", this.maxDelay);
+        output.putInt("extraDelay", this.extraDelay);
         output.putInt("bits", this.bits);
         output.putInt("ticks", this.ticks);
+        output.putInt("extraTicks", this.extraTicks);
         output.putInt("errorCode", this.errorCode);
         if (this.workingUuid != null) output.putIntArray("workingUuid", UUIDUtil.uuidToIntArray(this.workingUuid));
         output.putInt("lastOutput", lastOutput);
@@ -267,6 +277,10 @@ public class TruthAssignerBlockEntity extends BaseContainerBlockEntity implement
             }
         }
         if (++this.ticks >= this.maxDelay) this.recordOutput(true);
+        else if (this.extraTicks > 0) {
+            this.extraTicks--;
+            if (this.extraTicks == 0) this.recordOutput(true);
+        }
         this.setChanged();
     }
 
@@ -277,7 +291,11 @@ public class TruthAssignerBlockEntity extends BaseContainerBlockEntity implement
             signals <<= 4;
             signals |= blockEntity.getRelativePower(dir);
         }
-        if (signals != this.lastOutput || forced) {
+        if (signals != this.lastOutput && this.extraDelay > 0) {
+            ShortCircuitCommon.LOGGER.info("Triggered extra after {} ticks", this.ticks);
+            this.extraTicks = this.extraDelay;
+        } else if (signals != this.lastOutput || forced) {
+            ShortCircuitCommon.LOGGER.info("Saved after {} ticks", this.ticks);
             this.lastOutput = signals;
             this.ticks = 0;
             this.outputMap.put(this.currentInput, signals);

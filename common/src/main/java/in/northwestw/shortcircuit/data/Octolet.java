@@ -2,22 +2,13 @@ package in.northwestw.shortcircuit.data;
 
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
-import com.mojang.datafixers.util.Either;
-import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.Codec;
-import com.mojang.serialization.DataResult;
-import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import com.mojang.serialization.codecs.UnboundedMapCodec;
 import in.northwestw.shortcircuit.Constants;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.UUIDUtil;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.IntTag;
-import net.minecraft.nbt.ListTag;
-import net.minecraft.nbt.Tag;
 import net.minecraft.world.level.ChunkPos;
-import org.apache.commons.compress.utils.Lists;
+import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.List;
 import java.util.Map;
@@ -29,7 +20,7 @@ public class Octolet {
     public static final Codec<Octolet> CODEC = RecordCodecBuilder.create(instance -> instance.group(
             Codec.SHORT.fieldOf("value").forGetter(octolet -> octolet.blockSize),
             Codec.INT.listOf().fieldOf("occupied").forGetter(octolet -> octolet.occupied.stream().toList()),
-            Constants.backwardsCompatMapCodec(UUIDUtil.CODEC, Codec.INT, "uuid", "id").fieldOf("blocks").forGetter(octolet -> octolet.blocks)
+            Constants.pairMapCodec(UUIDUtil.CODEC, Codec.INT, "uuid", "id").fieldOf("blocks").forGetter(Octolet::flattenBlocks)
     ).apply(instance, Octolet::new));
     public static final short MAX_SIZE = 256;
 
@@ -37,20 +28,22 @@ public class Octolet {
     public Set<Integer> occupied;
     public Map<UUID, Integer> blocks;
 
-    public Octolet() {
-        this(MAX_SIZE);
-    }
-
     public Octolet(short blockSize) {
         this.blockSize = blockSize;
         this.occupied = Sets.newHashSet();
         this.blocks = Maps.newHashMap();
     }
 
-    public Octolet(short blockSize, List<Integer> occupied, Map<UUID, Integer> blocks) {
+    public Octolet(short blockSize, List<Integer> occupied, List<Pair<UUID, Integer>> blocks) {
         this.blockSize = blockSize;
         this.occupied = Sets.newHashSet(occupied);
-        this.blocks = Maps.newHashMap(blocks);
+        this.blocks = Maps.newHashMap();
+        for (Pair<UUID, Integer> pair : blocks)
+            this.blocks.put(pair.getLeft(), pair.getRight());
+    }
+
+    public List<Pair<UUID, Integer>> flattenBlocks() {
+        return this.blocks.entrySet().stream().map(entry -> Pair.of(entry.getKey(), entry.getValue())).toList();
     }
 
     public boolean isFull() {

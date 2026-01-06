@@ -2,30 +2,26 @@ package in.northwestw.shortcircuit.data;
 
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
-import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import in.northwestw.shortcircuit.Constants;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.HolderLookup;
 import net.minecraft.core.UUIDUtil;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
-import net.minecraft.nbt.Tag;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.util.datafix.DataFixTypes;
 import net.minecraft.world.level.saveddata.SavedData;
 import net.minecraft.world.level.saveddata.SavedDataType;
 import net.minecraft.world.level.storage.DimensionDataStorage;
+import org.apache.commons.lang3.tuple.Pair;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
 public class CircuitSavedData extends SavedData {
     public static final Codec<CircuitSavedData> CODEC = RecordCodecBuilder.create(instance -> instance.group(
-            Constants.backwardsCompatMapCodec(Codec.INT, Octolet.CODEC, "key", "value").fieldOf("octolets").forGetter(data -> data.octolets),
-            Constants.backwardsCompatMapCodec(UUIDUtil.CODEC, Codec.INT, "key", "value").fieldOf("circuits").forGetter(data -> data.circuits)
+            Constants.pairMapCodec(Codec.INT, Octolet.CODEC, "key", "value").fieldOf("octolets").forGetter(CircuitSavedData::flattenOctolets),
+            Constants.pairMapCodec(UUIDUtil.CODEC, Codec.INT, "key", "value").fieldOf("circuits").forGetter(CircuitSavedData::flattenCircuits)
     ).apply(instance, CircuitSavedData::new));
     public static final SavedDataType<CircuitSavedData> TYPE = new SavedDataType<>("circuit_pos", CircuitSavedData::new, CODEC, null);
     private static final double LOG2 = Math.log(2);
@@ -35,21 +31,33 @@ public class CircuitSavedData extends SavedData {
     public final Map<UUID, Integer> circuits;
 
     public CircuitSavedData() {
-        this(Maps.newHashMap(), Maps.newHashMap());
-    }
-
-    public CircuitSavedData(Map<Integer, Octolet> octolets, Map<UUID, Integer> circuits) {
-        this.octolets = octolets;
+        this.octolets = Maps.newHashMap();
         this.octoletsBySize = new Set[7];
         for (int ii = 0; ii < 7; ii++) {
             this.octoletsBySize[ii] = Sets.newHashSet();
         }
-        this.circuits = circuits;
+        this.circuits = Maps.newHashMap();
+    }
+
+    public CircuitSavedData(List<Pair<Integer, Octolet>> octolets, List<Pair<UUID, Integer>> circuits) {
+        this();
+        for (Pair<Integer, Octolet> pair : octolets)
+            this.octolets.put(pair.getLeft(), pair.getRight());
+        for (Pair<UUID, Integer> pair : circuits)
+            this.circuits.put(pair.getLeft(), pair.getRight());
 
         for (Map.Entry<Integer, Octolet> entry : this.octolets.entrySet()) {
             int sizeIndex = (int) (Math.log(entry.getValue().blockSize) / LOG2) - 2;
             this.octoletsBySize[sizeIndex].add(entry.getKey());
         }
+    }
+
+    public List<Pair<Integer, Octolet>> flattenOctolets() {
+        return this.octolets.entrySet().stream().map(entry -> Pair.of(entry.getKey(), entry.getValue())).toList();
+    }
+
+    public List<Pair<UUID, Integer>> flattenCircuits() {
+        return this.circuits.entrySet().stream().map(entry -> Pair.of(entry.getKey(), entry.getValue())).toList();
     }
 
     public int octoletIndexForSize(short blockSize) {

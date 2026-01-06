@@ -14,6 +14,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.saveddata.SavedData;
 import net.minecraft.world.level.saveddata.SavedDataType;
 import net.minecraft.world.level.storage.DimensionDataStorage;
+import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.Comparator;
 import java.util.List;
@@ -22,25 +23,23 @@ import java.util.UUID;
 
 public class TruthTableSavedData extends SavedData {
     public static final Codec<TruthTableSavedData> CODEC = RecordCodecBuilder.create(instance -> instance.group(
-            Codec.withAlternative(
-                    Codec.unboundedMap(UUIDUtil.CODEC, TruthTable.CODEC),
-                    TruthTable.CODEC_WITH_UUID.listOf().xmap(list -> {
-                        Map<UUID, TruthTable> map = Maps.newHashMap();
-                        for (TruthTable.WithUUID withUUID : list)
-                            map.put(withUUID.uuid, withUUID.table);
-                        return map;
-                    }, map -> map.entrySet().stream().map(entry -> new TruthTable.WithUUID(entry.getKey(), entry.getValue())).toList())
-            ).fieldOf("tables").forGetter(data -> data.truthTables)
+            TruthTable.CODEC_WITH_UUID.listOf().fieldOf("tables").forGetter(TruthTableSavedData::flattenTruthTables)
     ).apply(instance, TruthTableSavedData::new));
     public static final SavedDataType<TruthTableSavedData> TYPE = new SavedDataType<>("truth_table", TruthTableSavedData::new, CODEC, null);
     private final Map<UUID, TruthTable> truthTables;
 
     public TruthTableSavedData() {
-        this(Maps.newHashMap());
+        this.truthTables = Maps.newHashMap();
     }
 
-    public TruthTableSavedData(Map<UUID, TruthTable> truthTables) {
-        this.truthTables = truthTables;
+    public TruthTableSavedData(List<TruthTable.WithUUID> truthTables) {
+        this();
+        for (TruthTable.WithUUID merged : truthTables)
+            this.truthTables.put(merged.uuid, merged.table);
+    }
+
+    public List<TruthTable.WithUUID> flattenTruthTables() {
+        return this.truthTables.entrySet().stream().map(entry -> new TruthTable.WithUUID(entry.getKey(), entry.getValue())).toList();
     }
 
     public Map<RelativeDirection, Integer> getSignals(UUID uuid, Map<RelativeDirection, Integer> inputs) {

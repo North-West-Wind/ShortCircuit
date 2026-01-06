@@ -2,11 +2,13 @@ package in.northwestw.shortcircuit.registries.blockentityrenderers;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import in.northwestw.shortcircuit.properties.ColorHelper;
+import in.northwestw.shortcircuit.registries.BlockEntities;
 import in.northwestw.shortcircuit.registries.blockentities.IntegratedCircuitBlockEntity;
 import in.northwestw.shortcircuit.registries.blockentityrenderers.renderstates.CircuitBlockEntityRenderState;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
+import net.minecraft.client.renderer.blockentity.state.BlockEntityRenderState;
 import net.minecraft.client.renderer.feature.ModelFeatureRenderer;
 import net.minecraft.client.renderer.state.CameraRenderState;
 import net.minecraft.client.renderer.texture.OverlayTexture;
@@ -38,6 +40,7 @@ public class IntegratedCircuitBlockEntityRenderer implements BlockEntityRenderer
 
     @Override
     public void extractRenderState(IntegratedCircuitBlockEntity blockEntity, CircuitBlockEntityRenderState renderState, float partialTick, Vec3 cameraPosition, ModelFeatureRenderer.@Nullable CrumblingOverlay breakProgress) {
+        BlockEntityRenderState.extractBase(blockEntity, renderState, breakProgress);
         renderState.color = blockEntity.getColor();
         renderState.hidden = blockEntity.isHidden();
         renderState.blocks = blockEntity.blocks.stream().map(state -> Map.entry(BlockPos.ZERO, state)).collect(Collectors.toSet());

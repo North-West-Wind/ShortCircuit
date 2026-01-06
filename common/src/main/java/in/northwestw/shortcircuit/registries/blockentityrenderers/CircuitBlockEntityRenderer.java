@@ -3,12 +3,14 @@ package in.northwestw.shortcircuit.registries.blockentityrenderers;
 import com.mojang.blaze3d.vertex.PoseStack;
 import in.northwestw.shortcircuit.ShortCircuitCommon;
 import in.northwestw.shortcircuit.properties.ColorHelper;
+import in.northwestw.shortcircuit.registries.BlockEntities;
 import in.northwestw.shortcircuit.registries.blockentities.CircuitBlockEntity;
 import in.northwestw.shortcircuit.registries.blockentityrenderers.renderstates.CircuitBlockEntityRenderState;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
+import net.minecraft.client.renderer.blockentity.state.BlockEntityRenderState;
 import net.minecraft.client.renderer.feature.ModelFeatureRenderer;
 import net.minecraft.client.renderer.state.CameraRenderState;
 import net.minecraft.client.renderer.texture.OverlayTexture;
@@ -33,11 +35,8 @@ public class CircuitBlockEntityRenderer implements BlockEntityRenderer<CircuitBl
     private static final float HIDDEN_TRANSLATE = 0.0625f; // 1/16
     private static final float HIDDEN_SCALE_CARPET = 0.9375f; // 30/32
     private static final float HIDDEN_TRANSLATE_CARPET = 0.03125f; // 1/16
-    private final Font font;
 
-    public CircuitBlockEntityRenderer(BlockEntityRendererProvider.Context context) {
-        this.font = context.font();
-    }
+    public CircuitBlockEntityRenderer(BlockEntityRendererProvider.Context context) {}
 
     @Override
     public CircuitBlockEntityRenderState createRenderState() {
@@ -46,6 +45,7 @@ public class CircuitBlockEntityRenderer implements BlockEntityRenderer<CircuitBl
 
     @Override
     public void extractRenderState(CircuitBlockEntity blockEntity, CircuitBlockEntityRenderState renderState, float partialTick, Vec3 cameraPosition, ModelFeatureRenderer.@Nullable CrumblingOverlay breakProgress) {
+        BlockEntityRenderState.extractBase(blockEntity, renderState, breakProgress);
         renderState.color = blockEntity.getColor();
         renderState.hidden = blockEntity.isHidden();
         renderState.blockSize = blockEntity.getBlockSize();
@@ -54,14 +54,6 @@ public class CircuitBlockEntityRenderer implements BlockEntityRenderer<CircuitBl
 
     @Override
     public void submit(CircuitBlockEntityRenderState state, PoseStack poseStack, SubmitNodeCollector submitNodeCollector, CameraRenderState cameraRenderState) {
-        ShortCircuitCommon.LOGGER.info("submitting");
-        String text = "circuit";
-        float width = font.width(text);
-        submitNodeCollector.submitText(
-                poseStack, -width / 2, -4,
-                Component.literal(text).getVisualOrderText(),
-                false, Font.DisplayMode.SEE_THROUGH, state.lightCoords,
-                0xFFFFFFFF, 0, 0);
         poseStack.pushPose();
         // color outer shell
         DyeColor color = state.color;

@@ -4,21 +4,15 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import in.northwestw.shortcircuit.ShortCircuitCommon;
 import in.northwestw.shortcircuit.properties.RelativeDirection;
 import net.minecraft.core.UUIDUtil;
-import net.minecraft.nbt.CompoundTag;
 
-import java.io.ByteArrayOutputStream;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
-import java.util.function.IntFunction;
-import java.util.stream.Collectors;
 
 // The goal is to reduce memory & storage by using more brain
 public class TruthTable {

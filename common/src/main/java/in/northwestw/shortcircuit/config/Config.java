@@ -5,7 +5,10 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import in.northwestw.shortcircuit.ShortCircuitCommon;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.PrintWriter;
 
 public class Config {
     // maximum amount of updates for the same side of a circuit before deferring update to next tick

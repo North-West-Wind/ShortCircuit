@@ -2,7 +2,6 @@ package in.northwestw.shortcircuit.registries.blockentityrenderers;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import in.northwestw.shortcircuit.properties.ColorHelper;
-import in.northwestw.shortcircuit.registries.BlockEntities;
 import in.northwestw.shortcircuit.registries.blockentities.IntegratedCircuitBlockEntity;
 import in.northwestw.shortcircuit.registries.blockentityrenderers.renderstates.CircuitBlockEntityRenderState;
 import net.minecraft.client.renderer.SubmitNodeCollector;

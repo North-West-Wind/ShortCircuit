@@ -2,14 +2,20 @@ package in.northwestw.shortcircuit.data;
 
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import com.mojang.datafixers.util.Pair;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 import in.northwestw.shortcircuit.Constants;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
+import net.minecraft.core.UUIDUtil;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.datafix.DataFixTypes;
 import net.minecraft.world.level.saveddata.SavedData;
+import net.minecraft.world.level.saveddata.SavedDataType;
 import net.minecraft.world.level.storage.DimensionDataStorage;
 
 import java.util.Map;
@@ -17,6 +23,11 @@ import java.util.Set;
 import java.util.UUID;
 
 public class CircuitSavedData extends SavedData {
+    public static final Codec<CircuitSavedData> CODEC = RecordCodecBuilder.create(instance -> instance.group(
+            Constants.backwardsCompatMapCodec(Codec.INT, Octolet.CODEC, "key", "value").fieldOf("octolets").forGetter(data -> data.octolets),
+            Constants.backwardsCompatMapCodec(UUIDUtil.CODEC, Codec.INT, "key", "value").fieldOf("circuits").forGetter(data -> data.circuits)
+    ).apply(instance, CircuitSavedData::new));
+    public static final SavedDataType<CircuitSavedData> TYPE = new SavedDataType<>("circuit_pos", CircuitSavedData::new, CODEC, null);
     private static final double LOG2 = Math.log(2);
 
     public final Map<Integer, Octolet> octolets;
@@ -24,12 +35,21 @@ public class CircuitSavedData extends SavedData {
     public final Map<UUID, Integer> circuits;
 
     public CircuitSavedData() {
-        this.octolets = Maps.newHashMap();
+        this(Maps.newHashMap(), Maps.newHashMap());
+    }
+
+    public CircuitSavedData(Map<Integer, Octolet> octolets, Map<UUID, Integer> circuits) {
+        this.octolets = octolets;
         this.octoletsBySize = new Set[7];
         for (int ii = 0; ii < 7; ii++) {
             this.octoletsBySize[ii] = Sets.newHashSet();
         }
-        this.circuits = Maps.newHashMap();
+        this.circuits = circuits;
+
+        for (Map.Entry<Integer, Octolet> entry : this.octolets.entrySet()) {
+            int sizeIndex = (int) (Math.log(entry.getValue().blockSize) / LOG2) - 2;
+            this.octoletsBySize[sizeIndex].add(entry.getKey());
+        }
     }
 
     public int octoletIndexForSize(short blockSize) {
@@ -79,50 +99,15 @@ public class CircuitSavedData extends SavedData {
         this.circuits.remove(uuid);
     }
 
-    public static CircuitSavedData load(CompoundTag tag, HolderLookup.Provider lookupProvider) {
-        CircuitSavedData data = new CircuitSavedData();
-        for (Tag t : tag.getList("octolets", Tag.TAG_COMPOUND)) {
-            CompoundTag tt = (CompoundTag) t;
-            data.addOctolet(tt.getInt("key"), Octolet.fromTag(tt.getCompound("value")));
-        }
-        for (Tag t : tag.getList("circuits", Tag.TAG_COMPOUND)) {
-            CompoundTag tt = (CompoundTag) t;
-            data.circuits.put(tt.getUUID("key"), tt.getInt("value"));
-        }
-        return data;
-    }
-
-    @Override
-    public CompoundTag save(CompoundTag tag, HolderLookup.Provider registries) {
-        ListTag list = new ListTag();
-        this.octolets.forEach((integer, octolet) -> {
-            CompoundTag pair = new CompoundTag();
-            pair.putInt("key", integer);
-            CompoundTag octoTag = new CompoundTag();
-            pair.put("value", octolet.save(octoTag));
-            list.add(pair);
-        });
-        tag.put("octolets", list);
-        ListTag circuitList = new ListTag();
-        this.circuits.forEach((uuid, index) -> {
-            CompoundTag pair = new CompoundTag();
-            pair.putUUID("key", uuid);
-            pair.putInt("value", index);
-            circuitList.add(pair);
-        });
-        tag.put("circuits", circuitList);
-        return tag;
-    }
-
     public static CircuitSavedData getCircuitBoardData(ServerLevel level) {
         ServerLevel circuitBoardLevel = level.getServer().getLevel(Constants.CIRCUIT_BOARD_DIMENSION);
         DimensionDataStorage storage = circuitBoardLevel.getDataStorage();
-        return storage.computeIfAbsent(new SavedData.Factory<>(CircuitSavedData::new, CircuitSavedData::load, null), "circuit_pos");
+        return storage.computeIfAbsent(CircuitSavedData.TYPE);
     }
 
     public static CircuitSavedData getRuntimeData(ServerLevel level) {
         ServerLevel runtimeLevel = level.getServer().getLevel(Constants.RUNTIME_DIMENSION);
         DimensionDataStorage storage = runtimeLevel.getDataStorage();
-        return storage.computeIfAbsent(new SavedData.Factory<>(CircuitSavedData::new, CircuitSavedData::load, null), "circuit_pos");
+        return storage.computeIfAbsent(CircuitSavedData.TYPE);
     }
 }

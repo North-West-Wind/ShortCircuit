@@ -3,6 +3,7 @@ package in.northwestw.shortcircuit.registries.blockentities;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import com.mojang.logging.LogUtils;
 import in.northwestw.shortcircuit.data.TruthTableSavedData;
 import in.northwestw.shortcircuit.properties.RelativeDirection;
 import in.northwestw.shortcircuit.registries.BlockEntities;
@@ -16,6 +17,7 @@ import in.northwestw.shortcircuit.registries.menus.TruthAssignerMenu;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.NonNullList;
+import net.minecraft.core.UUIDUtil;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.Packet;
@@ -24,6 +26,7 @@ import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.ProblemReporter;
 import net.minecraft.world.ContainerHelper;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.AbstractContainerMenu;
@@ -33,6 +36,9 @@ import net.minecraft.world.inventory.ContainerListener;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BaseContainerBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.storage.TagValueOutput;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import org.apache.commons.lang3.tuple.Pair;
 import org.jetbrains.annotations.Nullable;
 
@@ -134,39 +140,41 @@ public class TruthAssignerBlockEntity extends BaseContainerBlockEntity implement
     }
 
     @Override
-    protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
-        super.loadAdditional(tag, registries);
-        ContainerHelper.loadAllItems(tag, this.items, registries);
-        this.working = tag.getBoolean("working");
-        this.wait = tag.getBoolean("wait");
-        this.maxDelay = tag.getInt("maxDelay");
-        this.bits = tag.getInt("bits");
+    protected void loadAdditional(ValueInput input) {
+        super.loadAdditional(input);
+        ContainerHelper.loadAllItems(input, this.items);
+        this.working = input.getBooleanOr("working", false);
+        this.wait = input.getBooleanOr("wait", false);
+        this.maxDelay = input.getIntOr("maxDelay", 0);
+        this.bits = input.getIntOr("bits", 0);
         if (this.bits == 0) this.bits = 4;
-        this.ticks = tag.getInt("ticks");
-        this.errorCode = tag.getInt("errorCode");
-        if (tag.hasUUID("workingUuid")) this.workingUuid = tag.getUUID("workingUuid");
-        this.lastOutput = tag.getInt("lastOutput");
+        this.ticks = input.getIntOr("ticks", 0);
+        this.errorCode = input.getIntOr("errorCode", 0);
+        input.getIntArray("workingUuid").ifPresent(arr -> this.workingUuid = UUIDUtil.uuidFromIntArray(arr));
+        this.lastOutput = input.getIntOr("lastOutput", 0);
     }
 
     @Override
-    protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
-        super.saveAdditional(tag, registries);
-        ContainerHelper.saveAllItems(tag, this.items, registries);
-        tag.putBoolean("working", this.working);
-        tag.putBoolean("wait", this.wait);
-        tag.putInt("maxDelay", this.maxDelay);
-        tag.putInt("bits", this.bits);
-        tag.putInt("ticks", this.ticks);
-        tag.putInt("errorCode", this.errorCode);
-        if (this.workingUuid != null) tag.putUUID("workingUuid", this.workingUuid);
-        tag.putInt("lastOutput", lastOutput);
+    protected void saveAdditional(ValueOutput output) {
+        super.saveAdditional(output);
+        ContainerHelper.saveAllItems(output, this.items, true);
+        output.putBoolean("working", this.working);
+        output.putBoolean("wait", this.wait);
+        output.putInt("maxDelay", this.maxDelay);
+        output.putInt("bits", this.bits);
+        output.putInt("ticks", this.ticks);
+        output.putInt("errorCode", this.errorCode);
+        if (this.workingUuid != null) output.putIntArray("workingUuid", UUIDUtil.uuidToIntArray(this.workingUuid));
+        output.putInt("lastOutput", lastOutput);
     }
 
     @Override
-    public CompoundTag getUpdateTag(HolderLookup.Provider resgitries) {
-        CompoundTag tag = new CompoundTag();
-        this.saveAdditional(tag, resgitries);
-        return tag;
+    public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
+        try (ProblemReporter.ScopedCollector collector = new ProblemReporter.ScopedCollector(this.problemPath(), LogUtils.getLogger())) {
+            TagValueOutput output = TagValueOutput.createWithContext(collector, registries);
+            this.saveAdditional(output);
+            return output.buildResult();
+        }
     }
 
     @Override

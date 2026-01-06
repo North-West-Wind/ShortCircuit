@@ -7,7 +7,7 @@ import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.flag.FeatureFlagSet;
 import net.minecraft.world.inventory.AbstractContainerMenu;
@@ -45,7 +45,7 @@ public class NeoForgeRegistryHelper implements IRegistryHelper {
 
     @Override
     public Supplier<Block> registerBlock(String name, Function<BlockBehaviour.Properties, Block> factory, BlockBehaviour.Properties properties) {
-        return BLOCKS.registerBlock(name, factory, properties);
+        return BLOCKS.registerBlock(name, factory, () -> properties);
     }
 
     @Override
@@ -60,7 +60,7 @@ public class NeoForgeRegistryHelper implements IRegistryHelper {
 
     @Override
     public <T extends Item> Supplier<T> registerItem(String name, Function<Item.Properties, T> function, Item.Properties properties) {
-        return ITEMS.registerItem(name, function, properties);
+        return ITEMS.registerItem(name, function, () -> properties);
     }
 
     @Override
@@ -70,7 +70,7 @@ public class NeoForgeRegistryHelper implements IRegistryHelper {
 
     @Override
     public Supplier<SoundEvent> registerSound(String name) {
-        return SOUND_EVENTS.register(name, () -> SoundEvent.createVariableRangeEvent(ResourceLocation.fromNamespaceAndPath(ShortCircuitCommon.MOD_ID, name)));
+        return SOUND_EVENTS.register(name, () -> SoundEvent.createVariableRangeEvent(Identifier.fromNamespaceAndPath(ShortCircuitCommon.MOD_ID, name)));
     }
 
     @Override

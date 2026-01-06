@@ -94,12 +94,6 @@ public class CircuitBoardBlock extends Block implements EntityBlock {
     }
 
     @Override
-    public void appendHoverText(ItemStack stack, Item.TooltipContext context, List<Component> components, TooltipFlag flag) {
-        components.add(Component.translatable("tooltip.short_circuit.circuit_board").setStyle(Style.EMPTY.withColor(TextColor.fromRgb(0x7f7f7f)).withItalic(true)));
-        super.appendHoverText(stack, context, components, flag);
-    }
-
-    @Override
     public @Nullable BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
         return new CircuitBoardBlockEntity(pos, state);
     }

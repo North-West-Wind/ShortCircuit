@@ -7,12 +7,15 @@ import in.northwestw.shortcircuit.registries.BlockEntities;
 import in.northwestw.shortcircuit.registries.Menus;
 import in.northwestw.shortcircuit.registries.blockentityrenderers.CircuitBlockEntityRenderer;
 import in.northwestw.shortcircuit.registries.blockentityrenderers.IntegratedCircuitBlockEntityRenderer;
+import in.northwestw.shortcircuit.registries.blocks.common.CommonCircuitBlock;
+import net.minecraft.world.item.BlockItem;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
+import net.neoforged.neoforge.event.entity.player.ItemTooltipEvent;
 
 @Mod(ShortCircuitCommon.MOD_ID)
 public class ShortCircuitNeoForge {
@@ -28,8 +31,8 @@ public class ShortCircuitNeoForge {
         NeoForgeRegistryHelper.CREATIVE_MODE_TABS.register(bus);
     }
 
-    @EventBusSubscriber(bus = EventBusSubscriber.Bus.MOD)
-    public static class Registries {
+    @EventBusSubscriber
+    public static class EventHandler {
         @SubscribeEvent
         public static void registerEntityRenderers(EntityRenderersEvent.RegisterRenderers event) {
             event.registerBlockEntityRenderer(BlockEntities.CIRCUIT.get(), CircuitBlockEntityRenderer::new);
@@ -39,6 +42,12 @@ public class ShortCircuitNeoForge {
         @SubscribeEvent
         public static void registerMenuScreens(RegisterMenuScreensEvent event) {
             event.register(Menus.TRUTH_ASSIGNER.get(), TruthAssignerScreen::new);
+        }
+
+        @SubscribeEvent
+        public static void itemTooltip(ItemTooltipEvent event) {
+            if (event.getItemStack().getItem() instanceof BlockItem item && item.getBlock() instanceof CommonCircuitBlock block)
+                event.getToolTip().addAll(block.extraTooltip(event.getItemStack()));
         }
     }
 }

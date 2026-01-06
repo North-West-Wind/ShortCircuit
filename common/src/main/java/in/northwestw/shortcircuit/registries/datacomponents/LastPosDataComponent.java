@@ -6,10 +6,10 @@ import io.netty.buffer.ByteBuf;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.phys.Vec3;
 
-public record LastPosDataComponent(ResourceLocation rl, Vec3 pos) {
+public record LastPosDataComponent(Identifier rl, Vec3 pos) {
     private static final Codec<LastPosDataComponent> CODEC = RecordCodecBuilder.create(instance ->
             instance.group(
                     Codec.STRING.fieldOf("dimension").forGetter(component -> component.rl.toString()),
@@ -26,7 +26,7 @@ public record LastPosDataComponent(ResourceLocation rl, Vec3 pos) {
     );
 
     private LastPosDataComponent(String rl, double x, double y, double z) {
-        this(ResourceLocation.parse(rl), new Vec3(x, y, z));
+        this(Identifier.parse(rl), new Vec3(x, y, z));
     }
 
     public static DataComponentType.Builder<LastPosDataComponent> getBuilder(DataComponentType.Builder<LastPosDataComponent> builder) {

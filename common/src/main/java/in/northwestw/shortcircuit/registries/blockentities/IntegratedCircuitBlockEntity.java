@@ -3,6 +3,7 @@ package in.northwestw.shortcircuit.registries.blockentities;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.mojang.logging.LogUtils;
 import in.northwestw.shortcircuit.data.TruthTableSavedData;
 import in.northwestw.shortcircuit.properties.DirectionHelper;
 import in.northwestw.shortcircuit.properties.RelativeDirection;
@@ -16,6 +17,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.ProblemReporter;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
@@ -23,6 +25,11 @@ import net.minecraft.world.level.block.CommandBlock;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.XoroshiroRandomSource;
+import net.minecraft.world.level.storage.TagValueInput;
+import net.minecraft.world.level.storage.TagValueOutput;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
+import org.slf4j.Logger;
 
 import java.util.Arrays;
 import java.util.List;
@@ -30,6 +37,7 @@ import java.util.Map;
 import java.util.UUID;
 
 public class IntegratedCircuitBlockEntity extends CommonCircuitBlockEntity {
+    private static final Logger LOGGER = LogUtils.getLogger();
     private static final Block[] POSSIBLE_INNER_BLOCKS = new Block[] { Blocks.COMMAND_BLOCK, Blocks.CHAIN_COMMAND_BLOCK, Blocks.REPEATING_COMMAND_BLOCK };
     private final Map<RelativeDirection, Integer> inputs;
     private Map<RelativeDirection, Integer> outputs;
@@ -46,33 +54,26 @@ public class IntegratedCircuitBlockEntity extends CommonCircuitBlockEntity {
         this.blocks = Lists.newArrayList();
     }
 
-    private void loadSignalMap(CompoundTag tag, String key, Map<RelativeDirection, Integer> map) {
-        if (tag.contains(key, Tag.TAG_LIST))
-            for (Tag t : tag.getList(key, Tag.TAG_COMPOUND)) {
-                CompoundTag pair = (CompoundTag) t;
-                map.put(RelativeDirection.fromId(pair.getByte("key")), (int) pair.getByte("value"));
-            }
+    private void loadSignalMap(ValueInput input, String key, Map<RelativeDirection, Integer> map) {
+        input.childrenList(key).ifPresent(list -> list.forEach(pair -> map.put(RelativeDirection.fromId(pair.getByteOr("key", (byte) 0)), (int) pair.getByteOr("value", (byte) 0))));
     }
 
-    private void saveSignalMap(CompoundTag tag, String key, Map<RelativeDirection, Integer> map) {
-        ListTag list = new ListTag();
+    private void saveSignalMap(ValueOutput.ValueOutputList list, Map<RelativeDirection, Integer> map) {
         for (Map.Entry<RelativeDirection, Integer> entry : map.entrySet()) {
-            CompoundTag pair = new CompoundTag();
-            pair.putByte("key", entry.getKey().getId());
-            pair.putByte("value", entry.getValue().byteValue());
-            list.add(pair);
+            ValueOutput output = list.addChild();
+            output.putByte("key", entry.getKey().getId());
+            output.putByte("value", entry.getValue().byteValue());
         }
-        tag.put(key, list);
     }
 
     @Override
-    protected void loadAdditional(CompoundTag tag, HolderLookup.Provider provider) {
+    protected void loadAdditional(ValueInput input) {
         UUID oldUuid = this.uuid;
-        super.loadAdditional(tag, provider);
-        this.loadSignalMap(tag, "inputs", this.inputs);
-        this.loadSignalMap(tag, "outputs", this.outputs);
+        super.loadAdditional(input);
+        this.loadSignalMap(input, "inputs", this.inputs);
+        this.loadSignalMap(input, "outputs", this.outputs);
         // upgrade to v1.0.2, default hidden to true
-        if (!tag.contains("hidden")) this.hidden = true;
+        this.hidden = input.getBooleanOr("hidden", false);;
 
         this.blocks.clear();
         if (oldUuid != this.uuid && this.uuid != null) {
@@ -84,10 +85,11 @@ public class IntegratedCircuitBlockEntity extends CommonCircuitBlockEntity {
     }
 
     @Override
-    protected void saveAdditional(CompoundTag tag, HolderLookup.Provider provider) {
-        super.saveAdditional(tag, provider);
-        this.saveSignalMap(tag, "inputs", this.inputs);
-        this.saveSignalMap(tag, "outputs", this.outputs);
+    protected void saveAdditional(ValueOutput output) {
+        super.saveAdditional(output);
+        output.childrenList("inputs");
+        this.saveSignalMap(output.childrenList("inputs"), this.inputs);
+        this.saveSignalMap(output.childrenList("outputs"), this.outputs);
     }
 
     public int getPower(Direction direction) {

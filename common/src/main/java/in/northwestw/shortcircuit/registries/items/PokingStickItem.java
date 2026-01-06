@@ -29,6 +29,7 @@ import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.portal.TeleportTransition;
+import net.minecraft.world.level.storage.LevelData;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 
@@ -71,7 +72,7 @@ public class PokingStickItem extends Item {
         } else {
             TeleportTransition transition;
             UUID uuid = blockEntity.getUuid();
-            stack.set(DataComponents.LAST_POS.get(), new LastPosDataComponent(level.dimension().location(), player.position()));
+            stack.set(DataComponents.LAST_POS.get(), new LastPosDataComponent(level.dimension().identifier(), player.position()));
             if (uuid == null) {
                 blockEntity.setBlockSize(this.getBlockSize(stack));
                 transition = this.getNewDimensionTransition(this.getBlockSize(stack), level, blockEntity);
@@ -102,10 +103,10 @@ public class PokingStickItem extends Item {
                 stack.remove(DataComponents.LAST_POS.get());
             } else {
                 ServerPlayer serverPlayer = (ServerPlayer) player;
-                ServerLevel serverLevel = server.getLevel(serverPlayer.getRespawnDimension());
-                BlockPos respawn = serverPlayer.getRespawnPosition();
-                if (respawn == null) respawn = serverLevel.getSharedSpawnPos();
-                player.teleport(new TeleportTransition(serverLevel, respawn.getCenter(), Vec3.ZERO, 0, 0, TeleportTransition.DO_NOTHING));
+                ServerPlayer.RespawnConfig config = serverPlayer.getRespawnConfig();
+                ServerLevel serverLevel = server.getLevel(serverPlayer.getRespawnConfig().respawnData().dimension());
+                LevelData.RespawnData data = config == null ? serverLevel.getRespawnData() : config.respawnData();
+                player.teleport(new TeleportTransition(serverLevel, data.pos().getCenter(), Vec3.ZERO, 0, 0, TeleportTransition.DO_NOTHING));
             }
         }
         return InteractionResult.SUCCESS;

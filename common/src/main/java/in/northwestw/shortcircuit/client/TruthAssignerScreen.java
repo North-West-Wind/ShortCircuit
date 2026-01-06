@@ -9,17 +9,17 @@ import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.StringWidget;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
-import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ContainerListener;
 import net.minecraft.world.item.ItemStack;
 
 public class TruthAssignerScreen extends AbstractContainerScreen<TruthAssignerMenu> implements ContainerListener {
-    private static final ResourceLocation BASE_BACKGROUND = ResourceLocation.fromNamespaceAndPath(ShortCircuitCommon.MOD_ID, "textures/gui/container/truth_assigner.png");
-    private static final ResourceLocation BURN_PROGRESS_SPRITE = ResourceLocation.withDefaultNamespace("container/furnace/burn_progress");
+    private static final Identifier BASE_BACKGROUND = Identifier.fromNamespaceAndPath(ShortCircuitCommon.MOD_ID, "textures/gui/container/truth_assigner.png");
+    private static final Identifier BURN_PROGRESS_SPRITE = Identifier.withDefaultNamespace("container/furnace/burn_progress");
     private EditBox maxDelay;
     private Button wait, start, bits;
     private StringWidget error, currentInput;
@@ -68,10 +68,10 @@ public class TruthAssignerScreen extends AbstractContainerScreen<TruthAssignerMe
 
     @Override
     protected void renderBg(GuiGraphics graphics, float partialTick, int mouseX, int mouseY) {
-        graphics.blit(RenderType::guiTextured, BASE_BACKGROUND, this.leftPos, this.topPos, 0, 0, this.imageWidth, this.imageHeight, 256, 256);
+        graphics.blit(RenderPipelines.GUI_TEXTURED, BASE_BACKGROUND, this.leftPos, this.topPos, 0, 0, this.imageWidth, this.imageHeight, 256, 256);
         if (this.menu.isWorking()) {
             // if we are working, color the arrow
-            graphics.blitSprite(RenderType::guiTextured, BURN_PROGRESS_SPRITE, 24, 16, 0, 0, this.leftPos + 37, this.topPos + 34, 24, 16);
+            graphics.blitSprite(RenderPipelines.GUI_TEXTURED, BURN_PROGRESS_SPRITE, 24, 16, 0, 0, this.leftPos + 37, this.topPos + 34, 24, 16);
         }
     }
 

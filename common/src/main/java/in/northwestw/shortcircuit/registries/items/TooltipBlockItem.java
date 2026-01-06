@@ -1,6 +1,5 @@
 package in.northwestw.shortcircuit.registries.items;
 
-import in.northwestw.shortcircuit.registries.Blocks;
 import in.northwestw.shortcircuit.registries.DataComponents;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;

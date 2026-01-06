@@ -1,7 +1,6 @@
 package in.northwestw.shortcircuit.registries.blocks;
 
 import com.mojang.serialization.MapCodec;
-import in.northwestw.shortcircuit.ShortCircuitCommon;
 import in.northwestw.shortcircuit.registries.BlockEntities;
 import in.northwestw.shortcircuit.registries.Blocks;
 import in.northwestw.shortcircuit.registries.Codecs;

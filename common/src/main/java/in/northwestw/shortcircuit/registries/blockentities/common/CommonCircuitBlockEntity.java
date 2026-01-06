@@ -97,7 +97,7 @@ public class CommonCircuitBlockEntity extends BlockEntity {
             this.color = DyeColor.byId((short) value);
             return true;
         } else if (component == DataComponents.UUID.get()) {
-            this.uuid = (UUID) value;
+            this.uuid = ((UUIDDataComponent) value).uuid();
             return true;
         } else {
             return false;

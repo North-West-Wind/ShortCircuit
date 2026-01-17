@@ -48,7 +48,8 @@ public class TruthTableSavedData extends SavedData {
         if (!this.truthTables.containsKey(uuid)) return signals;
         TruthTable table = this.truthTables.get(uuid);
         int input = 0;
-        for (RelativeDirection dir : table.inputs) {
+        for (int ii = table.inputs.size() - 1; ii >= 0; ii--) {
+            RelativeDirection dir = table.inputs.get(ii);
             input <<= table.bits;
             // merge 4-bit into amount specified by table.bits
             // i haven't had time to look into the mathematical relationships yet

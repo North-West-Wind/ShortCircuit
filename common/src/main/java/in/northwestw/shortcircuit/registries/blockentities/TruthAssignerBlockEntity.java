@@ -253,6 +253,7 @@ public class TruthAssignerBlockEntity extends BaseContainerBlockEntity implement
                 return;
             }
             // update runtime block signals according to encoding
+            // logic: first side gets lowest 4 bits
             for (int ii = 0; ii < this.inputOrder.size(); ii++) {
                 int power = (this.expandInput(this.currentInput) >> (ii * 4)) & 0xF;
                 blockEntity.updateRuntimeBlock(power, this.inputOrder.get(ii));

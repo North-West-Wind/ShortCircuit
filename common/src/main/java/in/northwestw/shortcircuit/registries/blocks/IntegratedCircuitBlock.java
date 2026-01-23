@@ -3,6 +3,7 @@ package in.northwestw.shortcircuit.registries.blocks;
 import com.mojang.math.Vector3f;
 import in.northwestw.shortcircuit.registries.*;
 import in.northwestw.shortcircuit.registries.blockentities.IntegratedCircuitBlockEntity;
+import in.northwestw.shortcircuit.registries.blockentities.common.CircuitProperties;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.DustParticleOptions;
@@ -31,8 +32,6 @@ import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
-import net.minecraft.world.level.block.state.properties.BlockStateProperties;
-import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
@@ -41,16 +40,14 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public class IntegratedCircuitBlock extends HorizontalDirectionalBlock implements EntityBlock {
-    public static final BooleanProperty POWERED = BlockStateProperties.POWERED;
-    public static final BooleanProperty COLORED = BooleanProperty.create("colored");
     public static final DustParticleOptions PARTICLE = new DustParticleOptions(new Vector3f(Vec3.fromRGB24(0xFFDD00)), 1.0F);
 
     public IntegratedCircuitBlock(Properties pProperties) {
         super(pProperties);
         this.registerDefaultState(this.stateDefinition.any()
                 .setValue(FACING, Direction.NORTH)
-                .setValue(POWERED, false)
-                .setValue(COLORED, false));
+                .setValue(CircuitProperties.POWERED, false)
+                .setValue(CircuitProperties.COLOR, 16));
     }
 
     @Override
@@ -60,7 +57,7 @@ public class IntegratedCircuitBlock extends HorizontalDirectionalBlock implement
 
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(FACING, POWERED, COLORED);
+        builder.add(FACING, CircuitProperties.POWERED, CircuitProperties.COLOR);
     }
 
     @Override
@@ -109,8 +106,7 @@ public class IntegratedCircuitBlock extends HorizontalDirectionalBlock implement
             if (stack.hasTag()) newStack.setTag(stack.getTag());
             CompoundTag tag = newStack.getOrCreateTag();
             tag.putUUID("uuid", blockEntity.getUuid());
-            if (blockEntity.getColor() != null)
-                tag.putShort("color", (short) blockEntity.getColor().getId());
+            tag.putShort("color", level.getBlockState(pos).getValue(CircuitProperties.COLOR).shortValue());
             player.setItemInHand(hand, newStack);
             player.playSound(SoundEvents.BEACON_ACTIVATE, 0.5f, 1);
             return InteractionResult.SUCCESS;
@@ -159,7 +155,7 @@ public class IntegratedCircuitBlock extends HorizontalDirectionalBlock implement
                 if (stack.hasCustomHoverName())
                     blockEntity.setName(stack.getHoverName());
                 if (tag.contains("color", Tag.TAG_SHORT))
-                    blockEntity.setColor(DyeColor.byId(tag.getShort("color")));
+                    level.setBlock(pos, state.setValue(CircuitProperties.COLOR, (int) tag.getShort("color")), Block.UPDATE_CLIENTS);
                 blockEntity.updateInputs();
             }
         }
@@ -168,7 +164,7 @@ public class IntegratedCircuitBlock extends HorizontalDirectionalBlock implement
 
     @Override
     public void animateTick(BlockState state, Level level, BlockPos pos, RandomSource random) {
-        if (state.getValue(POWERED) && (!(level.getBlockEntity(pos) instanceof IntegratedCircuitBlockEntity blockEntity) || !blockEntity.isHidden())) {
+        if (state.getValue(CircuitProperties.POWERED) && (!(level.getBlockEntity(pos) instanceof IntegratedCircuitBlockEntity blockEntity) || !blockEntity.isHidden())) {
             spawnParticles(level, pos);
         }
     }

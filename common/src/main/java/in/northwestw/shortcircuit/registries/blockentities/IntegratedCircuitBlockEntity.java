@@ -7,6 +7,7 @@ import in.northwestw.shortcircuit.data.TruthTableSavedData;
 import in.northwestw.shortcircuit.properties.DirectionHelper;
 import in.northwestw.shortcircuit.properties.RelativeDirection;
 import in.northwestw.shortcircuit.registries.BlockEntities;
+import in.northwestw.shortcircuit.registries.blockentities.common.CircuitProperties;
 import in.northwestw.shortcircuit.registries.blockentities.common.CommonCircuitBlockEntity;
 import in.northwestw.shortcircuit.registries.blocks.IntegratedCircuitBlock;
 import net.minecraft.core.BlockPos;
@@ -74,12 +75,14 @@ public class IntegratedCircuitBlockEntity extends CommonCircuitBlockEntity {
         // upgrade to v1.0.2, default hidden to true
         if (!tag.contains("hidden")) this.hidden = true;
 
-        this.blocks.clear();
-        if (oldUuid != this.uuid && this.uuid != null) {
-            RandomSource random = new XoroshiroRandomSource(this.uuid.getLeastSignificantBits(), this.uuid.getMostSignificantBits());
-            Direction[] directions = Direction.values();
-            for (int ii = 0; ii < 8; ii++)
-                this.blocks.add(POSSIBLE_INNER_BLOCKS[random.nextInt(POSSIBLE_INNER_BLOCKS.length)].defaultBlockState().setValue(CommandBlock.FACING, directions[random.nextInt(directions.length)]));
+        if (!this.hidden) {
+            this.blocks.clear();
+            if (oldUuid != this.uuid && this.uuid != null) {
+                RandomSource random = new XoroshiroRandomSource(this.uuid.getLeastSignificantBits(), this.uuid.getMostSignificantBits());
+                Direction[] directions = Direction.values();
+                for (int ii = 0; ii < 8; ii++)
+                    this.blocks.add(POSSIBLE_INNER_BLOCKS[random.nextInt(POSSIBLE_INNER_BLOCKS.length)].defaultBlockState().setValue(CommandBlock.FACING, directions[random.nextInt(directions.length)]));
+            }
         }
     }
 
@@ -114,8 +117,10 @@ public class IntegratedCircuitBlockEntity extends CommonCircuitBlockEntity {
         for (int ii = 0; ii < this.changed.length; ii++)
             if (this.changed[ii]) {
                 BlockPos pos = this.getBlockPos().relative(DirectionHelper.relativeDirectionToFacing(RelativeDirection.fromId((byte) ii), direction));
-                this.level.neighborChanged(pos, this.level.getBlockState(pos).getBlock(), this.getBlockPos());
-                this.level.updateNeighborsAtExceptFromFacing(pos, state.getBlock(), direction.getOpposite());
+                this.level.neighborChanged(pos, state.getBlock(), this.getBlockPos());
+                Block updateBlock = level.getBlockState(pos).getBlock();
+                if (updateBlock != in.northwestw.shortcircuit.registries.Blocks.CIRCUIT.get() && updateBlock != in.northwestw.shortcircuit.registries.Blocks.INTEGRATED_CIRCUIT.get())
+                    this.level.updateNeighborsAtExceptFromFacing(pos, updateBlock, direction.getOpposite());
             }
     }
 
@@ -133,7 +138,7 @@ public class IntegratedCircuitBlockEntity extends CommonCircuitBlockEntity {
                 if (!oldOutputs.containsKey(key)) // new value
                     this.changed[key.getId()] = true;
             }
-            this.level.setBlock(this.getBlockPos(), this.getBlockState().setValue(IntegratedCircuitBlock.POWERED, this.outputs.values().stream().anyMatch(power -> power > 0)), Block.UPDATE_CLIENTS);
+            this.level.setBlock(this.getBlockPos(), this.getBlockState().setValue(CircuitProperties.POWERED, this.outputs.values().stream().anyMatch(power -> power > 0)), Block.UPDATE_CLIENTS);
             this.updateChangedNeighbors();
         }
     }

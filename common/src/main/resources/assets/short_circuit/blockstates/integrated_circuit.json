@@ -1,10 +1,104 @@
 {
-  "variants": {
-    "colored=false": {
-      "model": "short_circuit:block/circuit"
+  "multipart": [
+    {
+      "when": { "color": 16 },
+      "apply": { "model": "minecraft:block/glass" }
     },
-    "colored=true": {
-      "model": "short_circuit:block/circuit_air_ic"
+    {
+      "when": { "color": 0 },
+      "apply": { "model": "minecraft:block/white_stained_glass" }
+    },
+    {
+      "when": { "color": 1 },
+      "apply": { "model": "minecraft:block/orange_stained_glass" }
+    },
+    {
+      "when": { "color": 2 },
+      "apply": { "model": "minecraft:block/magenta_stained_glass" }
+    },
+    {
+      "when": { "color": 3 },
+      "apply": { "model": "minecraft:block/light_blue_stained_glass" }
+    },
+    {
+      "when": { "color": 4 },
+      "apply": { "model": "minecraft:block/yellow_stained_glass" }
+    },
+    {
+      "when": { "color": 5 },
+      "apply": { "model": "minecraft:block/lime_stained_glass" }
+    },
+    {
+      "when": { "color": 6 },
+      "apply": { "model": "minecraft:block/pink_stained_glass" }
+    },
+    {
+      "when": { "color": 7 },
+      "apply": { "model": "minecraft:block/gray_stained_glass" }
+    },
+    {
+      "when": { "color": 8 },
+      "apply": { "model": "minecraft:block/light_gray_stained_glass" }
+    },
+    {
+      "when": { "color": 9 },
+      "apply": { "model": "minecraft:block/cyan_stained_glass" }
+    },
+    {
+      "when": { "color": 10 },
+      "apply": { "model": "minecraft:block/purple_stained_glass" }
+    },
+    {
+      "when": { "color": 11 },
+      "apply": { "model": "minecraft:block/blue_stained_glass" }
+    },
+    {
+      "when": { "color": 12 },
+      "apply": { "model": "minecraft:block/brown_stained_glass" }
+    },
+    {
+      "when": { "color": 13 },
+      "apply": { "model": "minecraft:block/green_stained_glass" }
+    },
+    {
+      "when": { "color": 14 },
+      "apply": { "model": "minecraft:block/red_stained_glass" }
+    },
+    {
+      "when": { "color": 15 },
+      "apply": { "model": "minecraft:block/black_stained_glass" }
+    },
+    {
+      "when": { "AND": [{ "powered": true }, { "facing": "north" }] },
+      "apply": { "model": "short_circuit:block/integrated_circuit_on" }
+    },
+    {
+      "when": { "AND": [{ "powered": true }, { "facing": "east" }] },
+      "apply": { "model": "short_circuit:block/integrated_circuit_on", "y": 90 }
+    },
+    {
+      "when": { "AND": [{ "powered": true }, { "facing": "south" }] },
+      "apply": { "model": "short_circuit:block/integrated_circuit_on", "y": 180 }
+    },
+    {
+      "when": { "AND": [{ "powered": true }, { "facing": "west" }] },
+      "apply": { "model": "short_circuit:block/integrated_circuit_on", "y": 270 }
+    },
+    {
+      "when": { "AND": [{ "powered": false }, { "facing": "north" }] },
+      "apply": { "model": "short_circuit:block/integrated_circuit" }
+    },
+    {
+      "when": { "AND": [{ "powered": false }, { "facing": "east" }] },
+      "apply": { "model": "short_circuit:block/integrated_circuit", "y": 90 }
+    },
+    {
+      "when": { "AND": [{ "powered": false }, { "facing": "south" }] },
+      "apply": { "model": "short_circuit:block/integrated_circuit", "y": 180 }
+    },
+    {
+      "when": { "AND": [{ "powered": false }, { "facing": "west" }] },
+      "apply": { "model": "short_circuit:block/integrated_circuit", "y": 270 }
     }
-  }
+  ]
 }

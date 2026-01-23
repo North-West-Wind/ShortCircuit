@@ -45,11 +45,5 @@ public class Blocks {
                     .isValidSpawn((state, level, pos, type) -> false)
                     .isRedstoneConductor((state, level, pos) -> false)
     );
-
-    public static final Supplier<Block> INNER_IC = Services.REGISTRY.registerBlock(
-            "inner_ic", InnerICBlock::new,
-            BlockBehaviour.Properties.of(Material.STONE).noLootTable()
-    );
-
     public static void trigger() { }
 }

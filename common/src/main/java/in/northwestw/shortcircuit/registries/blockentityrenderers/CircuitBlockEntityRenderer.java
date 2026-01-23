@@ -21,8 +21,6 @@ import java.util.Map;
 public class CircuitBlockEntityRenderer implements BlockEntityRenderer<CircuitBlockEntity> {
     private static final float HIDDEN_SCALE = 0.875f; // 14/16
     private static final float HIDDEN_TRANSLATE = 0.0625f; // 1/16
-    private static final float HIDDEN_SCALE_CARPET = 0.9375f; // 30/32
-    private static final float HIDDEN_TRANSLATE_CARPET = 0.03125f; // 1/16
     private final BlockRenderDispatcher blockRenderDispatcher;
 
     public CircuitBlockEntityRenderer(BlockEntityRendererProvider.Context context) {
@@ -32,11 +30,6 @@ public class CircuitBlockEntityRenderer implements BlockEntityRenderer<CircuitBl
     @Override
     public void render(CircuitBlockEntity blockEntity, float partialTick, PoseStack poseStack, MultiBufferSource bufferSource, int packedLight, int packedOverlay) {
         poseStack.pushPose();
-        // color outer shell
-        DyeColor color = blockEntity.getColor();
-        if (color != null) {
-            this.blockRenderDispatcher.renderSingleBlock(ColorHelper.colorToStainedGlass(color).defaultBlockState(), poseStack, bufferSource, packedLight, packedOverlay);
-        }
         // direction handling. move to the center and rotate, then move back
         poseStack.translate(0.5, 0.5, 0.5);
         switch (blockEntity.getBlockState().getValue(HorizontalDirectionalBlock.FACING)) {
@@ -45,10 +38,6 @@ public class CircuitBlockEntityRenderer implements BlockEntityRenderer<CircuitBl
             case NORTH -> poseStack.mulPose(new Quaternion(0, 0.7071068f, 0, -0.7071068f));
         }
         poseStack.translate(-0.5, -0.5, -0.5);
-
-        poseStack.scale(HIDDEN_SCALE_CARPET, HIDDEN_SCALE_CARPET, HIDDEN_SCALE_CARPET);
-        poseStack.translate(HIDDEN_TRANSLATE_CARPET, HIDDEN_TRANSLATE_CARPET, HIDDEN_TRANSLATE_CARPET);
-        this.blockRenderDispatcher.renderSingleBlock(Blocks.WHITE_CARPET.defaultBlockState(), poseStack, bufferSource, packedLight, packedOverlay);
         poseStack.translate(0, 0.0625, 0);
 
         if (blockEntity.isHidden()) {

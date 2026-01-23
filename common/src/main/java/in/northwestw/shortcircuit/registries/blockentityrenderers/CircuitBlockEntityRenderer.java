@@ -1,7 +1,6 @@
 package in.northwestw.shortcircuit.registries.blockentityrenderers;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import in.northwestw.shortcircuit.properties.ColorHelper;
 import in.northwestw.shortcircuit.registries.blockentities.CircuitBlockEntity;
 import in.northwestw.shortcircuit.registries.blockentityrenderers.renderstates.CircuitBlockEntityRenderState;
 import net.minecraft.client.renderer.SubmitNodeCollector;
@@ -13,7 +12,6 @@ import net.minecraft.client.renderer.state.CameraRenderState;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.level.block.state.BlockState;

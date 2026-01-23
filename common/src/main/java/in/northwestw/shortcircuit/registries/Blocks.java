@@ -1,7 +1,10 @@
 package in.northwestw.shortcircuit.registries;
 
 import in.northwestw.shortcircuit.platform.Services;
-import in.northwestw.shortcircuit.registries.blocks.*;
+import in.northwestw.shortcircuit.registries.blocks.CircuitBlock;
+import in.northwestw.shortcircuit.registries.blocks.CircuitBoardBlock;
+import in.northwestw.shortcircuit.registries.blocks.IntegratedCircuitBlock;
+import in.northwestw.shortcircuit.registries.blocks.TruthAssignerBlock;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockBehaviour;

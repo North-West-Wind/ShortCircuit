@@ -4,6 +4,7 @@ import com.mojang.logging.LogUtils;
 import in.northwestw.shortcircuit.config.Config;
 import in.northwestw.shortcircuit.properties.RelativeDirection;
 import in.northwestw.shortcircuit.registries.DataComponents;
+import in.northwestw.shortcircuit.registries.blocks.common.CommonCircuitBlock;
 import in.northwestw.shortcircuit.registries.datacomponents.UUIDDataComponent;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
@@ -89,7 +90,7 @@ public class CommonCircuitBlockEntity extends BlockEntity {
             return true;
         } else if (component == DataComponents.SHORT.get()) {
             this.color = (byte) value;
-            this.level.setBlock(this.getBlockPos(), this.getBlockState().setValue(CircuitProperties.COLOR, (int) value), Block.UPDATE_CLIENTS);
+            this.level.setBlock(this.getBlockPos(), this.getBlockState().setValue(CommonCircuitBlock.COLOR, (int) value), Block.UPDATE_CLIENTS);
             return true;
         } else if (component == DataComponents.UUID.get()) {
             this.uuid = ((UUIDDataComponent) value).uuid();
@@ -108,7 +109,7 @@ public class CommonCircuitBlockEntity extends BlockEntity {
     protected void collectImplicitComponents(DataComponentMap.Builder components) {
         super.collectImplicitComponents(components);
         if (this.uuid != null) components.set(DataComponents.UUID.get(), new UUIDDataComponent(this.uuid));
-        components.set(DataComponents.SHORT.get(), this.getBlockState().getValue(CircuitProperties.COLOR).shortValue());
+        components.set(DataComponents.SHORT.get(), this.getBlockState().getValue(CommonCircuitBlock.COLOR).shortValue());
         if (this.name != null) components.set(net.minecraft.core.component.DataComponents.CUSTOM_NAME, Component.literal(this.name));
     }
 
@@ -148,7 +149,7 @@ public class CommonCircuitBlockEntity extends BlockEntity {
             this.updateInputs();
         }
         if (!this.savedColor) {
-            this.level.setBlock(this.getBlockPos(), this.getBlockState().setValue(CircuitProperties.COLOR, (int) this.color), Block.UPDATE_CLIENTS);
+            this.level.setBlock(this.getBlockPos(), this.getBlockState().setValue(CommonCircuitBlock.COLOR, (int) this.color), Block.UPDATE_CLIENTS);
             this.savedColor = true;
         }
     }

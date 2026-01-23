@@ -1,7 +1,6 @@
 package in.northwestw.shortcircuit.registries.blocks.common;
 
 import in.northwestw.shortcircuit.registries.DataComponents;
-import in.northwestw.shortcircuit.registries.blockentities.common.CircuitProperties;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.DyeColor;

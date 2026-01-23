@@ -14,10 +14,9 @@ import in.northwestw.shortcircuit.properties.DirectionHelper;
 import in.northwestw.shortcircuit.properties.RelativeDirection;
 import in.northwestw.shortcircuit.registries.BlockEntities;
 import in.northwestw.shortcircuit.registries.Blocks;
-import in.northwestw.shortcircuit.registries.blockentities.common.CircuitProperties;
 import in.northwestw.shortcircuit.registries.blockentities.common.CommonCircuitBlockEntity;
-import in.northwestw.shortcircuit.registries.blocks.CircuitBlock;
 import in.northwestw.shortcircuit.registries.blocks.CircuitBoardBlock;
+import in.northwestw.shortcircuit.registries.blocks.common.CommonCircuitBlock;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
@@ -417,7 +416,7 @@ public class CircuitBlockEntity extends CommonCircuitBlockEntity {
                 break;
             }
         }
-        state = state.setValue(CircuitProperties.POWERED, powered);
+        state = state.setValue(CommonCircuitBlock.POWERED, powered);
         this.level.setBlock(this.getBlockPos(), state, Block.UPDATE_CLIENTS);
         this.setChanged();
         this.updateInnerBlocks();

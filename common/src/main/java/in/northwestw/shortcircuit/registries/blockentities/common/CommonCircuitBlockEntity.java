@@ -1,11 +1,9 @@
 package in.northwestw.shortcircuit.registries.blockentities.common;
 
+import in.northwestw.shortcircuit.ShortCircuitCommon;
 import in.northwestw.shortcircuit.config.Config;
 import in.northwestw.shortcircuit.properties.RelativeDirection;
 import in.northwestw.shortcircuit.registries.DataComponents;
-import in.northwestw.shortcircuit.registries.blockentities.CircuitBlockEntity;
-import in.northwestw.shortcircuit.registries.blocks.CircuitBlock;
-import in.northwestw.shortcircuit.registries.blocks.IntegratedCircuitBlock;
 import in.northwestw.shortcircuit.registries.datacomponents.UUIDDataComponent;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
@@ -21,7 +19,6 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
@@ -31,7 +28,8 @@ public class CommonCircuitBlockEntity extends BlockEntity {
     protected UUID uuid;
     protected boolean hidden;
     protected Component name;
-    protected DyeColor color;
+    private byte color;
+    private boolean savedColor;
     private final int[] sameTickUpdates;
 
     public CommonCircuitBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState blockState) {
@@ -46,7 +44,9 @@ public class CommonCircuitBlockEntity extends BlockEntity {
         else this.uuid = null;
         this.hidden = tag.getBoolean("hidden");
         if (tag.contains("customName", Tag.TAG_STRING)) this.name = Component.Serializer.fromJson(tag.getString("customName"), provider);
-        if (tag.contains("color", Tag.TAG_BYTE)) this.color = DyeColor.byId(tag.getByte("color"));
+        // backwards compatible with before v1.0.9
+        if (tag.contains("color", Tag.TAG_BYTE)) this.color = tag.getByte("color");
+        else this.savedColor = true;
     }
 
     @Override
@@ -55,7 +55,7 @@ public class CommonCircuitBlockEntity extends BlockEntity {
         if (this.uuid != null) tag.putUUID("uuid", this.uuid);
         tag.putBoolean("hidden", this.hidden);
         if (this.name != null) tag.putString("customName", Component.Serializer.toJson(this.name, provider));
-        if (this.color != null) tag.putByte("color", (byte) this.color.getId());
+        if (!this.savedColor) tag.putByte("color", this.color);
     }
 
     @Override
@@ -74,7 +74,7 @@ public class CommonCircuitBlockEntity extends BlockEntity {
     protected void collectImplicitComponents(DataComponentMap.Builder components) {
         super.collectImplicitComponents(components);
         if (this.uuid != null) components.set(DataComponents.UUID.get(), new UUIDDataComponent(this.uuid));
-        if (this.color != null) components.set(DataComponents.SHORT.get(), (short) this.color.getId());
+        components.set(DataComponents.SHORT.get(), this.getBlockState().getValue(CircuitProperties.COLOR).shortValue());
         if (this.name != null) components.set(net.minecraft.core.component.DataComponents.CUSTOM_NAME, this.name);
     }
 
@@ -106,41 +106,16 @@ public class CommonCircuitBlockEntity extends BlockEntity {
         this.setChanged();
     }
 
-    private BooleanProperty colorBooleanProperty() {
-        return this instanceof CircuitBlockEntity ? CircuitBlock.COLORED : IntegratedCircuitBlock.COLORED;
-    }
-
-    public void cycleColor(boolean backwards) {
-        BooleanProperty property = this.colorBooleanProperty();
-        if (this.color == null) {
-            this.color = DyeColor.byId(backwards ? 15 : 0);
-            this.level.setBlock(this.getBlockPos(), this.getBlockState().setValue(property, true), Block.UPDATE_CLIENTS);
-        }
-        else if (this.color.getId() < 15 && !backwards) this.color = DyeColor.byId(this.color.getId() + 1);
-        else if (this.color.getId() > 0 && backwards) this.color = DyeColor.byId(this.color.getId() - 1);
-        else {
-            this.color = null;
-            this.level.setBlock(this.getBlockPos(), this.getBlockState().setValue(property, false), Block.UPDATE_CLIENTS);
-        }
-        this.setChanged();
-    }
-
-    public void setColor(DyeColor color) {
-        this.color = color;
-        this.level.setBlock(this.getBlockPos(), this.getBlockState().setValue(this.colorBooleanProperty(), this.color != null), Block.UPDATE_CLIENTS);
-        this.setChanged();
-    }
-
-    public DyeColor getColor() {
-        return color;
-    }
-
     public void tick() {
         boolean reTick = this.maxUpdateReached();
         Arrays.fill(this.sameTickUpdates, 0);
         if (reTick) {
             // couldn't finish update last tick due to limit, so we try again
             this.updateInputs();
+        }
+        if (!this.savedColor) {
+            this.level.setBlock(this.getBlockPos(), this.getBlockState().setValue(CircuitProperties.COLOR, (int) this.color), Block.UPDATE_CLIENTS);
+            this.savedColor = true;
         }
     }
 

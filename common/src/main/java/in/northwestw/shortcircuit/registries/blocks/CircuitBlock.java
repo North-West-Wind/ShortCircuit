@@ -6,6 +6,7 @@ import in.northwestw.shortcircuit.ShortCircuitCommon;
 import in.northwestw.shortcircuit.data.CircuitLimitSavedData;
 import in.northwestw.shortcircuit.registries.*;
 import in.northwestw.shortcircuit.registries.blockentities.CircuitBlockEntity;
+import in.northwestw.shortcircuit.registries.blockentities.common.CircuitProperties;
 import in.northwestw.shortcircuit.registries.datacomponents.UUIDDataComponent;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -37,8 +38,6 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
-import net.minecraft.world.level.block.state.properties.BlockStateProperties;
-import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.phys.BlockHitResult;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,15 +46,12 @@ import java.util.List;
 import java.util.UUID;
 
 public class CircuitBlock extends HorizontalDirectionalBlock implements EntityBlock {
-    public static final BooleanProperty POWERED = BlockStateProperties.POWERED;
-    public static final BooleanProperty COLORED = BooleanProperty.create("colored");
-
     public CircuitBlock(BlockBehaviour.Properties properties) {
         super(properties);
         this.registerDefaultState(this.stateDefinition.any()
                 .setValue(FACING, Direction.NORTH)
-                .setValue(POWERED, false)
-                .setValue(COLORED, false));
+                .setValue(CircuitProperties.POWERED, false)
+                .setValue(CircuitProperties.COLOR, 16));
     }
 
     @Override
@@ -71,7 +67,7 @@ public class CircuitBlock extends HorizontalDirectionalBlock implements EntityBl
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
         //builder.add(FACING, UP_POWER, DOWN_POWER, LEFT_POWER, RIGHT_POWER, FRONT_POWER, BACK_POWER);
-        builder.add(FACING, POWERED, COLORED);
+        builder.add(FACING, CircuitProperties.POWERED, CircuitProperties.COLOR);
     }
 
     @Override
@@ -155,8 +151,7 @@ public class CircuitBlock extends HorizontalDirectionalBlock implements EntityBl
             ItemStack newStack = new ItemStack(Items.CIRCUIT.get(), stack.getCount());
             newStack.applyComponents(stack.getComponents());
             newStack.set(DataComponents.UUID.get(), new UUIDDataComponent(blockEntity.getUuid()));
-            if (blockEntity.getColor() != null)
-                newStack.set(DataComponents.SHORT.get(), (short) blockEntity.getColor().getId());
+            newStack.set(DataComponents.SHORT.get(), state.getValue(CircuitProperties.COLOR).shortValue());
             player.setItemInHand(hand, newStack);
             player.playSound(SoundEvents.BEACON_ACTIVATE, 0.5f, 1);
             return ItemInteractionResult.SUCCESS;
@@ -210,7 +205,7 @@ public class CircuitBlock extends HorizontalDirectionalBlock implements EntityBl
                 if (stack.has(net.minecraft.core.component.DataComponents.CUSTOM_NAME))
                     blockEntity.setName(stack.get(net.minecraft.core.component.DataComponents.CUSTOM_NAME));
                 if (stack.has(DataComponents.SHORT.get()))
-                    blockEntity.setColor(DyeColor.byId(stack.get(DataComponents.SHORT.get())));
+                    level.setBlock(pos, state.setValue(CircuitProperties.COLOR, stack.get(DataComponents.SHORT.get()).intValue()), Block.UPDATE_CLIENTS);
                 if (!level.dimension().equals(Constants.CIRCUIT_BOARD_DIMENSION)) {
                     blockEntity.reloadRuntime();
                     blockEntity.updateInputs();

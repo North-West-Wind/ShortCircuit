@@ -1,7 +1,23 @@
 {
-  "parent": "minecraft:block/cube_all",
-  "render_type": "minecraft:cutout",
-  "textures": {
-    "all": "minecraft:block/glass"
-  }
+	"format_version": "1.9.0",
+	"credit": "Made with Blockbench",
+    "render_type": "minecraft:cutout",
+	"textures": {
+		"particle": "block/glass",
+		"carpet": "block/white_wool"
+	},
+	"elements": [
+		{
+			"from": [0.5, 0, 0.5],
+			"to": [15.5, 1, 15.5],
+			"faces": {
+				"north": {"uv": [0, 0, 16, 1], "texture": "#carpet"},
+				"east": {"uv": [0, 1, 16, 2], "texture": "#carpet"},
+				"south": {"uv": [0, 2, 16, 3], "texture": "#carpet"},
+				"west": {"uv": [0, 3, 16, 4], "texture": "#carpet"},
+				"up": {"uv": [0, 0, 16, 16], "texture": "#carpet"},
+				"down": {"uv": [0, 0, 16, 16], "texture": "#carpet"}
+			}
+		}
+	]
 }

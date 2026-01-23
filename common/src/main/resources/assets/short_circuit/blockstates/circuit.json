@@ -1,10 +1,75 @@
 {
-  "variants": {
-    "colored=false": {
-      "model": "short_circuit:block/circuit"
+  "multipart": [
+    {
+      "apply": { "model": "short_circuit:block/circuit" }
     },
-    "colored=true": {
-      "model": "short_circuit:block/circuit_air"
+    {
+      "when": { "color": 16 },
+      "apply": { "model": "minecraft:block/glass" }
+    },
+    {
+      "when": { "color": 0 },
+      "apply": { "model": "minecraft:block/white_stained_glass" }
+    },
+    {
+      "when": { "color": 1 },
+      "apply": { "model": "minecraft:block/orange_stained_glass" }
+    },
+    {
+      "when": { "color": 2 },
+      "apply": { "model": "minecraft:block/magenta_stained_glass" }
+    },
+    {
+      "when": { "color": 3 },
+      "apply": { "model": "minecraft:block/light_blue_stained_glass" }
+    },
+    {
+      "when": { "color": 4 },
+      "apply": { "model": "minecraft:block/yellow_stained_glass" }
+    },
+    {
+      "when": { "color": 5 },
+      "apply": { "model": "minecraft:block/lime_stained_glass" }
+    },
+    {
+      "when": { "color": 6 },
+      "apply": { "model": "minecraft:block/pink_stained_glass" }
+    },
+    {
+      "when": { "color": 7 },
+      "apply": { "model": "minecraft:block/gray_stained_glass" }
+    },
+    {
+      "when": { "color": 8 },
+      "apply": { "model": "minecraft:block/light_gray_stained_glass" }
+    },
+    {
+      "when": { "color": 9 },
+      "apply": { "model": "minecraft:block/cyan_stained_glass" }
+    },
+    {
+      "when": { "color": 10 },
+      "apply": { "model": "minecraft:block/purple_stained_glass" }
+    },
+    {
+      "when": { "color": 11 },
+      "apply": { "model": "minecraft:block/blue_stained_glass" }
+    },
+    {
+      "when": { "color": 12 },
+      "apply": { "model": "minecraft:block/brown_stained_glass" }
+    },
+    {
+      "when": { "color": 13 },
+      "apply": { "model": "minecraft:block/green_stained_glass" }
+    },
+    {
+      "when": { "color": 14 },
+      "apply": { "model": "minecraft:block/red_stained_glass" }
+    },
+    {
+      "when": { "color": 15 },
+      "apply": { "model": "minecraft:block/black_stained_glass" }
     }
-  }
+  ]
 }

@@ -7,6 +7,7 @@ import in.northwestw.shortcircuit.data.CircuitLimitSavedData;
 import in.northwestw.shortcircuit.registries.*;
 import in.northwestw.shortcircuit.registries.blockentities.CircuitBlockEntity;
 import in.northwestw.shortcircuit.registries.blocks.common.CommonCircuitBlock;
+import in.northwestw.shortcircuit.registries.blockentities.common.CircuitProperties;
 import in.northwestw.shortcircuit.registries.datacomponents.UUIDDataComponent;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -115,8 +116,7 @@ public class CircuitBlock extends CommonCircuitBlock {
             ItemStack newStack = new ItemStack(Items.CIRCUIT.get(), stack.getCount());
             newStack.applyComponents(stack.getComponents());
             newStack.set(DataComponents.UUID.get(), new UUIDDataComponent(blockEntity.getUuid()));
-            if (blockEntity.getColor() != null)
-                newStack.set(DataComponents.SHORT.get(), (short) blockEntity.getColor().getId());
+            newStack.set(DataComponents.SHORT.get(), state.getValue(CircuitProperties.COLOR).shortValue());
             newStack.set(net.minecraft.core.component.DataComponents.ITEM_MODEL, ShortCircuitCommon.rl("circuit"));
             player.setItemInHand(hand, newStack);
             player.playSound(SoundEvents.BEACON_ACTIVATE, 0.5f, 1);
@@ -171,7 +171,7 @@ public class CircuitBlock extends CommonCircuitBlock {
                 if (stack.has(net.minecraft.core.component.DataComponents.CUSTOM_NAME))
                     blockEntity.setName(stack.get(net.minecraft.core.component.DataComponents.CUSTOM_NAME).getString());
                 if (stack.has(DataComponents.SHORT.get()))
-                    blockEntity.setColor(DyeColor.byId(stack.get(DataComponents.SHORT.get())));
+                    level.setBlock(pos, state.setValue(CircuitProperties.COLOR, stack.get(DataComponents.SHORT.get()).intValue()), Block.UPDATE_CLIENTS);
                 if (!level.dimension().equals(Constants.CIRCUIT_BOARD_DIMENSION)) {
                     blockEntity.reloadRuntime();
                     blockEntity.updateInputs();

@@ -1,6 +1,7 @@
 package in.northwestw.shortcircuit.registries.blocks.common;
 
 import in.northwestw.shortcircuit.registries.DataComponents;
+import in.northwestw.shortcircuit.registries.blockentities.common.CircuitProperties;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.DyeColor;
@@ -13,20 +14,21 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
+import net.minecraft.world.level.block.state.properties.IntegerProperty;
 import org.apache.commons.compress.utils.Lists;
 
 import java.util.List;
 
 public abstract class CommonCircuitBlock extends HorizontalDirectionalBlock implements EntityBlock {
     public static final BooleanProperty POWERED = BlockStateProperties.POWERED;
-    public static final BooleanProperty COLORED = BooleanProperty.create("colored");
+    public static final IntegerProperty COLOR = IntegerProperty.create("color", 0, 16);
 
     public CommonCircuitBlock(Properties pProperties) {
         super(pProperties);
         this.registerDefaultState(this.stateDefinition.any()
                 .setValue(FACING, Direction.NORTH)
                 .setValue(POWERED, false)
-                .setValue(COLORED, false));
+                .setValue(COLOR, 16));
     }
 
     @Override
@@ -37,7 +39,7 @@ public abstract class CommonCircuitBlock extends HorizontalDirectionalBlock impl
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
         //builder.add(FACING, UP_POWER, DOWN_POWER, LEFT_POWER, RIGHT_POWER, FRONT_POWER, BACK_POWER);
-        builder.add(FACING, POWERED, COLORED);
+        builder.add(FACING, POWERED, COLOR);
     }
 
     public List<Component> extraTooltip(ItemStack stack) {

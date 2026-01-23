@@ -4,6 +4,7 @@ import in.northwestw.shortcircuit.registries.Blocks;
 import in.northwestw.shortcircuit.registries.DataComponents;
 import in.northwestw.shortcircuit.registries.blockentities.CircuitBlockEntity;
 import in.northwestw.shortcircuit.registries.blockentities.IntegratedCircuitBlockEntity;
+import in.northwestw.shortcircuit.registries.blockentities.common.CircuitProperties;
 import in.northwestw.shortcircuit.registries.blocks.CircuitBoardBlock;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
@@ -48,8 +49,17 @@ public class LabellingStickItem extends Item {
         Level level = context.getLevel();
         BlockPos pos = context.getClickedPos();
         Player player = context.getPlayer();
-        if (level.getBlockEntity(pos) instanceof CircuitBlockEntity blockEntity) blockEntity.cycleColor(player != null && (player.isCrouching() || player.isShiftKeyDown()));
-        else if (level.getBlockEntity(pos) instanceof IntegratedCircuitBlockEntity blockEntity) blockEntity.cycleColor(player != null && (player.isCrouching() || player.isShiftKeyDown()));
+        BlockState state = level.getBlockState(pos);
+        int color = state.getValue(CircuitProperties.COLOR);
+        if (player != null && (player.isCrouching() || player.isShiftKeyDown())) {
+            color -= 1;
+            if (color < 0) color = 16;
+        }
+        else {
+            color += 1;
+            if (color > 16) color = 0;
+        }
+        level.setBlockAndUpdate(pos, state.setValue(CircuitProperties.COLOR, color));
         return InteractionResult.SUCCESS;
     }
 
@@ -61,16 +71,14 @@ public class LabellingStickItem extends Item {
         if (player.isCrouching() || player.isShiftKeyDown()) {
             // copy color
             DyeColor color = null;
-            if (level.getBlockEntity(pos) instanceof CircuitBlockEntity blockEntity) color = blockEntity.getColor();
-            else if (level.getBlockEntity(pos) instanceof IntegratedCircuitBlockEntity blockEntity) color = blockEntity.getColor();
+            int colorVal = level.getBlockState(pos).getValue(CircuitProperties.COLOR);
+            if (colorVal != 16) color = DyeColor.byId(colorVal);
             if (color == null) stack.remove(DataComponents.SHORT.get());
             else stack.set(DataComponents.SHORT.get(), (short) color.getId());
             player.displayClientMessage(Component.translatable("action.labelling_stick.copy").withColor(color == null ? 0xFFFFFF : color.getTextColor()), true);
         } else {
-            short id = stack.getOrDefault(DataComponents.SHORT.get(), (short) -1);
-            DyeColor color = id < 0 ? null : DyeColor.byId(id);
-            if (level.getBlockEntity(pos) instanceof CircuitBlockEntity blockEntity) blockEntity.setColor(color);
-            else if (level.getBlockEntity(pos) instanceof IntegratedCircuitBlockEntity blockEntity) blockEntity.setColor(color);
+            short id = stack.getOrDefault(DataComponents.SHORT.get(), (short) 16);
+            level.setBlockAndUpdate(pos, level.getBlockState(pos).setValue(CircuitProperties.COLOR, (int) id));
         }
         return InteractionResult.SUCCESS;
     }

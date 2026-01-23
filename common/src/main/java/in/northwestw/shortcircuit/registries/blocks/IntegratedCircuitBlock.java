@@ -64,8 +64,7 @@ public class IntegratedCircuitBlock extends CommonCircuitBlock {
             ItemStack newStack = new ItemStack(Items.INTEGRATED_CIRCUIT.get(), stack.getCount());
             newStack.applyComponents(stack.getComponents());
             newStack.set(DataComponents.UUID.get(), new UUIDDataComponent(blockEntity.getUuid()));
-            if (blockEntity.getColor() != null)
-                newStack.set(DataComponents.SHORT.get(), (short) blockEntity.getColor().getId());
+            newStack.set(DataComponents.SHORT.get(), state.getValue(COLOR).shortValue());
             newStack.set(net.minecraft.core.component.DataComponents.ITEM_MODEL, ShortCircuitCommon.rl("integrated_circuit"));
             player.setItemInHand(hand, newStack);
             player.playSound(SoundEvents.BEACON_ACTIVATE, 0.5f, 1);
@@ -114,7 +113,7 @@ public class IntegratedCircuitBlock extends CommonCircuitBlock {
                 if (stack.has(net.minecraft.core.component.DataComponents.CUSTOM_NAME))
                     blockEntity.setName(stack.get(net.minecraft.core.component.DataComponents.CUSTOM_NAME).getString());
                 if (stack.has(DataComponents.SHORT.get()))
-                    blockEntity.setColor(DyeColor.byId(stack.get(DataComponents.SHORT.get())));
+                    level.setBlock(pos, state.setValue(COLOR, stack.get(DataComponents.SHORT.get()).intValue()), Block.UPDATE_CLIENTS);
                 blockEntity.updateInputs();
             }
         super.setPlacedBy(level, pos, state, placer, stack);

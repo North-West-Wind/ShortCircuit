@@ -14,6 +14,7 @@ import in.northwestw.shortcircuit.properties.DirectionHelper;
 import in.northwestw.shortcircuit.properties.RelativeDirection;
 import in.northwestw.shortcircuit.registries.BlockEntities;
 import in.northwestw.shortcircuit.registries.Blocks;
+import in.northwestw.shortcircuit.registries.blockentities.common.CircuitProperties;
 import in.northwestw.shortcircuit.registries.blockentities.common.CommonCircuitBlockEntity;
 import in.northwestw.shortcircuit.registries.blocks.CircuitBlock;
 import in.northwestw.shortcircuit.registries.blocks.CircuitBoardBlock;
@@ -416,7 +417,7 @@ public class CircuitBlockEntity extends CommonCircuitBlockEntity {
                 break;
             }
         }
-        state = state.setValue(CircuitBlock.POWERED, powered);
+        state = state.setValue(CircuitProperties.POWERED, powered);
         this.level.setBlock(this.getBlockPos(), state, Block.UPDATE_CLIENTS);
         this.setChanged();
         this.updateInnerBlocks();

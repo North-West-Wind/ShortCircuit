@@ -7,7 +7,6 @@ import in.northwestw.shortcircuit.registries.Blocks;
 import in.northwestw.shortcircuit.registries.Menus;
 import in.northwestw.shortcircuit.registries.blockentities.CircuitBlockEntity;
 import in.northwestw.shortcircuit.registries.blockentityrenderers.CircuitBlockEntityRenderer;
-import in.northwestw.shortcircuit.registries.blockentityrenderers.IntegratedCircuitBlockEntityRenderer;
 import in.northwestw.shortcircuit.registries.blockentityrenderers.renderstates.CircuitBlockEntityRenderState;
 import in.northwestw.shortcircuit.registries.blocks.common.CommonCircuitBlock;
 import net.fabricmc.api.ClientModInitializer;
@@ -45,10 +44,9 @@ public class ShortCircuitFabric implements ModInitializer, ClientModInitializer 
     @Override
     public void onInitializeClient() {
         BlockEntityRenderers.register(BlockEntities.CIRCUIT.get(), CircuitBlockEntityRenderer::new);
-        BlockEntityRenderers.register(BlockEntities.INTEGRATED_CIRCUIT.get(), IntegratedCircuitBlockEntityRenderer::new);
         MenuScreens.register(Menus.TRUTH_ASSIGNER.get(), TruthAssignerScreen::new);
-        BlockRenderLayerMap.putBlock(Blocks.CIRCUIT.get(), ChunkSectionLayer.CUTOUT);
-        BlockRenderLayerMap.putBlock(Blocks.INTEGRATED_CIRCUIT.get(), ChunkSectionLayer.CUTOUT);
+        BlockRenderLayerMap.putBlock(Blocks.CIRCUIT.get(), ChunkSectionLayer.TRANSLUCENT);
+        BlockRenderLayerMap.putBlock(Blocks.INTEGRATED_CIRCUIT.get(), ChunkSectionLayer.TRANSLUCENT);
         ItemTooltipCallback.EVENT.register(((itemStack, tooltipContext, tooltipFlag, list) -> {
             if (itemStack.getItem() instanceof BlockItem item && item.getBlock() instanceof CommonCircuitBlock block)
                 list.addAll(block.extraTooltip(itemStack));

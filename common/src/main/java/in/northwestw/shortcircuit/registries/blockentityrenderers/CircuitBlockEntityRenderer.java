@@ -40,7 +40,6 @@ public class CircuitBlockEntityRenderer implements BlockEntityRenderer<CircuitBl
     @Override
     public void extractRenderState(CircuitBlockEntity blockEntity, CircuitBlockEntityRenderState renderState, float partialTick, Vec3 cameraPosition, ModelFeatureRenderer.@Nullable CrumblingOverlay breakProgress) {
         BlockEntityRenderState.extractBase(blockEntity, renderState, breakProgress);
-        renderState.color = blockEntity.getColor();
         renderState.hidden = blockEntity.isHidden();
         renderState.blockSize = blockEntity.getBlockSize();
         renderState.blocks = blockEntity.blocks.entrySet();
@@ -49,11 +48,6 @@ public class CircuitBlockEntityRenderer implements BlockEntityRenderer<CircuitBl
     @Override
     public void submit(CircuitBlockEntityRenderState state, PoseStack poseStack, SubmitNodeCollector submitNodeCollector, CameraRenderState cameraRenderState) {
         poseStack.pushPose();
-        // color outer shell
-        DyeColor color = state.color;
-        if (color != null) {
-            submitNodeCollector.submitBlock(poseStack, ColorHelper.colorToStainedGlass(color).defaultBlockState(), state.lightCoords, OverlayTexture.NO_OVERLAY, 0);
-        }
         // direction handling. move to the center and rotate, then move back
         poseStack.translate(0.5, 0.5, 0.5);
         switch (state.blockState.getValue(HorizontalDirectionalBlock.FACING)) {
@@ -62,10 +56,6 @@ public class CircuitBlockEntityRenderer implements BlockEntityRenderer<CircuitBl
             case NORTH -> poseStack.mulPose(new Quaternionf(0, 0.7071068, 0, -0.7071068));
         }
         poseStack.translate(-0.5, -0.5, -0.5);
-
-        poseStack.scale(HIDDEN_SCALE_CARPET, HIDDEN_SCALE_CARPET, HIDDEN_SCALE_CARPET);
-        poseStack.translate(HIDDEN_TRANSLATE_CARPET, HIDDEN_TRANSLATE_CARPET, HIDDEN_TRANSLATE_CARPET);
-        submitNodeCollector.submitBlock(poseStack, Blocks.WHITE_CARPET.defaultBlockState(), state.lightCoords, OverlayTexture.NO_OVERLAY, 0);
         poseStack.translate(0, 0.0625, 0);
 
         if (state.hidden) {

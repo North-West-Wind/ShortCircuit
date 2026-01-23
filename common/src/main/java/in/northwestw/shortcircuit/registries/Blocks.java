@@ -52,10 +52,5 @@ public class Blocks {
                     .isRedstoneConductor((state, level, pos) -> false)
     );
 
-    public static final Supplier<Block> INNER_IC = Services.REGISTRY.registerBlock(
-            "inner_ic", InnerICBlock::new,
-            BlockBehaviour.Properties.of().noLootTable()
-    );
-
     public static void trigger() { }
 }

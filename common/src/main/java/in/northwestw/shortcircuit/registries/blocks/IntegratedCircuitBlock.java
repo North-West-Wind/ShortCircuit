@@ -4,6 +4,7 @@ import com.mojang.serialization.MapCodec;
 import in.northwestw.shortcircuit.ShortCircuitCommon;
 import in.northwestw.shortcircuit.registries.*;
 import in.northwestw.shortcircuit.registries.blockentities.IntegratedCircuitBlockEntity;
+import in.northwestw.shortcircuit.registries.blockentities.common.CircuitProperties;
 import in.northwestw.shortcircuit.registries.datacomponents.UUIDDataComponent;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -33,6 +34,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
+import net.minecraft.world.level.block.state.properties.IntegerProperty;
 import net.minecraft.world.level.redstone.Orientation;
 import net.minecraft.world.phys.BlockHitResult;
 import org.jetbrains.annotations.Nullable;
@@ -40,16 +42,14 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public class IntegratedCircuitBlock extends HorizontalDirectionalBlock implements EntityBlock {
-    public static final BooleanProperty POWERED = BlockStateProperties.POWERED;
-    public static final BooleanProperty COLORED = BooleanProperty.create("colored");
     public static final DustParticleOptions PARTICLE = new DustParticleOptions(0xFFDD00, 1.0F);
 
     public IntegratedCircuitBlock(Properties pProperties) {
         super(pProperties);
         this.registerDefaultState(this.stateDefinition.any()
                 .setValue(FACING, Direction.NORTH)
-                .setValue(POWERED, false)
-                .setValue(COLORED, false));
+                .setValue(CircuitProperties.POWERED, false)
+                .setValue(CircuitProperties.COLOR, 16));
     }
 
     @Override
@@ -64,7 +64,7 @@ public class IntegratedCircuitBlock extends HorizontalDirectionalBlock implement
 
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(FACING, POWERED, COLORED);
+        builder.add(FACING, CircuitProperties.POWERED, CircuitProperties.COLOR);
     }
 
     @Override
@@ -102,8 +102,7 @@ public class IntegratedCircuitBlock extends HorizontalDirectionalBlock implement
             ItemStack newStack = new ItemStack(Items.INTEGRATED_CIRCUIT.get(), stack.getCount());
             newStack.applyComponents(stack.getComponents());
             newStack.set(DataComponents.UUID.get(), new UUIDDataComponent(blockEntity.getUuid()));
-            if (blockEntity.getColor() != null)
-                newStack.set(DataComponents.SHORT.get(), (short) blockEntity.getColor().getId());
+            newStack.set(DataComponents.SHORT.get(), state.getValue(CircuitProperties.COLOR).shortValue());
             newStack.set(net.minecraft.core.component.DataComponents.ITEM_MODEL, ShortCircuitCommon.rl("integrated_circuit"));
             player.setItemInHand(hand, newStack);
             player.playSound(SoundEvents.BEACON_ACTIVATE, 0.5f, 1);
@@ -152,7 +151,7 @@ public class IntegratedCircuitBlock extends HorizontalDirectionalBlock implement
                 if (stack.has(net.minecraft.core.component.DataComponents.CUSTOM_NAME))
                     blockEntity.setName(stack.get(net.minecraft.core.component.DataComponents.CUSTOM_NAME));
                 if (stack.has(DataComponents.SHORT.get()))
-                    blockEntity.setColor(DyeColor.byId(stack.get(DataComponents.SHORT.get())));
+                    level.setBlock(pos, state.setValue(CircuitProperties.COLOR, stack.get(DataComponents.SHORT.get()).intValue()), Block.UPDATE_CLIENTS);
                 blockEntity.updateInputs();
             }
         super.setPlacedBy(level, pos, state, placer, stack);
@@ -160,7 +159,7 @@ public class IntegratedCircuitBlock extends HorizontalDirectionalBlock implement
 
     @Override
     public void animateTick(BlockState state, Level level, BlockPos pos, RandomSource random) {
-        if (state.getValue(POWERED) && (!(level.getBlockEntity(pos) instanceof IntegratedCircuitBlockEntity blockEntity) || !blockEntity.isHidden())) {
+        if (state.getValue(CircuitProperties.POWERED) && (!(level.getBlockEntity(pos) instanceof IntegratedCircuitBlockEntity blockEntity) || !blockEntity.isHidden())) {
             spawnParticles(level, pos);
         }
     }

@@ -7,6 +7,7 @@ import in.northwestw.shortcircuit.data.TruthTableSavedData;
 import in.northwestw.shortcircuit.properties.DirectionHelper;
 import in.northwestw.shortcircuit.properties.RelativeDirection;
 import in.northwestw.shortcircuit.registries.BlockEntities;
+import in.northwestw.shortcircuit.registries.blockentities.common.CircuitProperties;
 import in.northwestw.shortcircuit.registries.blockentities.common.CommonCircuitBlockEntity;
 import in.northwestw.shortcircuit.registries.blocks.IntegratedCircuitBlock;
 import net.minecraft.core.BlockPos;
@@ -137,7 +138,7 @@ public class IntegratedCircuitBlockEntity extends CommonCircuitBlockEntity {
                 if (!oldOutputs.containsKey(key)) // new value
                     this.changed[key.getId()] = true;
             }
-            this.level.setBlock(this.getBlockPos(), this.getBlockState().setValue(IntegratedCircuitBlock.POWERED, this.outputs.values().stream().anyMatch(power -> power > 0)), Block.UPDATE_CLIENTS);
+            this.level.setBlock(this.getBlockPos(), this.getBlockState().setValue(CircuitProperties.POWERED, this.outputs.values().stream().anyMatch(power -> power > 0)), Block.UPDATE_CLIENTS);
             this.updateChangedNeighbors();
         }
     }

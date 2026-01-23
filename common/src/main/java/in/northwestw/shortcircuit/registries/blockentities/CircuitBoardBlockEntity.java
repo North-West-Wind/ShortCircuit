@@ -4,6 +4,7 @@ import com.google.common.collect.Lists;
 import in.northwestw.shortcircuit.properties.DirectionHelper;
 import in.northwestw.shortcircuit.properties.RelativeDirection;
 import in.northwestw.shortcircuit.registries.BlockEntities;
+import in.northwestw.shortcircuit.registries.Blocks;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
@@ -14,6 +15,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
@@ -67,8 +69,10 @@ public class CircuitBoardBlockEntity extends BlockEntity {
             BlockState circuitState = level.getBlockState(this.pos);
             Direction circuitDirection = circuitState.getValue(HorizontalDirectionalBlock.FACING);
             BlockPos updatePos = this.pos.relative(DirectionHelper.relativeDirectionToFacing(direction, circuitDirection));
-            level.neighborChanged(updatePos, level.getBlockState(updatePos).getBlock(), this.pos);
-            level.updateNeighborsAtExceptFromFacing(this.pos, circuitState.getBlock(), circuitDirection.getOpposite());
+            level.neighborChanged(updatePos, circuitState.getBlock(), this.pos);
+            Block updateBlock = level.getBlockState(updatePos).getBlock();
+            if (updateBlock != Blocks.CIRCUIT.get() && updateBlock != Blocks.INTEGRATED_CIRCUIT.get())
+                level.updateNeighborsAtExceptFromFacing(updatePos, updateBlock, circuitDirection.getOpposite());
         }
     }
 }

@@ -74,12 +74,14 @@ public class IntegratedCircuitBlockEntity extends CommonCircuitBlockEntity {
         // upgrade to v1.0.2, default hidden to true
         if (!tag.contains("hidden")) this.hidden = true;
 
-        this.blocks.clear();
-        if (oldUuid != this.uuid && this.uuid != null) {
-            RandomSource random = new XoroshiroRandomSource(this.uuid.getLeastSignificantBits(), this.uuid.getMostSignificantBits());
-            Direction[] directions = Direction.values();
-            for (int ii = 0; ii < 8; ii++)
-                this.blocks.add(POSSIBLE_INNER_BLOCKS[random.nextInt(POSSIBLE_INNER_BLOCKS.length)].defaultBlockState().setValue(CommandBlock.FACING, directions[random.nextInt(directions.length)]));
+        if (!this.hidden) {
+            this.blocks.clear();
+            if (oldUuid != this.uuid && this.uuid != null) {
+                RandomSource random = new XoroshiroRandomSource(this.uuid.getLeastSignificantBits(), this.uuid.getMostSignificantBits());
+                Direction[] directions = Direction.values();
+                for (int ii = 0; ii < 8; ii++)
+                    this.blocks.add(POSSIBLE_INNER_BLOCKS[random.nextInt(POSSIBLE_INNER_BLOCKS.length)].defaultBlockState().setValue(CommandBlock.FACING, directions[random.nextInt(directions.length)]));
+            }
         }
     }
 
@@ -114,8 +116,10 @@ public class IntegratedCircuitBlockEntity extends CommonCircuitBlockEntity {
         for (int ii = 0; ii < this.changed.length; ii++)
             if (this.changed[ii]) {
                 BlockPos pos = this.getBlockPos().relative(DirectionHelper.relativeDirectionToFacing(RelativeDirection.fromId((byte) ii), direction));
-                this.level.neighborChanged(pos, this.level.getBlockState(pos).getBlock(), null);
-                this.level.updateNeighborsAtExceptFromFacing(this.getBlockPos(), state.getBlock(), direction.getOpposite(), null);
+                this.level.neighborChanged(pos, state.getBlock(), null);
+                Block updateBlock = level.getBlockState(pos).getBlock();
+                if (updateBlock != in.northwestw.shortcircuit.registries.Blocks.CIRCUIT.get() && updateBlock != in.northwestw.shortcircuit.registries.Blocks.INTEGRATED_CIRCUIT.get())
+                    this.level.updateNeighborsAtExceptFromFacing(pos, updateBlock, direction.getOpposite(), null);
             }
     }
 

@@ -4,16 +4,21 @@ package in.northwestw.shortcircuit;
 import in.northwestw.shortcircuit.client.TruthAssignerScreen;
 import in.northwestw.shortcircuit.platform.NeoForgeRegistryHelper;
 import in.northwestw.shortcircuit.registries.BlockEntities;
+import in.northwestw.shortcircuit.registries.Blocks;
 import in.northwestw.shortcircuit.registries.Menus;
 import in.northwestw.shortcircuit.registries.blockentityrenderers.CircuitBlockEntityRenderer;
 import in.northwestw.shortcircuit.registries.blocks.common.CommonCircuitBlock;
+import net.minecraft.client.renderer.ItemBlockRenderTypes;
+import net.minecraft.client.renderer.chunk.ChunkSectionLayer;
 import net.minecraft.world.item.BlockItem;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
+import net.neoforged.neoforge.client.event.RegisterNamedRenderTypesEvent;
 import net.neoforged.neoforge.event.entity.player.ItemTooltipEvent;
 
 @Mod(ShortCircuitCommon.MOD_ID)
@@ -46,6 +51,12 @@ public class ShortCircuitNeoForge {
         public static void itemTooltip(ItemTooltipEvent event) {
             if (event.getItemStack().getItem() instanceof BlockItem item && item.getBlock() instanceof CommonCircuitBlock block)
                 event.getToolTip().addAll(block.extraTooltip(event.getItemStack()));
+        }
+
+        @SubscribeEvent
+        public static void makeTranslucent(FMLClientSetupEvent event) {
+            ItemBlockRenderTypes.setRenderLayer(Blocks.CIRCUIT.get(), ChunkSectionLayer.TRANSLUCENT);
+            ItemBlockRenderTypes.setRenderLayer(Blocks.INTEGRATED_CIRCUIT.get(), ChunkSectionLayer.TRANSLUCENT);
         }
     }
 }

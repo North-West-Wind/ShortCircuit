@@ -1,7 +1,6 @@
 {
 	"format_version": "1.9.0",
 	"credit": "Made with Blockbench",
-    "render_type": "minecraft:cutout",
 	"textures": {
 		"particle": "block/glass",
 		"carpet": "block/white_wool"

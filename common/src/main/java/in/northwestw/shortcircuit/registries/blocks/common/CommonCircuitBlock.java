@@ -32,7 +32,7 @@ public abstract class CommonCircuitBlock extends HorizontalDirectionalBlock impl
 
     @Override
     public BlockState getStateForPlacement(BlockPlaceContext pContext) {
-        return this.defaultBlockState().setValue(FACING, pContext.getHorizontalDirection());
+        return this.defaultBlockState().setValue(FACING, pContext.getHorizontalDirection()).setValue(COLOR, 16);
     }
 
     @Override

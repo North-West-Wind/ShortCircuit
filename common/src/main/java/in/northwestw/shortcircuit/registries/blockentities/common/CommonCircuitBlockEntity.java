@@ -87,8 +87,8 @@ public class CommonCircuitBlockEntity extends BlockEntity {
             this.name = ((Component) value).getString();
             return true;
         } else if (component == DataComponents.SHORT.get()) {
-            this.color = (byte) value;
-            this.level.setBlock(this.getBlockPos(), this.getBlockState().setValue(CommonCircuitBlock.COLOR, (int) value), Block.UPDATE_CLIENTS);
+            this.color = (byte) (short) value;
+            this.level.setBlock(this.getBlockPos(), this.getBlockState().setValue(CommonCircuitBlock.COLOR, (int) (short) value), Block.UPDATE_CLIENTS);
             return true;
         } else if (component == DataComponents.UUID.get()) {
             this.uuid = ((UUIDDataComponent) value).uuid();

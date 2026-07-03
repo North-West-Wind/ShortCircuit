@@ -12,6 +12,10 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
 import org.apache.commons.compress.utils.Lists;
 
+//? if <=1.21.4 {
+/*import net.minecraft.world.item.TooltipFlag;
+*///? }
+
 import java.util.List;
 import java.util.Optional;
 
@@ -33,6 +37,14 @@ public class TooltipBlockItem extends BlockItem {
         }
         return tooltip.needed();
     }
+
+    //? if <=1.21.4 {
+    /*@Override
+    public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> components, TooltipFlag flag) {
+        super.appendHoverText(stack, context, components, flag);
+        this.getTooltipImage(stack).ifPresent(tooltipComponent -> components.addAll(((ItemTooltipComponent) tooltipComponent).components));
+    }
+    *///? }
 
     static class ItemTooltipComponent implements TooltipComponent, ClientTooltipComponent {
         private final List<Component> components;
@@ -65,10 +77,12 @@ public class TooltipBlockItem extends BlockItem {
             return false;
         }
 
+        //? if >=1.21.11 {
         @Override
         public void renderText(GuiGraphics graphics, Font font, int x, int y) {
             graphics.setComponentTooltipForNextFrame(font, this.components, x, y);
         }
+        //? }
 
         @Override
         public void renderImage(Font font, int x, int y, int width, int height, GuiGraphics guiGraphics) { }

@@ -45,7 +45,10 @@ public class NeoForgeRegistryHelper implements IRegistryHelper {
 
     @Override
     public Supplier<Block> registerBlock(String name, Function<BlockBehaviour.Properties, Block> factory, BlockBehaviour.Properties properties) {
+        //? if >=1.21.11 {
         return BLOCKS.registerBlock(name, factory, () -> properties);
+        //? } else
+        //return BLOCKS.registerBlock(name, factory, properties);
     }
 
     @Override
@@ -60,7 +63,10 @@ public class NeoForgeRegistryHelper implements IRegistryHelper {
 
     @Override
     public <T extends Item> Supplier<T> registerItem(String name, Function<Item.Properties, T> function, Item.Properties properties) {
+        //? if >=1.21.11 {
         return ITEMS.registerItem(name, function, () -> properties);
+         //? } else
+        //return ITEMS.registerItem(name, function, properties);
     }
 
     @Override

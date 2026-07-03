@@ -9,7 +9,6 @@ import in.northwestw.shortcircuit.registries.datacomponents.UUIDDataComponent;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.UUIDUtil;
-import net.minecraft.core.component.DataComponentGetter;
 import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.nbt.CompoundTag;
@@ -21,10 +20,16 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.storage.ValueInput;
-import net.minecraft.world.level.storage.ValueOutput;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
+
+//? if >=1.21.11 {
+import net.minecraft.core.component.DataComponentGetter;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
+//? } else {
+/*import net.minecraft.nbt.Tag;
+*///? }
 
 import java.util.Arrays;
 import java.util.UUID;
@@ -41,8 +46,10 @@ public class CommonCircuitBlockEntity extends BlockEntity {
     public CommonCircuitBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState blockState) {
         super(type, pos, blockState);
         this.sameTickUpdates = new int[6];
+        this.color = 16;
     }
 
+    //? if >=1.21.11 {
     @Override
     protected void loadAdditional(ValueInput input) {
         super.loadAdditional(input);
@@ -63,6 +70,27 @@ public class CommonCircuitBlockEntity extends BlockEntity {
         if (this.name != null) output.putString("name", this.name);
         if (!this.savedColor) output.putByte("color", this.color);
     }
+    //? } else {
+    /*@Override
+    protected void loadAdditional(CompoundTag input, HolderLookup.Provider provider) {
+        super.loadAdditional(input, provider);
+        this.hidden = input.getBoolean("hidden");
+        if (input.hasUUID("uuid")) this.uuid = input.getUUID("uuid");
+        if (input.contains("customName", Tag.TAG_STRING)) this.name = input.getString("customName");
+        else this.name = null;
+        if (input.contains("color", Tag.TAG_BYTE)) this.color = input.getByte("color");
+        else this.savedColor = true;
+    }
+
+    @Override
+    protected void saveAdditional(CompoundTag output, HolderLookup.Provider provider) {
+        super.saveAdditional(output, provider);
+        output.putBoolean("hidden", this.hidden);
+        if (this.uuid != null) output.putIntArray("uuid", UUIDUtil.uuidToIntArray(this.uuid));
+        if (this.name != null) output.putString("name", this.name);
+        if (!this.savedColor) output.putByte("color", this.color);
+    }
+    *///? }
 
     @Override
     public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
@@ -74,6 +102,7 @@ public class CommonCircuitBlockEntity extends BlockEntity {
         return ClientboundBlockEntityDataPacket.create(this);
     }
 
+    //? if >=1.21.11 {
     @Override
     protected void applyImplicitComponents(DataComponentGetter components) {
         super.applyImplicitComponents(components);
@@ -81,6 +110,25 @@ public class CommonCircuitBlockEntity extends BlockEntity {
         this.applyImplicitComponentIfPresent(components, DataComponents.SHORT.get());
         this.applyImplicitComponentIfPresent(components, DataComponents.UUID.get());
     }
+
+    protected <T> boolean applyImplicitComponentIfPresent(DataComponentGetter componentGetter, DataComponentType<T> component) {
+        T t = componentGetter.get(component);
+        return t != null && this.applyImplicitComponent(component, t);
+    }
+    //? } else {
+    /*@Override
+    protected void applyImplicitComponents(DataComponentInput components) {
+        super.applyImplicitComponents(components);
+        this.applyImplicitComponentIfPresent(components, net.minecraft.core.component.DataComponents.CUSTOM_NAME);
+        this.applyImplicitComponentIfPresent(components, DataComponents.SHORT.get());
+        this.applyImplicitComponentIfPresent(components, DataComponents.UUID.get());
+    }
+
+    protected <T> boolean applyImplicitComponentIfPresent(DataComponentInput componentGetter, DataComponentType<T> component) {
+        T t = componentGetter.get(component);
+        return t != null && this.applyImplicitComponent(component, t);
+    }
+    *///? }
 
     protected <T> boolean applyImplicitComponent(DataComponentType<T> component, T value) {
         if (component == net.minecraft.core.component.DataComponents.CUSTOM_NAME) {
@@ -96,11 +144,6 @@ public class CommonCircuitBlockEntity extends BlockEntity {
         } else {
             return false;
         }
-    }
-
-    protected <T> boolean applyImplicitComponentIfPresent(DataComponentGetter componentGetter, DataComponentType<T> component) {
-        T t = componentGetter.get(component);
-        return t != null && this.applyImplicitComponent(component, t);
     }
 
     @Override

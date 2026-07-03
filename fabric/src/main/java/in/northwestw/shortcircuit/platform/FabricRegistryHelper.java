@@ -5,6 +5,7 @@ import com.mojang.serialization.MapCodec;
 import in.northwestw.shortcircuit.ShortCircuitCommon;
 import in.northwestw.shortcircuit.platform.services.IRegistryHelper;
 import net.fabricmc.fabric.api.itemgroup.v1.FabricItemGroup;
+import net.fabricmc.fabric.api.object.builder.v1.block.entity.FabricBlockEntityTypeBuilder;
 import net.minecraft.core.Registry;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -22,6 +23,7 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
+import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.Arrays;
 import java.util.List;
@@ -36,7 +38,11 @@ public class FabricRegistryHelper implements IRegistryHelper {
     @Override
     public <T extends BlockEntity> Supplier<BlockEntityType<T>> registerBlockEntityType(String name, BlockEntitySupplier<T> factory, Supplier<Block> ...blocks) {
         Identifier id = Identifier.fromNamespaceAndPath(ShortCircuitCommon.MOD_ID, name);
-        BlockEntityType<T> type = BlockEntityType.register(id.toString(), factory::create, Arrays.stream(blocks).map(Supplier::get).toArray(Block[]::new));
+        Block[] gotBlocks = Arrays.stream(blocks).map(Supplier::get).toArray(Block[]::new);
+        BlockEntityType<T> type = Registry.register(
+                BuiltInRegistries.BLOCK_ENTITY_TYPE, id,
+                FabricBlockEntityTypeBuilder.create(factory::create, gotBlocks).build()
+        );
         return () -> type;
     }
 

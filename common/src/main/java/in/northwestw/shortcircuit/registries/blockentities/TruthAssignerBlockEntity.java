@@ -5,6 +5,7 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.mojang.logging.LogUtils;
 import in.northwestw.shortcircuit.data.TruthTableSavedData;
+import in.northwestw.shortcircuit.properties.CrossVersionTag;
 import in.northwestw.shortcircuit.properties.RelativeDirection;
 import in.northwestw.shortcircuit.registries.BlockEntities;
 import in.northwestw.shortcircuit.registries.Blocks;
@@ -36,11 +37,16 @@ import net.minecraft.world.inventory.ContainerListener;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BaseContainerBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import org.apache.commons.lang3.tuple.Pair;
+import org.jetbrains.annotations.Nullable;
+
+//? if >=1.21.11 {
 import net.minecraft.world.level.storage.TagValueOutput;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
-import org.apache.commons.lang3.tuple.Pair;
-import org.jetbrains.annotations.Nullable;
+//? } else {
+
+//? }
 
 import java.util.Comparator;
 import java.util.List;
@@ -140,41 +146,61 @@ public class TruthAssignerBlockEntity extends BaseContainerBlockEntity implement
     }
 
     @Override
+    //? if >=1.21.11 {
     protected void loadAdditional(ValueInput input) {
         super.loadAdditional(input);
         ContainerHelper.loadAllItems(input, this.items);
-        this.working = input.getBooleanOr("working", false);
-        this.wait = input.getBooleanOr("wait", false);
-        this.maxDelay = input.getIntOr("maxDelay", 0);
-        this.bits = input.getIntOr("bits", 0);
+    //? } else {
+    /*protected void loadAdditional(CompoundTag input, HolderLookup.Provider provider) {
+        super.loadAdditional(input, provider);
+        ContainerHelper.loadAllItems(input, this.items, provider);
+    *///? }
+        CrossVersionTag.Reader reader = new CrossVersionTag.Reader(input);
+        this.working = reader.getBoolean("working");
+        this.wait = reader.getBoolean("wait");
+        this.maxDelay = reader.getInt("maxDelay", 0);
+        this.bits = reader.getInt("bits", 0);
         if (this.bits == 0) this.bits = 4;
-        this.ticks = input.getIntOr("ticks", 0);
-        this.errorCode = input.getIntOr("errorCode", 0);
-        input.getIntArray("workingUuid").ifPresent(arr -> this.workingUuid = UUIDUtil.uuidFromIntArray(arr));
-        this.lastOutput = input.getIntOr("lastOutput", 0);
+        this.ticks = reader.getInt("ticks", 0);
+        this.errorCode = reader.getInt("errorCode", 0);
+        reader.getUUID("workingUuid").ifPresent(uuid -> this.workingUuid = uuid);
+        this.lastOutput = reader.getInt("lastOutput", 0);
     }
 
     @Override
+    //? if >=1.21.11 {
     protected void saveAdditional(ValueOutput output) {
         super.saveAdditional(output);
         ContainerHelper.saveAllItems(output, this.items, true);
-        output.putBoolean("working", this.working);
-        output.putBoolean("wait", this.wait);
-        output.putInt("maxDelay", this.maxDelay);
-        output.putInt("bits", this.bits);
-        output.putInt("ticks", this.ticks);
-        output.putInt("errorCode", this.errorCode);
-        if (this.workingUuid != null) output.putIntArray("workingUuid", UUIDUtil.uuidToIntArray(this.workingUuid));
-        output.putInt("lastOutput", lastOutput);
+    //? } else {
+    /*protected void saveAdditional(CompoundTag output, HolderLookup.Provider provider) {
+        super.saveAdditional(output, provider);
+        ContainerHelper.saveAllItems(output, this.items, provider);
+    *///? }
+        CrossVersionTag.Writer writer = new CrossVersionTag.Writer(output);
+        writer.putBoolean("working", this.working);
+        writer.putBoolean("wait", this.wait);
+        writer.putInt("maxDelay", this.maxDelay);
+        writer.putInt("bits", this.bits);
+        writer.putInt("ticks", this.ticks);
+        writer.putInt("errorCode", this.errorCode);
+        if (this.workingUuid != null) writer.putUUID("workingUuid", this.workingUuid);
+        writer.putInt("lastOutput", lastOutput);
     }
 
     @Override
     public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
+        //? if >=1.21.11 {
         try (ProblemReporter.ScopedCollector collector = new ProblemReporter.ScopedCollector(this.problemPath(), LogUtils.getLogger())) {
             TagValueOutput output = TagValueOutput.createWithContext(collector, registries);
             this.saveAdditional(output);
             return output.buildResult();
         }
+        //? } else {
+        /*CompoundTag output = new CompoundTag();
+        this.saveAdditional(output, registries);
+        return output;
+        *///? }
     }
 
     @Override

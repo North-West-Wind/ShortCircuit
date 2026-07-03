@@ -7,7 +7,13 @@ import in.northwestw.shortcircuit.Constants;
 import in.northwestw.shortcircuit.properties.RelativeDirection;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.saveddata.SavedData;
+//? if >=1.21.11 {
 import net.minecraft.world.level.saveddata.SavedDataType;
+//? } else {
+/*import net.minecraft.core.HolderLookup;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtOps;
+*///? }
 import net.minecraft.world.level.storage.DimensionDataStorage;
 
 import java.util.Comparator;
@@ -19,7 +25,9 @@ public class TruthTableSavedData extends SavedData {
     public static final Codec<TruthTableSavedData> CODEC = RecordCodecBuilder.create(instance -> instance.group(
             TruthTable.CODEC_WITH_UUID.listOf().fieldOf("tables").forGetter(TruthTableSavedData::flattenTruthTables)
     ).apply(instance, TruthTableSavedData::new));
+    //? if >=1.21.11 {
     public static final SavedDataType<TruthTableSavedData> TYPE = new SavedDataType<>("truth_table", TruthTableSavedData::new, CODEC, null);
+    //? }
     private final Map<UUID, TruthTable> truthTables;
 
     public TruthTableSavedData() {
@@ -84,6 +92,20 @@ public class TruthTableSavedData extends SavedData {
     public static TruthTableSavedData getTruthTableData(ServerLevel level) {
         ServerLevel circuitBoardLevel = level.getServer().getLevel(Constants.CIRCUIT_BOARD_DIMENSION);
         DimensionDataStorage storage = circuitBoardLevel.getDataStorage();
+        //? if >=1.21.11 {
         return storage.computeIfAbsent(TYPE);
+        //? } else
+        //return storage.computeIfAbsent(new SavedData.Factory<>(TruthTableSavedData::new, TruthTableSavedData::load, null), "truth_table");
     }
+
+    //? if <=1.21.4 {
+    /*public static TruthTableSavedData load(CompoundTag tag, HolderLookup.Provider lookupProvider) {
+        return CODEC.parse(NbtOps.INSTANCE, tag).resultOrPartial().orElse(new TruthTableSavedData());
+    }
+
+    @Override
+    public CompoundTag save(CompoundTag tag, HolderLookup.Provider registries) {
+        return (CompoundTag) CODEC.encodeStart(NbtOps.INSTANCE, this).getOrThrow();
+    }
+    *///? }
 }

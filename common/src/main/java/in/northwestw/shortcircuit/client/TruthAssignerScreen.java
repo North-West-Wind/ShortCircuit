@@ -9,7 +9,10 @@ import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.StringWidget;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+//? if >=1.21.11 {
 import net.minecraft.client.renderer.RenderPipelines;
+//? } else
+//import net.minecraft.client.renderer.RenderType;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Inventory;
@@ -68,11 +71,19 @@ public class TruthAssignerScreen extends AbstractContainerScreen<TruthAssignerMe
 
     @Override
     protected void renderBg(GuiGraphics graphics, float partialTick, int mouseX, int mouseY) {
+        //? if >=1.21.11 {
         graphics.blit(RenderPipelines.GUI_TEXTURED, BASE_BACKGROUND, this.leftPos, this.topPos, 0, 0, this.imageWidth, this.imageHeight, 256, 256);
         if (this.menu.isWorking()) {
             // if we are working, color the arrow
             graphics.blitSprite(RenderPipelines.GUI_TEXTURED, BURN_PROGRESS_SPRITE, 24, 16, 0, 0, this.leftPos + 37, this.topPos + 34, 24, 16);
         }
+        //? } else {
+        /*graphics.blit(RenderType::guiTextured, BASE_BACKGROUND, this.leftPos, this.topPos, 0, 0, this.imageWidth, this.imageHeight, 256, 256);
+        if (this.menu.isWorking()) {
+            // if we are working, color the arrow
+            graphics.blitSprite(RenderType::guiTextured, BURN_PROGRESS_SPRITE, 24, 16, 0, 0, this.leftPos + 37, this.topPos + 34, 24, 16);
+        }
+        *///? }
     }
 
     @Override

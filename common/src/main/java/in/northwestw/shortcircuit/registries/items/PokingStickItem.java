@@ -72,7 +72,10 @@ public class PokingStickItem extends Item {
         } else {
             TeleportTransition transition;
             UUID uuid = blockEntity.getUuid();
+            //? if >=1.21.11 {
             stack.set(DataComponents.LAST_POS.get(), new LastPosDataComponent(level.dimension().identifier(), player.position()));
+            //? } else
+            //stack.set(DataComponents.LAST_POS.get(), new LastPosDataComponent(level.dimension().location(), player.position()));
             if (uuid == null) {
                 blockEntity.setBlockSize(this.getBlockSize(stack));
                 transition = this.getNewDimensionTransition(this.getBlockSize(stack), level, blockEntity);
@@ -103,10 +106,17 @@ public class PokingStickItem extends Item {
                 stack.remove(DataComponents.LAST_POS.get());
             } else {
                 ServerPlayer serverPlayer = (ServerPlayer) player;
+                //? if >=1.21.11 {
                 ServerPlayer.RespawnConfig config = serverPlayer.getRespawnConfig();
                 ServerLevel serverLevel = server.getLevel(serverPlayer.getRespawnConfig().respawnData().dimension());
                 LevelData.RespawnData data = config == null ? serverLevel.getRespawnData() : config.respawnData();
                 player.teleport(new TeleportTransition(serverLevel, data.pos().getCenter(), Vec3.ZERO, 0, 0, TeleportTransition.DO_NOTHING));
+                //? } else {
+                /*ServerLevel serverLevel = server.getLevel(serverPlayer.getRespawnDimension());
+                BlockPos respawn = serverPlayer.getRespawnPosition();
+                if (respawn == null) respawn = serverLevel.getSharedSpawnPos();
+                player.teleport(new TeleportTransition(serverLevel, respawn.getCenter(), Vec3.ZERO, 0, 0, TeleportTransition.DO_NOTHING));
+                *///? }
             }
         }
         return InteractionResult.SUCCESS;

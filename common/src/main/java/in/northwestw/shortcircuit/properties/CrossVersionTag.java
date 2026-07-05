@@ -179,7 +179,7 @@ public class CrossVersionTag {
 
         public Writer addChild(String key) {
             //? if >= 1.21.11 {
-
+            return new Writer(this.output.childrenList(key).addChild());
             //? } else {
             /*ListTag listTag = this.output.contains(key, Tag.TAG_LIST) ? this.output.getList(key, Tag.TAG_COMPOUND) : new ListTag();
             CompoundTag tag = new CompoundTag();

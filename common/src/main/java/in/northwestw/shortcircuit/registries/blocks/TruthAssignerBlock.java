@@ -25,9 +25,12 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
-import net.minecraft.world.level.redstone.Orientation;
 import net.minecraft.world.phys.BlockHitResult;
 import org.jetbrains.annotations.Nullable;
+
+//? if >=1.21.4 {
+import net.minecraft.world.level.redstone.Orientation;
+//? }
 
 public class TruthAssignerBlock extends HorizontalDirectionalBlock implements EntityBlock {
     public static final BooleanProperty LIT = BlockStateProperties.LIT;
@@ -75,7 +78,10 @@ public class TruthAssignerBlock extends HorizontalDirectionalBlock implements En
     protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult result) {
         if (!level.isClientSide() && player instanceof ServerPlayer serverPlayer)
             serverPlayer.openMenu(state.getMenuProvider(level, pos));
+        //? if >=1.21.4 {
         return InteractionResult.SUCCESS_SERVER;
+        //? } else
+        //return InteractionResult.sidedSuccess(level.isClientSide);
     }
 
     @Override
@@ -92,7 +98,10 @@ public class TruthAssignerBlock extends HorizontalDirectionalBlock implements En
 
         for (Direction direction : Direction.values()) {
             BlockPos blockpos = pos.relative(direction);
+            //? if >=1.21.4 {
             if (!level.getBlockState(blockpos).isSolidRender()) {
+            //? } else
+            //if (!level.getBlockState(blockpos).isSolidRender(level, pos)) {
                 Direction.Axis direction$axis = direction.getAxis();
                 double d1 = direction$axis == Direction.Axis.X ? 0.5 + 0.5625 * (double)direction.getStepX() : (double)randomsource.nextFloat();
                 double d2 = direction$axis == Direction.Axis.Y ? 0.5 + 0.5625 * (double)direction.getStepY() : (double)randomsource.nextFloat();
@@ -105,8 +114,13 @@ public class TruthAssignerBlock extends HorizontalDirectionalBlock implements En
     }
 
     @Override
+    //? if >=1.21.4 {
     protected void neighborChanged(BlockState state, Level level, BlockPos pos, Block neighborBlock, @Nullable Orientation orientation, boolean movedByPiston) {
         super.neighborChanged(state, level, pos, neighborBlock, orientation, movedByPiston);
+    //? } else {
+    /*protected void neighborChanged(BlockState state, Level level, BlockPos pos, Block neighborBlock, BlockPos neighborPos, boolean movedByPiston) {
+        super.neighborChanged(state, level, pos, neighborBlock, neighborPos, movedByPiston);
+    *///? }
         BlockPos above = pos.above();
         if (level.getBlockEntity(pos) instanceof TruthAssignerBlockEntity blockEntity && neighborBlock == Blocks.CIRCUIT.get() && level.getBlockState(above).is(Blocks.CIRCUIT.get())) {
             if (!blockEntity.isWorking()) blockEntity.setErrorCode(1, level.getBlockState(above).isAir());

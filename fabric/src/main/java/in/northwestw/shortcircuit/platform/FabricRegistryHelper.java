@@ -49,7 +49,10 @@ public class FabricRegistryHelper implements IRegistryHelper {
     @Override
     public Supplier<Block> registerBlock(String name, Function<BlockBehaviour.Properties, Block> factory, BlockBehaviour.Properties properties) {
         Identifier id = Identifier.fromNamespaceAndPath(ShortCircuitCommon.MOD_ID, name);
-        Block block = Registry.register(BuiltInRegistries.BLOCK, id, factory.apply(properties.setId(ResourceKey.create(BuiltInRegistries.BLOCK.key(), id))));
+        //? if >=1.21.4 {
+        properties.setId(ResourceKey.create(BuiltInRegistries.BLOCK.key(), id));
+        //? }
+        Block block = Registry.register(BuiltInRegistries.BLOCK, id, factory.apply(properties));
         return () -> block;
     }
 
@@ -70,7 +73,10 @@ public class FabricRegistryHelper implements IRegistryHelper {
     @Override
     public <T extends Item> Supplier<T> registerItem(String name, Function<Item.Properties, T> function, Item.Properties properties) {
         Identifier id = Identifier.fromNamespaceAndPath(ShortCircuitCommon.MOD_ID, name);
-        T item = Registry.register(BuiltInRegistries.ITEM, id, function.apply(properties.setId(ResourceKey.create(BuiltInRegistries.ITEM.key(), id))));
+        //? if >=1.21.4 {
+        properties.setId(ResourceKey.create(BuiltInRegistries.ITEM.key(), id));
+        //? }
+        T item = Registry.register(BuiltInRegistries.ITEM, id, function.apply(properties));
         return () -> item;
     }
 

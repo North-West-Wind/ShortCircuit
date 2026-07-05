@@ -12,6 +12,10 @@ stonecutter {
         replacements.string(current.parsed < "1.21.11") {
             replace("Identifier", "ResourceLocation")
         }
+
+        replacements.string(current.parsed < "1.21.4") {
+            replace("TeleportTransition", "DimensionTransition")
+        }
     }
 }
 

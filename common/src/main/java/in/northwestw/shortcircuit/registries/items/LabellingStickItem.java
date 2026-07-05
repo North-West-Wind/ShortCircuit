@@ -19,13 +19,20 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.HitResult;
 
+//? if <=1.21.1 {
+/*import net.minecraft.world.InteractionResultHolder;
+*///? }
+
 public class LabellingStickItem extends Item {
     public LabellingStickItem(Properties properties) {
         super(properties);
     }
 
     @Override
+    //? if >=1.21.4 {
     public InteractionResult use(Level level, Player player, InteractionHand hand) {
+    //? } else
+    //public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
         HitResult hitresult = getPlayerPOVHitResult(level, player, ClipContext.Fluid.NONE);
         if (hitresult.getType() == HitResult.Type.MISS) return this.changeMode(player.getItemInHand(hand), player);
         return super.use(level, player, hand);
@@ -81,12 +88,18 @@ public class LabellingStickItem extends Item {
         return InteractionResult.SUCCESS;
     }
 
+    //? if >=1.21.4 {
     private InteractionResult changeMode(ItemStack stack, Player player) {
+    //? } else
+    //private InteractionResultHolder<ItemStack> changeMode(ItemStack stack, Player player) {
         boolean copyPasteMode = stack.getOrDefault(DataComponents.BIT.get(), false);
         stack.set(DataComponents.BIT.get(), !copyPasteMode);
         player.displayClientMessage(Component.translatable("action.labelling_stick.change." + (!copyPasteMode ? "copy" : "cycle")), true);
         player.playSound(SoundEvents.CHICKEN_EGG);
+        //? if >=1.21.4 {
         return InteractionResult.SUCCESS;
+        //? } else
+        //return InteractionResultHolder.success(stack);
     }
 
     private InteractionResult toggleAnnotation(UseOnContext context) {

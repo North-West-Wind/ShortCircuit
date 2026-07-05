@@ -207,7 +207,10 @@ public class CircuitBlockEntity extends CommonCircuitBlockEntity {
             }
         }
         this.updateInputs();
+        //? if >=1.21.4 {
         outputBlockPos.forEach(pos -> runtimeLevel.neighborChanged(pos, runtimeLevel.getBlockState(pos).getBlock(), null));
+        //? } else
+        //outputBlockPos.forEach(pos -> runtimeLevel.neighborChanged(pos, runtimeLevel.getBlockState(pos).getBlock(), this.getBlockPos()));
         this.chunkedOffset = 0;
         this.chunked = false;
         this.updateInnerBlocks();

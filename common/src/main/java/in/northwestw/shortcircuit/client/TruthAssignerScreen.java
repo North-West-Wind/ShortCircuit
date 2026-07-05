@@ -77,11 +77,17 @@ public class TruthAssignerScreen extends AbstractContainerScreen<TruthAssignerMe
             // if we are working, color the arrow
             graphics.blitSprite(RenderPipelines.GUI_TEXTURED, BURN_PROGRESS_SPRITE, 24, 16, 0, 0, this.leftPos + 37, this.topPos + 34, 24, 16);
         }
-        //? } else {
+        //? } elif >=1.21.4 {
         /*graphics.blit(RenderType::guiTextured, BASE_BACKGROUND, this.leftPos, this.topPos, 0, 0, this.imageWidth, this.imageHeight, 256, 256);
         if (this.menu.isWorking()) {
             // if we are working, color the arrow
             graphics.blitSprite(RenderType::guiTextured, BURN_PROGRESS_SPRITE, 24, 16, 0, 0, this.leftPos + 37, this.topPos + 34, 24, 16);
+        }
+        *///? } else {
+        /*graphics.blit(BASE_BACKGROUND, this.leftPos, this.topPos, 0, 0, this.imageWidth, this.imageHeight, 256, 256);
+        if (this.menu.isWorking()) {
+            // if we are working, color the arrow
+            graphics.blitSprite(BURN_PROGRESS_SPRITE, 24, 16, 0, 0, this.leftPos + 37, this.topPos + 34, 24, 16);
         }
         *///? }
     }

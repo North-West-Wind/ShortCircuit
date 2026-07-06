@@ -1,5 +1,6 @@
 package in.northwestw.shortcircuit.registries.datacomponents;
 
+//? if >=1.21.1 {
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.netty.buffer.ByteBuf;
@@ -33,3 +34,5 @@ public record LastPosDataComponent(Identifier rl, Vec3 pos) {
         return builder.persistent(CODEC).networkSynchronized(STREAM_CODEC);
     }
 }
+//? } else
+//public record LastPosDataComponent() {}

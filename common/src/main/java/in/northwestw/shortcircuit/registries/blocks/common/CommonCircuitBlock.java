@@ -2,7 +2,9 @@ package in.northwestw.shortcircuit.registries.blocks.common;
 
 import in.northwestw.shortcircuit.registries.DataComponents;
 import net.minecraft.core.Direction;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.Style;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.BlockPlaceContext;
@@ -43,13 +45,22 @@ public abstract class CommonCircuitBlock extends HorizontalDirectionalBlock impl
 
     public List<Component> extraTooltip(ItemStack stack) {
         List<Component> list = Lists.newArrayList();
-        if (stack.has(DataComponents.UUID.get())) {
+        //? if >=1.21.1 {
+        if (stack.has(DataComponents.UUID.get()))
             list.add(Component.translatable("tooltip.short_circuit.circuit", stack.get(DataComponents.UUID.get()).uuid().toString()).withColor(0x7f7f7f));
-        }
         if (stack.has(DataComponents.SHORT.get())) {
             DyeColor color = DyeColor.byId(stack.get(DataComponents.SHORT.get()));
             list.add(Component.translatable("tooltip.short_circuit.circuit.color", Component.translatable("color.minecraft." + color.getName())).withColor(color.getTextColor()));
         }
+        //? } else {
+        /*CompoundTag tag = stack.getOrCreateTag();
+        if (tag.hasUUID("uuid"))
+            list.add(Component.translatable("tooltip.short_circuit.circuit", tag.getUUID("uuid").toString()).withStyle(Style.EMPTY.withColor(0x7f7f7f)));
+        if (tag.contains("color", CompoundTag.TAG_SHORT)) {
+            DyeColor color = DyeColor.byId(tag.getShort("color"));
+            list.add(Component.translatable("tooltip.short_circuit.circuit.color", Component.translatable("color.minecraft." + color.getName())).withStyle(Style.EMPTY.withColor(color.getTextColor())));
+        }
+        *///? }
         return list;
     }
 }

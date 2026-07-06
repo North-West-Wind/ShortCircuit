@@ -7,7 +7,13 @@ import in.northwestw.shortcircuit.Constants;
 import in.northwestw.shortcircuit.properties.RelativeDirection;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.saveddata.SavedData;
+//? if >=1.21.11 {
 import net.minecraft.world.level.saveddata.SavedDataType;
+//? } else {
+/*import net.minecraft.core.HolderLookup;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtOps;
+*///? }
 import net.minecraft.world.level.storage.DimensionDataStorage;
 
 import java.util.Comparator;
@@ -19,7 +25,9 @@ public class TruthTableSavedData extends SavedData {
     public static final Codec<TruthTableSavedData> CODEC = RecordCodecBuilder.create(instance -> instance.group(
             TruthTable.CODEC_WITH_UUID.listOf().fieldOf("tables").forGetter(TruthTableSavedData::flattenTruthTables)
     ).apply(instance, TruthTableSavedData::new));
+    //? if >=1.21.11 {
     public static final SavedDataType<TruthTableSavedData> TYPE = new SavedDataType<>("truth_table", TruthTableSavedData::new, CODEC, null);
+    //? }
     private final Map<UUID, TruthTable> truthTables;
 
     public TruthTableSavedData() {
@@ -41,7 +49,8 @@ public class TruthTableSavedData extends SavedData {
         if (!this.truthTables.containsKey(uuid)) return signals;
         TruthTable table = this.truthTables.get(uuid);
         int input = 0;
-        for (RelativeDirection dir : table.inputs.reversed()) {
+        for (int ii = table.inputs.size() - 1; ii >= 0; ii--) {
+            RelativeDirection dir = table.inputs.get(ii);
             input <<= table.bits;
             // merge 4-bit into amount specified by table.bits
             // i haven't had time to look into the mathematical relationships yet
@@ -51,7 +60,8 @@ public class TruthTableSavedData extends SavedData {
             else input |= val > 0 ? 1 : 0;
         }
         int output = table.signals.getOrDefault(input, table.defaultValue);
-        for (RelativeDirection dir: table.outputs.reversed()) {
+        for (int ii = table.outputs.size() - 1; ii >= 0; ii--) {
+            RelativeDirection dir = table.outputs.get(ii);
             signals.put(dir, output & 0xF);
             output >>= 4;
         }
@@ -84,6 +94,31 @@ public class TruthTableSavedData extends SavedData {
     public static TruthTableSavedData getTruthTableData(ServerLevel level) {
         ServerLevel circuitBoardLevel = level.getServer().getLevel(Constants.CIRCUIT_BOARD_DIMENSION);
         DimensionDataStorage storage = circuitBoardLevel.getDataStorage();
+        //? if >=1.21.11 {
         return storage.computeIfAbsent(TYPE);
+        //? } elif >=1.21.1 {
+        /*return storage.computeIfAbsent(new SavedData.Factory<>(TruthTableSavedData::new, TruthTableSavedData::load, null), "truth_table");
+        *///? } else
+        //return storage.computeIfAbsent(TruthTableSavedData::load, TruthTableSavedData::new, "truth_table");
     }
+
+    //? if <=1.21.4 && >=1.21.1 {
+    /*public static TruthTableSavedData load(CompoundTag tag, HolderLookup.Provider lookupProvider) {
+        return CODEC.parse(NbtOps.INSTANCE, tag).resultOrPartial().orElse(new TruthTableSavedData());
+    }
+
+    @Override
+    public CompoundTag save(CompoundTag tag, HolderLookup.Provider registries) {
+        return (CompoundTag) CODEC.encodeStart(NbtOps.INSTANCE, this).getOrThrow();
+    }
+    *///? } elif <=1.20.1 {
+    /*public static TruthTableSavedData load(CompoundTag tag) {
+        return CODEC.parse(NbtOps.INSTANCE, tag).result().orElse(new TruthTableSavedData());
+    }
+
+    @Override
+    public CompoundTag save(CompoundTag tag) {
+        return (CompoundTag) CODEC.encodeStart(NbtOps.INSTANCE, this).result().get();
+    }
+    *///? }
 }

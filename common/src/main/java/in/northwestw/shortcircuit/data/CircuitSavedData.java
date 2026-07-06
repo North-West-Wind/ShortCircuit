@@ -9,7 +9,13 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.UUIDUtil;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.saveddata.SavedData;
+//? if >=1.21.11 {
 import net.minecraft.world.level.saveddata.SavedDataType;
+//? } else {
+/*import net.minecraft.core.HolderLookup;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtOps;
+*///? }
 import net.minecraft.world.level.storage.DimensionDataStorage;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -23,7 +29,9 @@ public class CircuitSavedData extends SavedData {
             Constants.pairMapCodec(Codec.INT, Octolet.CODEC, "key", "value").fieldOf("octolets").forGetter(CircuitSavedData::flattenOctolets),
             Constants.pairMapCodec(UUIDUtil.CODEC, Codec.INT, "key", "value").fieldOf("circuits").forGetter(CircuitSavedData::flattenCircuits)
     ).apply(instance, CircuitSavedData::new));
+    //? if >=1.21.11 {
     public static final SavedDataType<CircuitSavedData> TYPE = new SavedDataType<>("circuit_pos", CircuitSavedData::new, CODEC, null);
+    //? }
     private static final double LOG2 = Math.log(2);
 
     public final Map<Integer, Octolet> octolets;
@@ -110,12 +118,42 @@ public class CircuitSavedData extends SavedData {
     public static CircuitSavedData getCircuitBoardData(ServerLevel level) {
         ServerLevel circuitBoardLevel = level.getServer().getLevel(Constants.CIRCUIT_BOARD_DIMENSION);
         DimensionDataStorage storage = circuitBoardLevel.getDataStorage();
-        return storage.computeIfAbsent(CircuitSavedData.TYPE);
+        //? if >=1.21.11 {
+        return storage.computeIfAbsent(TYPE);
+        //? } elif >=1.21.1 {
+        /*return storage.computeIfAbsent(new SavedData.Factory<>(CircuitSavedData::new, CircuitSavedData::load, null), "circuit_pos");
+        *///? } else
+        //return storage.computeIfAbsent(CircuitSavedData::load, CircuitSavedData::new, "circuit_pos");
     }
 
     public static CircuitSavedData getRuntimeData(ServerLevel level) {
         ServerLevel runtimeLevel = level.getServer().getLevel(Constants.RUNTIME_DIMENSION);
         DimensionDataStorage storage = runtimeLevel.getDataStorage();
-        return storage.computeIfAbsent(CircuitSavedData.TYPE);
+        //? if >=1.21.11 {
+        return storage.computeIfAbsent(TYPE);
+        //? } elif >=1.21.1 {
+        /*return storage.computeIfAbsent(new SavedData.Factory<>(CircuitSavedData::new, CircuitSavedData::load, null), "circuit_pos");
+        *///? } else
+        //return storage.computeIfAbsent(CircuitSavedData::load, CircuitSavedData::new, "circuit_pos");
     }
+
+    //? if <=1.21.4 && >=1.21.1 {
+    /*public static CircuitSavedData load(CompoundTag tag, HolderLookup.Provider lookupProvider) {
+        return CODEC.parse(NbtOps.INSTANCE, tag).resultOrPartial().orElse(new CircuitSavedData());
+    }
+
+    @Override
+    public CompoundTag save(CompoundTag tag, HolderLookup.Provider registries) {
+        return (CompoundTag) CODEC.encodeStart(NbtOps.INSTANCE, this).getOrThrow();
+    }
+    *///? } elif <=1.20.1 {
+    /*public static CircuitSavedData load(CompoundTag tag) {
+        return CODEC.parse(NbtOps.INSTANCE, tag).result().orElse(new CircuitSavedData());
+    }
+
+    @Override
+    public CompoundTag save(CompoundTag tag) {
+        return (CompoundTag) CODEC.encodeStart(NbtOps.INSTANCE, this).result().get();
+    }
+    *///? }
 }

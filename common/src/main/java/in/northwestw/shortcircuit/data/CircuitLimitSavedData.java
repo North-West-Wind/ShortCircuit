@@ -1,15 +1,21 @@
 package in.northwestw.shortcircuit.data;
 
 import com.google.common.collect.Maps;
-import com.mojang.serialization.Codec;
-import com.mojang.serialization.codecs.RecordCodecBuilder;
 import in.northwestw.shortcircuit.Constants;
 import in.northwestw.shortcircuit.config.Config;
-import net.minecraft.core.UUIDUtil;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.saveddata.SavedData;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
+import net.minecraft.core.UUIDUtil;
+//? if >=1.21.11 {
 import net.minecraft.world.level.saveddata.SavedDataType;
+//? } else {
+/*import net.minecraft.core.HolderLookup;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtOps;
+*///? }
 import net.minecraft.world.level.storage.DimensionDataStorage;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -21,7 +27,9 @@ public class CircuitLimitSavedData extends SavedData {
     public static final Codec<CircuitLimitSavedData> CODEC = RecordCodecBuilder.create(instance -> instance.group(
             Constants.pairMapCodec(UUIDUtil.CODEC, Codec.LONG, "uuid", "amount").fieldOf("placements").forGetter(CircuitLimitSavedData::flattenPlacements)
     ).apply(instance, CircuitLimitSavedData::new));
+    //? if >=1.21.11 {
     public static final SavedDataType<CircuitLimitSavedData> TYPE = new SavedDataType<>("circuit_limit", CircuitLimitSavedData::new, CODEC, null);
+    //? }
     public final Map<UUID, Long> placements;
 
     public CircuitLimitSavedData() {
@@ -59,6 +67,31 @@ public class CircuitLimitSavedData extends SavedData {
     public static CircuitLimitSavedData getRuntimeData(MinecraftServer server) {
         ServerLevel runtimeLevel = server.getLevel(Constants.RUNTIME_DIMENSION);
         DimensionDataStorage storage = runtimeLevel.getDataStorage();
+        //? if >=1.21.11 {
         return storage.computeIfAbsent(TYPE);
+        //? } elif >=1.21.1 {
+        /*return storage.computeIfAbsent(new SavedData.Factory<>(CircuitLimitSavedData::new, CircuitLimitSavedData::load, null), "circuit_limit");
+        *///? } else
+        //return storage.computeIfAbsent(CircuitLimitSavedData::load, CircuitLimitSavedData::new, "circuit_limit");
     }
+
+    //? if <=1.21.4 && >=1.21.1 {
+    /*public static CircuitLimitSavedData load(CompoundTag tag, HolderLookup.Provider lookupProvider) {
+        return CODEC.parse(NbtOps.INSTANCE, tag).resultOrPartial().orElse(new CircuitLimitSavedData());
+    }
+
+    @Override
+    public CompoundTag save(CompoundTag tag, HolderLookup.Provider provider) {
+        return (CompoundTag) CODEC.encodeStart(NbtOps.INSTANCE, this).getOrThrow();
+    }
+    *///? } elif <=1.20.1 {
+    /*public static CircuitLimitSavedData load(CompoundTag tag) {
+        return CODEC.parse(NbtOps.INSTANCE, tag).result().orElse(new CircuitLimitSavedData());
+    }
+
+    @Override
+    public CompoundTag save(CompoundTag tag) {
+        return (CompoundTag) CODEC.encodeStart(NbtOps.INSTANCE, this).result().get();
+    }
+    *///? }
 }

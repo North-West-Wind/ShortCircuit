@@ -1,15 +1,20 @@
 package in.northwestw.shortcircuit.registries;
 
+//? if >=1.21.1 {
 import com.mojang.serialization.Codec;
 import in.northwestw.shortcircuit.platform.Services;
 import in.northwestw.shortcircuit.registries.datacomponents.LastPosDataComponent;
 import in.northwestw.shortcircuit.registries.datacomponents.UUIDDataComponent;
+
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.network.codec.ByteBufCodecs;
 
 import java.util.function.Supplier;
+//? }
+
 
 public class DataComponents {
+    //? if >=1.21.1 {
     public static final Supplier<DataComponentType<UUIDDataComponent>> UUID = Services.REGISTRY.registerDataComponent("uuid", UUIDDataComponent::getBuilder);
     public static final Supplier<DataComponentType<Short>> SHORT = createShortDataComponent("short");
     public static final Supplier<DataComponentType<LastPosDataComponent>> LAST_POS = Services.REGISTRY.registerDataComponent("last_pos", LastPosDataComponent::getBuilder);
@@ -18,6 +23,7 @@ public class DataComponents {
     private static Supplier<DataComponentType<Short>> createShortDataComponent(String name) {
         return Services.REGISTRY.registerDataComponent(name, builder -> builder.persistent(Codec.SHORT).networkSynchronized(ByteBufCodecs.SHORT));
     }
+    //? }
 
     public static void trigger() { }
 }

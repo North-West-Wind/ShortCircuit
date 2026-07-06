@@ -3,10 +3,10 @@ package in.northwestw.shortcircuit.registries.blockentities;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
-import com.mojang.logging.LogUtils;
 import in.northwestw.shortcircuit.data.TruthTableSavedData;
+import in.northwestw.shortcircuit.properties.CrossVersionTag;
 import in.northwestw.shortcircuit.properties.RelativeDirection;
-import in.northwestw.shortcircuit.registries.BlockEntities;
+import in.northwestw.shortcircuit.registries.BlockEntityTypes;
 import in.northwestw.shortcircuit.registries.Blocks;
 import in.northwestw.shortcircuit.registries.DataComponents;
 import in.northwestw.shortcircuit.registries.Items;
@@ -17,7 +17,6 @@ import in.northwestw.shortcircuit.registries.menus.TruthAssignerMenu;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.NonNullList;
-import net.minecraft.core.UUIDUtil;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.Packet;
@@ -26,7 +25,6 @@ import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
-import net.minecraft.util.ProblemReporter;
 import net.minecraft.world.ContainerHelper;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.AbstractContainerMenu;
@@ -36,11 +34,19 @@ import net.minecraft.world.inventory.ContainerListener;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BaseContainerBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import org.apache.commons.lang3.tuple.Pair;
+import org.jetbrains.annotations.Nullable;
+
+//? if >=1.21.11 {
+import com.mojang.logging.LogUtils;
+import net.minecraft.util.ProblemReporter;
 import net.minecraft.world.level.storage.TagValueOutput;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
-import org.apache.commons.lang3.tuple.Pair;
-import org.jetbrains.annotations.Nullable;
+//? } else {
+/*import net.minecraft.world.Container;
+import net.minecraft.world.entity.player.Player;
+*///? }
 
 import java.util.Comparator;
 import java.util.List;
@@ -60,7 +66,7 @@ public class TruthAssignerBlockEntity extends BaseContainerBlockEntity implement
     private UUID workingUuid;
 
     public TruthAssignerBlockEntity(BlockPos pos, BlockState state) {
-        super(BlockEntities.TRUTH_ASSIGNER.get(), pos, state);
+        super(BlockEntityTypes.TRUTH_ASSIGNER.get(), pos, state);
         this.wait = true;
         this.maxDelay = 20;
         this.bits = 4;
@@ -119,6 +125,7 @@ public class TruthAssignerBlockEntity extends BaseContainerBlockEntity implement
         return SIZE;
     }
 
+    //? if >=1.21.1 {
     @Override
     protected NonNullList<ItemStack> getItems() {
         return this.items;
@@ -128,6 +135,59 @@ public class TruthAssignerBlockEntity extends BaseContainerBlockEntity implement
     protected void setItems(NonNullList<ItemStack> items) {
         this.items = items;
     }
+    //? } else {
+    /*@Override
+    public boolean isEmpty() {
+        for(ItemStack stack : this.items) {
+            if (!stack.isEmpty()) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    @Override
+    public ItemStack getItem(int i) {
+        return this.items.get(i);
+    }
+
+    @Override
+    public ItemStack removeItem(int i, int i1) {
+        return ContainerHelper.removeItem(this.items, i, i1);
+    }
+
+    @Override
+    public ItemStack removeItemNoUpdate(int i) {
+        return ContainerHelper.takeItem(this.items, i);
+    }
+
+    @Override
+    public void setItem(int i, ItemStack itemStack) {
+        ItemStack stack = this.items.get(i);
+        if (!itemStack.isEmpty()) {
+            ItemStack.isSameItemSameTags(stack, itemStack);
+        }
+        this.items.set(i, itemStack);
+        if (itemStack.getCount() > this.getMaxStackSize()) {
+            itemStack.setCount(this.getMaxStackSize());
+        }
+    }
+
+    @Override
+    public boolean stillValid(Player player) {
+        //? if >=1.20.1 {
+        return Container.stillValidBlockEntity(this, player);
+        //? } else {
+        /^if (this.level.getBlockEntity(this.worldPosition) != this) return false;
+        else return player.distanceToSqr((double)this.worldPosition.getX() + (double)0.5F, (double)this.worldPosition.getY() + (double)0.5F, (double)this.worldPosition.getZ() + (double)0.5F) <= (double)64.0F;
+        ^///? }
+    }
+
+    @Override
+    public void clearContent() {
+
+    }
+    *///? }
 
     @Override
     protected Component getDefaultName() {
@@ -140,41 +200,76 @@ public class TruthAssignerBlockEntity extends BaseContainerBlockEntity implement
     }
 
     @Override
+    //? if >=1.21.11 {
     protected void loadAdditional(ValueInput input) {
         super.loadAdditional(input);
         ContainerHelper.loadAllItems(input, this.items);
-        this.working = input.getBooleanOr("working", false);
-        this.wait = input.getBooleanOr("wait", false);
-        this.maxDelay = input.getIntOr("maxDelay", 0);
-        this.bits = input.getIntOr("bits", 0);
+    //? } elif >=1.21.1 {
+    /*protected void loadAdditional(CompoundTag input, HolderLookup.Provider provider) {
+        super.loadAdditional(input, provider);
+        ContainerHelper.loadAllItems(input, this.items, provider);
+    *///? } else {
+    /*public void load(CompoundTag input) {
+        super.load(input);
+        ContainerHelper.loadAllItems(input, this.items);
+    *///? }
+        CrossVersionTag.Reader reader = new CrossVersionTag.Reader(input);
+        this.working = reader.getBoolean("working");
+        this.wait = reader.getBoolean("wait");
+        this.maxDelay = reader.getInt("maxDelay", 0);
+        this.bits = reader.getInt("bits", 0);
         if (this.bits == 0) this.bits = 4;
-        this.ticks = input.getIntOr("ticks", 0);
-        this.errorCode = input.getIntOr("errorCode", 0);
-        input.getIntArray("workingUuid").ifPresent(arr -> this.workingUuid = UUIDUtil.uuidFromIntArray(arr));
-        this.lastOutput = input.getIntOr("lastOutput", 0);
+        this.ticks = reader.getInt("ticks", 0);
+        this.errorCode = reader.getInt("errorCode", 0);
+        reader.getUUID("workingUuid").ifPresent(uuid -> this.workingUuid = uuid);
+        this.lastOutput = reader.getInt("lastOutput", 0);
     }
 
     @Override
+    //? if >=1.21.11 {
     protected void saveAdditional(ValueOutput output) {
         super.saveAdditional(output);
         ContainerHelper.saveAllItems(output, this.items, true);
-        output.putBoolean("working", this.working);
-        output.putBoolean("wait", this.wait);
-        output.putInt("maxDelay", this.maxDelay);
-        output.putInt("bits", this.bits);
-        output.putInt("ticks", this.ticks);
-        output.putInt("errorCode", this.errorCode);
-        if (this.workingUuid != null) output.putIntArray("workingUuid", UUIDUtil.uuidToIntArray(this.workingUuid));
-        output.putInt("lastOutput", lastOutput);
+    //? } elif >=1.21.1 {
+    /*protected void saveAdditional(CompoundTag output, HolderLookup.Provider provider) {
+        super.saveAdditional(output, provider);
+        ContainerHelper.saveAllItems(output, this.items, provider);
+    *///? } else {
+    /*protected void saveAdditional(CompoundTag output) {
+        super.saveAdditional(output);
+        ContainerHelper.saveAllItems(output, this.items);
+    *///? }
+        CrossVersionTag.Writer writer = new CrossVersionTag.Writer(output);
+        writer.putBoolean("working", this.working);
+        writer.putBoolean("wait", this.wait);
+        writer.putInt("maxDelay", this.maxDelay);
+        writer.putInt("bits", this.bits);
+        writer.putInt("ticks", this.ticks);
+        writer.putInt("errorCode", this.errorCode);
+        if (this.workingUuid != null) writer.putUUID("workingUuid", this.workingUuid);
+        writer.putInt("lastOutput", lastOutput);
     }
 
     @Override
+    //? if >=1.21.1 {
     public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
+    //? } else
+    //public CompoundTag getUpdateTag() {
+        //? if >=1.21.11 {
         try (ProblemReporter.ScopedCollector collector = new ProblemReporter.ScopedCollector(this.problemPath(), LogUtils.getLogger())) {
             TagValueOutput output = TagValueOutput.createWithContext(collector, registries);
             this.saveAdditional(output);
             return output.buildResult();
         }
+        //? } elif >=1.21.1 {
+        /*CompoundTag output = new CompoundTag();
+        this.saveAdditional(output, registries);
+        return output;
+        *///? } else {
+        /*CompoundTag output = new CompoundTag();
+        this.saveAdditional(output);
+        return output;
+        *///? }
     }
 
     @Override
@@ -192,8 +287,14 @@ public class TruthAssignerBlockEntity extends BaseContainerBlockEntity implement
         CircuitBlockEntity blockEntity = (CircuitBlockEntity) this.level.getBlockEntity(this.getBlockPos().above());
         blockEntity.setFake(true);
         ItemStack input = this.getItem(0);
+        //? if >=1.21.1 {
         if (input.has(DataComponents.UUID.get()))
             blockEntity.setUuid(input.get(DataComponents.UUID.get()).uuid());
+        //? } else {
+        /*CompoundTag tag = input.getOrCreateTag();
+        if (tag.contains("uuid"))
+            blockEntity.setUuid(tag.getUUID("uuid"));
+        *///? }
         Pair<CircuitBlockEntity.RuntimeReloadResult, Map<RelativeDirection, CircuitBoardBlock.Mode>> pair = blockEntity.reloadRuntimeAndModeMap(Sets.newHashSet());
         CircuitBlockEntity.RuntimeReloadResult result = pair.getLeft();
         if (!result.isGood()) {
@@ -222,7 +323,13 @@ public class TruthAssignerBlockEntity extends BaseContainerBlockEntity implement
             // create integrated circuits by amount of circuits
             ItemStack input = this.getItem(0);
             ItemStack outputs = new ItemStack(Items.INTEGRATED_CIRCUIT.get(), input.getCount());
+            //? if >=1.21.1 {
             outputs.set(DataComponents.UUID.get(), new UUIDDataComponent(uuid));
+            //? } else {
+            /*CompoundTag tag = outputs.getOrCreateTag();
+            tag.putUUID("uuid", uuid);
+            outputs.setTag(tag);
+            *///? }
             this.setItem(0, ItemStack.EMPTY);
             this.setItem(1, outputs);
         }
@@ -248,6 +355,7 @@ public class TruthAssignerBlockEntity extends BaseContainerBlockEntity implement
     public void tick() {
         if (!this.working) return;
         if (this.level != null && this.level.random.nextDouble() < 0.1)
+            //~ if <=1.19.2 'this.getBlockPos()' -> 'this.worldPosition.getX(), this.worldPosition.getY(), this.worldPosition.getZ()'
             this.level.playLocalSound(this.getBlockPos(), SoundEvents.LEVER_CLICK, SoundSource.BLOCKS, 0.2f, this.level.random.nextFloat() * 0.4f + 0.8f, false);
         if (!(this.level.getBlockEntity(this.getBlockPos().above()) instanceof CircuitBlockEntity blockEntity)) {
             this.stop(false);

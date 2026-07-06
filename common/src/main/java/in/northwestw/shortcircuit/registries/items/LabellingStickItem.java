@@ -19,13 +19,26 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.HitResult;
 
+//? if <=1.21.1 {
+/*import net.minecraft.world.InteractionResultHolder;
+*///? }
+
+//? if <=1.20.1 {
+/*import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.network.chat.Style;
+*///? }
+
 public class LabellingStickItem extends Item {
     public LabellingStickItem(Properties properties) {
         super(properties);
     }
 
     @Override
+    //? if >=1.21.4 {
     public InteractionResult use(Level level, Player player, InteractionHand hand) {
+    //? } else
+    //public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
         HitResult hitresult = getPlayerPOVHitResult(level, player, ClipContext.Fluid.NONE);
         if (hitresult.getType() == HitResult.Type.MISS) return this.changeMode(player.getItemInHand(hand), player);
         return super.use(level, player, hand);
@@ -35,7 +48,10 @@ public class LabellingStickItem extends Item {
     public InteractionResult useOn(UseOnContext context) {
         BlockState state = context.getLevel().getBlockState(context.getClickedPos());
         ItemStack stack = context.getItemInHand();
+        //? if >=1.21.1 {
         boolean copyPasteMode = stack.getOrDefault(DataComponents.BIT.get(), false);
+        //? } else
+        //boolean copyPasteMode = stack.hasTag() && stack.getTag().getBoolean("copyMode");
         if (state.is(Blocks.CIRCUIT.get()) || state.is(Blocks.INTEGRATED_CIRCUIT.get()))
             return copyPasteMode ? this.copyOrPasteCircuitColor(context) : this.cycleCircuitColor(context);
         if (state.is(Blocks.CIRCUIT_BOARD.get()))
@@ -71,22 +87,44 @@ public class LabellingStickItem extends Item {
             DyeColor color = null;
             int colorVal = level.getBlockState(pos).getValue(CommonCircuitBlock.COLOR);
             if (colorVal != 16) color = DyeColor.byId(colorVal);
+            //? if >=1.21.1 {
             if (color == null) stack.remove(DataComponents.SHORT.get());
             else stack.set(DataComponents.SHORT.get(), (short) color.getId());
             player.displayClientMessage(Component.translatable("action.labelling_stick.copy").withColor(color == null ? 0xFFFFFF : color.getTextColor()), true);
         } else {
             short id = stack.getOrDefault(DataComponents.SHORT.get(), (short) 16);
+            //? } else {
+            /*CompoundTag tag = stack.getOrCreateTag();
+            if (color == null) tag.remove("color");
+            else tag.putShort("color", (short) color.getId());
+            stack.setTag(tag);
+            player.displayClientMessage(Component.translatable("action.labelling_stick.copy").withStyle(color == null ? Style.EMPTY : Style.EMPTY.withColor(color.getTextColor())), true);
+        } else {
+            CompoundTag tag = stack.getOrCreateTag();
+            short id = tag.contains("color", Tag.TAG_SHORT) ? tag.getShort("color") : 16;
+            *///? }
             level.setBlockAndUpdate(pos, level.getBlockState(pos).setValue(CommonCircuitBlock.COLOR, (int) id));
         }
         return InteractionResult.SUCCESS;
     }
 
+    //~ if <=1.21.1 'InteractionResult' -> 'InteractionResultHolder<ItemStack>'
     private InteractionResult changeMode(ItemStack stack, Player player) {
+        //? if >=1.21.1 {
         boolean copyPasteMode = stack.getOrDefault(DataComponents.BIT.get(), false);
         stack.set(DataComponents.BIT.get(), !copyPasteMode);
+        //? } else {
+        /*CompoundTag tag = stack.getOrCreateTag();
+        boolean copyPasteMode = tag.getBoolean("copyMode");
+        tag.putBoolean("copyMode", !copyPasteMode);
+        stack.setTag(tag);
+        *///? }
         player.displayClientMessage(Component.translatable("action.labelling_stick.change." + (!copyPasteMode ? "copy" : "cycle")), true);
         player.playSound(SoundEvents.CHICKEN_EGG);
+        //? if >=1.21.4 {
         return InteractionResult.SUCCESS;
+        //? } else
+        //return InteractionResultHolder.success(stack);
     }
 
     private InteractionResult toggleAnnotation(UseOnContext context) {

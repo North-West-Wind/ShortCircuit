@@ -1,0 +1,29 @@
+val IS_CI = System.getenv("CI") == "true"
+
+plugins {
+    id("dev.kikugie.stonecutter")
+    id("net.neoforged.moddev") version "2.0.141" apply false
+    id("net.fabricmc.fabric-loom") version "1.17-SNAPSHOT" apply false
+    id("net.fabricmc.fabric-loom-remap") version "1.17-SNAPSHOT" apply false
+}
+
+stonecutter {
+    parameters {
+        replacements.string(current.parsed < "1.21.11") {
+            replace("Identifier", "ResourceLocation")
+        }
+
+        replacements.string(current.parsed < "1.21.4") {
+            replace("TeleportTransition", "DimensionTransition")
+        }
+
+        replacements.string(current.parsed < "1.20.1") {
+            replace("Quaternionf", "Quaternion")
+            replace("org.joml.Quaternionf", "com.mojang.math.Quaternion")
+            replace("Registries.DIMENSION", "Registry.DIMENSION_REGISTRY")
+        }
+    }
+}
+
+if (IS_CI) stonecutter active null
+else stonecutter active "1.21.11"

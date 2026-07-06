@@ -5,9 +5,10 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.mojang.logging.LogUtils;
 import in.northwestw.shortcircuit.data.TruthTableSavedData;
+import in.northwestw.shortcircuit.properties.CrossVersionTag;
 import in.northwestw.shortcircuit.properties.DirectionHelper;
 import in.northwestw.shortcircuit.properties.RelativeDirection;
-import in.northwestw.shortcircuit.registries.BlockEntities;
+import in.northwestw.shortcircuit.registries.BlockEntityTypes;
 import in.northwestw.shortcircuit.registries.blockentities.common.CommonCircuitBlockEntity;
 import in.northwestw.shortcircuit.registries.blocks.common.CommonCircuitBlock;
 import net.minecraft.core.BlockPos;
@@ -20,9 +21,15 @@ import net.minecraft.world.level.block.CommandBlock;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.XoroshiroRandomSource;
+import org.slf4j.Logger;
+
+//? if >=1.21.11 {
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
-import org.slf4j.Logger;
+//? } else {
+/*import net.minecraft.core.HolderLookup;
+import net.minecraft.nbt.CompoundTag;
+*///? }
 
 import java.util.Arrays;
 import java.util.List;
@@ -39,7 +46,7 @@ public class IntegratedCircuitBlockEntity extends CommonCircuitBlockEntity {
     public final List<BlockState> blocks;
 
     public IntegratedCircuitBlockEntity(BlockPos pos, BlockState state) {
-        super(BlockEntities.INTEGRATED_CIRCUIT.get(), pos, state);
+        super(BlockEntityTypes.INTEGRATED_CIRCUIT.get(), pos, state);
         this.inputs = Maps.newHashMap();
         this.outputs = Maps.newHashMap();
         this.changed = new boolean[6];
@@ -47,26 +54,36 @@ public class IntegratedCircuitBlockEntity extends CommonCircuitBlockEntity {
         this.blocks = Lists.newArrayList();
     }
 
-    private void loadSignalMap(ValueInput input, String key, Map<RelativeDirection, Integer> map) {
-        input.childrenList(key).ifPresent(list -> list.forEach(pair -> map.put(RelativeDirection.fromId(pair.getByteOr("key", (byte) 0)), (int) pair.getByteOr("value", (byte) 0))));
+    private void loadSignalMap(CrossVersionTag.Reader reader, String key, Map<RelativeDirection, Integer> map) {
+        reader.getList(key).forEach(pair ->
+                map.put(RelativeDirection.fromId(pair.getByte("key", (byte) 0)), (int) pair.getByte("value", (byte) 0)));
     }
 
-    private void saveSignalMap(ValueOutput.ValueOutputList list, Map<RelativeDirection, Integer> map) {
+    private void saveSignalMap(CrossVersionTag.Writer writer, String key, Map<RelativeDirection, Integer> map) {
         for (Map.Entry<RelativeDirection, Integer> entry : map.entrySet()) {
-            ValueOutput output = list.addChild();
+            CrossVersionTag.Writer output = writer.addChild(key);
             output.putByte("key", entry.getKey().getId());
             output.putByte("value", entry.getValue().byteValue());
         }
     }
 
     @Override
+    //? if >=1.21.11 {
     protected void loadAdditional(ValueInput input) {
+    super.loadAdditional(input);
+    //? } elif >=1.21.1 {
+    /*protected void loadAdditional(CompoundTag input, HolderLookup.Provider provider) {
+        super.loadAdditional(input, provider);
+    *///? } else {
+    /*public void load(CompoundTag input) {
+        super.load(input);
+    *///? }
         UUID oldUuid = this.uuid;
-        super.loadAdditional(input);
-        this.loadSignalMap(input, "inputs", this.inputs);
-        this.loadSignalMap(input, "outputs", this.outputs);
+        CrossVersionTag.Reader reader = new CrossVersionTag.Reader(input);
+        this.loadSignalMap(reader, "inputs", this.inputs);
+        this.loadSignalMap(reader, "outputs", this.outputs);
         // upgrade to v1.0.2, default hidden to true
-        this.hidden = input.getBooleanOr("hidden", false);;
+        this.hidden = reader.getBoolean("hidden");
 
         if (!this.hidden) {
             this.blocks.clear();
@@ -80,11 +97,19 @@ public class IntegratedCircuitBlockEntity extends CommonCircuitBlockEntity {
     }
 
     @Override
+    //? if >=1.21.11 {
     protected void saveAdditional(ValueOutput output) {
         super.saveAdditional(output);
-        output.childrenList("inputs");
-        this.saveSignalMap(output.childrenList("inputs"), this.inputs);
-        this.saveSignalMap(output.childrenList("outputs"), this.outputs);
+    //? } elif >=1.21.1 {
+    /*protected void saveAdditional(CompoundTag output, HolderLookup.Provider provider) {
+        super.saveAdditional(output, provider);
+    *///? } else {
+    /*protected void saveAdditional(CompoundTag output) {
+        super.saveAdditional(output);
+    *///? }
+        CrossVersionTag.Writer writer = new CrossVersionTag.Writer(output);
+        this.saveSignalMap(writer, "inputs", this.inputs);
+        this.saveSignalMap(writer, "outputs", this.outputs);
     }
 
     public int getPower(Direction direction) {
@@ -111,10 +136,17 @@ public class IntegratedCircuitBlockEntity extends CommonCircuitBlockEntity {
         for (int ii = 0; ii < this.changed.length; ii++)
             if (this.changed[ii]) {
                 BlockPos pos = this.getBlockPos().relative(DirectionHelper.relativeDirectionToFacing(RelativeDirection.fromId((byte) ii), direction));
+                //? if >=1.21.4 {
                 this.level.neighborChanged(pos, state.getBlock(), null);
+                //? } else
+                //this.level.neighborChanged(pos, state.getBlock(), this.getBlockPos());
                 Block updateBlock = level.getBlockState(pos).getBlock();
-                if (updateBlock != in.northwestw.shortcircuit.registries.Blocks.CIRCUIT.get() && updateBlock != in.northwestw.shortcircuit.registries.Blocks.INTEGRATED_CIRCUIT.get())
+                if (updateBlock != in.northwestw.shortcircuit.registries.Blocks.CIRCUIT.get() && updateBlock != in.northwestw.shortcircuit.registries.Blocks.INTEGRATED_CIRCUIT.get()) {
+                    //? if >=1.21.4 {
                     this.level.updateNeighborsAtExceptFromFacing(pos, updateBlock, direction.getOpposite(), null);
+                    //? } else
+                    //this.level.updateNeighborsAtExceptFromFacing(pos, updateBlock, direction.getOpposite());
+                }
             }
     }
 

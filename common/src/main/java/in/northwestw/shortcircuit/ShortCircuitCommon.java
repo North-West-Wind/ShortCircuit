@@ -15,7 +15,7 @@ public class ShortCircuitCommon {
 
         // blocks must be registered before block entities for fabric
         Blocks.trigger();
-        BlockEntities.trigger();
+        BlockEntityTypes.trigger();
         Codecs.trigger();
         DataComponents.trigger();
         Items.trigger();
@@ -25,6 +25,9 @@ public class ShortCircuitCommon {
     }
 
     public static Identifier rl(String name) {
+        //? if >=1.21.1 {
         return Identifier.fromNamespaceAndPath(MOD_ID, name);
+        //? } else
+        //return new Identifier(MOD_ID, name);
     }
 }

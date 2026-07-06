@@ -3,41 +3,42 @@ package in.northwestw.shortcircuit.registries.blockentities;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
-import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import com.mojang.logging.LogUtils;
-import com.mojang.serialization.Codec;
 import in.northwestw.shortcircuit.Constants;
 import in.northwestw.shortcircuit.config.Config;
 import in.northwestw.shortcircuit.data.CircuitSavedData;
 import in.northwestw.shortcircuit.data.Octolet;
 import in.northwestw.shortcircuit.properties.DirectionHelper;
 import in.northwestw.shortcircuit.properties.RelativeDirection;
-import in.northwestw.shortcircuit.registries.BlockEntities;
+import in.northwestw.shortcircuit.properties.CrossVersionTag;
+import in.northwestw.shortcircuit.registries.BlockEntityTypes;
 import in.northwestw.shortcircuit.registries.Blocks;
 import in.northwestw.shortcircuit.registries.blockentities.common.CommonCircuitBlockEntity;
 import in.northwestw.shortcircuit.registries.blocks.CircuitBoardBlock;
 import in.northwestw.shortcircuit.registries.blocks.common.CommonCircuitBlock;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.HolderLookup;
-import net.minecraft.core.UUIDUtil;
-import net.minecraft.core.registries.Registries;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.IntArrayTag;
-import net.minecraft.nbt.ListTag;
-import net.minecraft.nbt.NbtUtils;
+import net.minecraft.nbt.*;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.util.ProblemReporter;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import org.apache.commons.lang3.tuple.Pair;
+
+//? if >=1.21.11 {
+import com.mojang.logging.LogUtils;
+import net.minecraft.util.ProblemReporter;
 import net.minecraft.world.level.storage.TagValueInput;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
-import org.apache.commons.lang3.tuple.Pair;
+//? }
+
+//? if >=1.20.1 {
+import net.minecraft.core.HolderLookup;
+import net.minecraft.core.registries.Registries;
+//? }
 
 import java.util.*;
 
@@ -53,7 +54,7 @@ public class CircuitBlockEntity extends CommonCircuitBlockEntity {
     private boolean chunked;
 
     public CircuitBlockEntity(BlockPos pos, BlockState state) {
-        super(BlockEntities.CIRCUIT.get(), pos, state);
+        super(BlockEntityTypes.CIRCUIT.get(), pos, state);
         this.blocks = Maps.newTreeMap();
         this.runtimeUuid = UUID.randomUUID();
         this.powers = new byte[6];
@@ -90,10 +91,8 @@ public class CircuitBlockEntity extends CommonCircuitBlockEntity {
             for (int jj = 1; jj < octolet.blockSize - 1; jj++) {
                 for (int kk = 1; kk < octolet.blockSize - 1; kk++) {
                     BlockState blockState = runtimeLevel.getBlockState(startingPos.offset(ii, jj, kk));
-                    if (!blockState.isAir()) {
-                        // ShortCircuit.LOGGER.debug("{} at {}, {}, {}", blockState, ii, jj, kk);
+                    if (!blockState.isAir())
                         this.blocks.put(new BlockPos(ii - 1, jj - 1, kk - 1), blockState);
-                    }
                 }
             }
         }
@@ -156,12 +155,20 @@ public class CircuitBlockEntity extends CommonCircuitBlockEntity {
                     runtimeLevel.setBlock(newPos, oldState, Block.UPDATE_KNOWN_SHAPE | Block.UPDATE_CLIENTS); // no neighbor update to prevent things from breaking
                     BlockEntity oldBlockEntity = circuitBoardLevel.getBlockEntity(oldPos);
                     if (oldBlockEntity != null) {
+                        //? if >=1.21.1 {
                         CompoundTag save = oldBlockEntity.saveCustomOnly(circuitBoardLevel.registryAccess());
+                        //? } else
+                        //CompoundTag save = oldBlockEntity.saveWithoutMetadata();
                         BlockEntity be = runtimeLevel.getBlockEntity(newPos);
+                        //? if >=1.21.11 {
                         try (ProblemReporter.ScopedCollector problemreporter$scopedcollector = new ProblemReporter.ScopedCollector(this.problemPath(), LogUtils.getLogger())) {
                             ValueInput input = TagValueInput.create(problemreporter$scopedcollector, runtimeLevel.registryAccess(), save);
                             be.loadCustomOnly(input);
                         }
+                        //? } elif >=1.21.1 {
+                        /*be.loadCustomOnly(save, runtimeLevel.registryAccess());
+                        *///? } else
+                        //be.load(save);
                         if (be instanceof CircuitBoardBlockEntity blockEntity) {
                             RelativeDirection dir = oldState.getValue(CircuitBoardBlock.DIRECTION);
                             CircuitBoardBlock.Mode mode = oldState.getValue(CircuitBoardBlock.MODE);
@@ -203,7 +210,10 @@ public class CircuitBlockEntity extends CommonCircuitBlockEntity {
             }
         }
         this.updateInputs();
+        //? if >=1.21.4 {
         outputBlockPos.forEach(pos -> runtimeLevel.neighborChanged(pos, runtimeLevel.getBlockState(pos).getBlock(), null));
+        //? } else
+        //outputBlockPos.forEach(pos -> runtimeLevel.neighborChanged(pos, runtimeLevel.getBlockState(pos).getBlock(), this.getBlockPos()));
         this.chunkedOffset = 0;
         this.chunked = false;
         this.updateInnerBlocks();
@@ -279,53 +289,91 @@ public class CircuitBlockEntity extends CommonCircuitBlockEntity {
     }
 
     @Override
+    //? if >=1.21.11 {
     protected void loadAdditional(ValueInput input) {
         super.loadAdditional(input);
-        this.runtimeUuid = UUIDUtil.uuidFromIntArray(input.getIntArray("runtimeUuid").orElseThrow());
-        this.blockSize = (short) input.getShortOr("blockSize", (short) 4);
-        this.fake = input.getBooleanOr("fake", false);
+    //? } elif >=1.21.1 {
+    /*protected void loadAdditional(CompoundTag input, HolderLookup.Provider provider) {
+        super.loadAdditional(input, provider);
+    *///? } else {
+    /*public void load(CompoundTag input) {
+        super.load(input);
+    *///? }
+        CrossVersionTag.Reader reader = new CrossVersionTag.Reader(input);
+        reader.getUUID("runtimeUuid").ifPresent(uuid -> this.runtimeUuid = uuid);
+        this.blockSize = reader.getShort("blockSize", (short) 4);
+        this.fake = reader.getBoolean("fake");
         this.powers = new byte[6];
-        input.read("powers", Codec.BYTE.listOf()).ifPresent(list -> {
+        reader.getByteArray("powers").ifPresent(list -> {
             if (list.size() == 6)
                 for (int ii = 0; ii < list.size(); ii++)
                     this.powers[ii] = list.get(ii);
         });
         this.inputs = new byte[6];
-        input.read("inputs", Codec.BYTE.listOf()).ifPresent(list -> {
+        reader.getByteArray("inputs").ifPresent(list -> {
             if (list.size() == 6)
                 for (int ii = 0; ii < list.size(); ii++)
                     this.inputs[ii] = list.get(ii);
         });
-        if (!this.hidden) {
-            try {
-                this.loadExtraFromData(input);
-            } catch (CommandSyntaxException e) {
-                throw new RuntimeException(e);
-            }
-        }
+        if (!this.hidden) this.loadExtraFromData(input);
     }
 
     @Override
+    //? if >=1.21.11 {
     protected void saveAdditional(ValueOutput output) {
         super.saveAdditional(output);
-        output.putIntArray("runtimeUuid", UUIDUtil.uuidToIntArray(this.runtimeUuid));
-        output.putShort("blockSize", this.blockSize);
-        output.putBoolean("fake", this.fake);
-        int[] arr = new int[6];
-        for (int ii = 0; ii < this.powers.length; ii++)
-            arr[ii] = this.powers[ii];
-        output.putIntArray("powers", arr);
-        for (int ii = 0; ii < this.inputs.length; ii++)
-            arr[ii] = this.inputs[ii];
-        output.putIntArray("inputs", arr);
+    //? } elif >=1.21.1 {
+    /*protected void saveAdditional(CompoundTag output, HolderLookup.Provider provider) {
+        super.saveAdditional(output, provider);
+    *///? } else {
+    /*protected void saveAdditional(CompoundTag output) {
+        super.saveAdditional(output);
+    *///? }
+        CrossVersionTag.Writer writer = new CrossVersionTag.Writer(output);
+        writer.putUUID("runtimeUuid", this.runtimeUuid);
+        writer.putShort("blockSize", this.blockSize);
+        writer.putBoolean("fake", this.fake);
+        writer.putByteArray("powers", this.powers);
+        writer.putByteArray("inputs", this.inputs);
     }
 
+    //? if >=1.21.11 {
+    public void loadExtraFromData(ValueInput input) {
+    //? } else
+    //public void loadExtraFromData(CompoundTag input) {
+        if (this.level == null) return;
+        CrossVersionTag.Reader reader = new CrossVersionTag.Reader(input);
+        this.chunked = reader.getBoolean("chunked", false);
+        Map<BlockPos, BlockState> blocks = Maps.newHashMap();
+        for (CrossVersionTag.Reader t : reader.getList("blocks")) {
+            Optional<BlockPos> opt = t.getBlockPos("pos");
+            if (opt.isEmpty()) continue;
+            BlockPos pos = opt.get();
+            // use string to cheese ValueInput
+            //? if >=1.20.1 {
+            t.getBlockState("block", this.level.holderLookup(Registries.BLOCK)).ifPresent(state -> blocks.put(pos, state));
+            //? } else
+            //t.getBlockState("block").ifPresent(state -> blocks.put(pos, state));
+        }
+        if (!this.chunked) this.blocks = blocks;
+        else this.blocks.putAll(blocks);
+    }
+
+
     @Override
+    //? if >=1.21.1 {
     public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
         CompoundTag tag = super.getUpdateTag(registries);
+    //? } else {
+    /*public CompoundTag getUpdateTag() {
+        CompoundTag tag = super.getUpdateTag();
+    *///? }
         if (this.hidden) return tag;
         ListTag list = new ListTag(), testList = new ListTag();
+        //? if >=1.20.1 {
         long size = tag.sizeInBytes() + (48 + 28 + 2 * 6 + 36) + (48 + 28 + 2 * 7 + 36 + 9);
+        //? } else
+        //long size = tag.size() + (48 + 28 + 2 * 6 + 36) + (48 + 28 + 2 * 7 + 36 + 9);
         boolean broke = false, oldChunked = this.chunked;
         int ii = 0;
         for (Map.Entry<BlockPos, BlockState> entry : this.blocks.entrySet()) {
@@ -338,7 +386,10 @@ public class CircuitBlockEntity extends CommonCircuitBlockEntity {
             testList.add(tuple);
 
             this.chunkedOffset++;
+            //? if >=1.20.1 {
             if (testList.sizeInBytes() + size >= MAX_TAG_BYTE_SIZE) {
+            //? } else
+            //if (testList.size() + size >= MAX_TAG_BYTE_SIZE) {
                 this.chunked = true;
                 broke = true;
                 break;
@@ -353,23 +404,6 @@ public class CircuitBlockEntity extends CommonCircuitBlockEntity {
         // chunked only changes from false to true after first update of reload. we want to clear out old blocks
         tag.putBoolean("chunked", oldChunked == this.chunked && this.chunked);
         return tag;
-    }
-
-    public void loadExtraFromData(ValueInput input) throws CommandSyntaxException {
-        if (this.level == null) return;
-        this.chunked = input.getBooleanOr("chunked", false);
-        Map<BlockPos, BlockState> blocks = Maps.newHashMap();
-        for (ValueInput t : input.childrenListOrEmpty("blocks")) {
-            Optional<int[]> opt = t.getIntArray("pos");
-            if (opt.isEmpty()) continue;
-            int[] arr = opt.get();
-            BlockPos pos = new BlockPos(arr[0], arr[1], arr[2]);
-            // use string to cheese ValueInput
-            BlockState state = NbtUtils.readBlockState(this.level.holderLookup(Registries.BLOCK), NbtUtils.snbtToStructure(t.getString("block").orElseThrow()));
-            blocks.put(pos, state);
-        }
-        if (!this.chunked) this.blocks = blocks;
-        else this.blocks.putAll(blocks);
     }
 
     public UUID getRuntimeUuid() {

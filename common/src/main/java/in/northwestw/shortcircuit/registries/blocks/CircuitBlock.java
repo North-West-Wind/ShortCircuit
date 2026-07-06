@@ -63,18 +63,13 @@ public class CircuitBlock extends CommonCircuitBlock {
     public void playerWillDestroy(Level level, BlockPos pos, BlockState state, Player player) {
     *///? }
         BlockEntity blockentity = level.getBlockEntity(pos);
+        ItemStack stack = new ItemStack(Blocks.CIRCUIT.get());
         if (blockentity instanceof CircuitBlockEntity circuitBlockEntity) {
             if (!player.isCreative() && circuitBlockEntity.isValid()) {
-                ItemStack stack = new ItemStack(Blocks.CIRCUIT.get());
                 //? if >=1.21.1 {
                 stack.applyComponents(blockentity.collectComponents());
                 //? } else
                 //circuitBlockEntity.saveToItem(stack);
-                ItemEntity itementity = new ItemEntity(
-                        level, (double)pos.getX() + 0.5, (double)pos.getY() + 0.5, (double)pos.getZ() + 0.5, stack
-                );
-                itementity.setDefaultPickUpDelay();
-                level.addFreshEntity(itementity);
             }
             circuitBlockEntity.removeRuntime();
 
@@ -82,6 +77,11 @@ public class CircuitBlock extends CommonCircuitBlock {
             MinecraftServer server = circuitBlockEntity.getLevel().getServer();
             if (owner != null && server != null)
                 CircuitLimitSavedData.getRuntimeData(server).remove(owner);
+        }
+        if (!player.isCreative()) {
+            ItemEntity itementity = new ItemEntity(level, (double)pos.getX() + 0.5, (double)pos.getY() + 0.5, (double)pos.getZ() + 0.5, stack);
+            itementity.setDefaultPickUpDelay();
+            level.addFreshEntity(itementity);
         }
 
         //? if >=1.21.1 {

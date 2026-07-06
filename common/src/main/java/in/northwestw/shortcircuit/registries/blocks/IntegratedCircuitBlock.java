@@ -65,19 +65,19 @@ public class IntegratedCircuitBlock extends CommonCircuitBlock {
     /*@Override
     public void playerWillDestroy(Level level, BlockPos pos, BlockState state, Player player) {
     *///? }
+        ItemStack stack = new ItemStack(Blocks.INTEGRATED_CIRCUIT.get());
         if (level.getBlockEntity(pos) instanceof IntegratedCircuitBlockEntity blockEntity) {
             if (!player.isCreative() && blockEntity.isValid()) {
-                ItemStack stack = new ItemStack(Blocks.INTEGRATED_CIRCUIT.get());
                 //? if >=1.21.1 {
                 stack.applyComponents(blockEntity.collectComponents());
                 //? } else
                 //blockEntity.saveToItem(stack);
-                ItemEntity itementity = new ItemEntity(
-                        level, (double)pos.getX() + 0.5, (double)pos.getY() + 0.5, (double)pos.getZ() + 0.5, stack
-                );
-                itementity.setDefaultPickUpDelay();
-                level.addFreshEntity(itementity);
             }
+        }
+        if (!player.isCreative()) {
+            ItemEntity itementity = new ItemEntity(level, (double)pos.getX() + 0.5, (double)pos.getY() + 0.5, (double)pos.getZ() + 0.5, stack);
+            itementity.setDefaultPickUpDelay();
+            level.addFreshEntity(itementity);
         }
 
         //? if >=1.21.1 {

@@ -36,8 +36,12 @@ import org.jetbrains.annotations.Nullable;
 import in.northwestw.shortcircuit.ShortCircuitCommon;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.redstone.Orientation;
-//? } else {
-/*import net.minecraft.world.ItemInteractionResult;
+//? } elif >=1.21.1 {
+/*import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.ItemInteractionResult;
+*///? } else {
+/*import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
 *///? }
 
 import java.util.UUID;
@@ -47,18 +51,25 @@ public class CircuitBlock extends CommonCircuitBlock {
         super(properties);
     }
 
+    //? if >=1.21.1 {
     @Override
     protected @NotNull MapCodec<CircuitBlock> codec() {
         return Codecs.CIRCUIT.get();
     }
-
     @Override
     public BlockState playerWillDestroy(Level level, BlockPos pos, BlockState state, Player player) {
+    //? } else {
+    /*@Override
+    public void playerWillDestroy(Level level, BlockPos pos, BlockState state, Player player) {
+    *///? }
         BlockEntity blockentity = level.getBlockEntity(pos);
         if (blockentity instanceof CircuitBlockEntity circuitBlockEntity) {
             if (!player.isCreative() && circuitBlockEntity.isValid()) {
                 ItemStack stack = new ItemStack(Blocks.CIRCUIT.get());
+                //? if >=1.21.1 {
                 stack.applyComponents(blockentity.collectComponents());
+                //? } else
+                //circuitBlockEntity.saveToItem(stack);
                 ItemEntity itementity = new ItemEntity(
                         level, (double)pos.getX() + 0.5, (double)pos.getY() + 0.5, (double)pos.getZ() + 0.5, stack
                 );
@@ -73,14 +84,15 @@ public class CircuitBlock extends CommonCircuitBlock {
                 CircuitLimitSavedData.getRuntimeData(server).remove(owner);
         }
 
+        //? if >=1.21.1 {
         return super.playerWillDestroy(level, pos, state, player);
+        //? } else
+        //super.playerWillDestroy(level, pos, state, player);
     }
 
     @Override
-    //? if >=1.21.4 {
+    //~ if <=1.21.1 'ServerLevel' -> 'Level'
     public void wasExploded(ServerLevel level, BlockPos pos, Explosion explosion) {
-    //? } else
-    //public void wasExploded(Level level, BlockPos pos, Explosion explosion) {
         if (level.getBlockEntity(pos) instanceof CircuitBlockEntity blockEntity) {
             blockEntity.removeRuntime();
 
@@ -104,13 +116,24 @@ public class CircuitBlock extends CommonCircuitBlock {
 
     @Override
     public @Nullable <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
-        return type == BlockEntities.CIRCUIT.get() ? (pLevel, pPos, pState, blockEntity) -> ((CircuitBlockEntity) blockEntity).tick() : null;
+        return type == BlockEntityTypes.CIRCUIT.get() ? (pLevel, pPos, pState, blockEntity) -> ((CircuitBlockEntity) blockEntity).tick() : null;
     }
 
-    @Override
+    //? <=1.20.1 {
+    /*@Override
+    public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
+        ItemStack stack = player.getItemInHand(hand);
+        if (stack.isEmpty()) return this.useWithoutItem(state, level, pos, player, hit);
+        else return this.useItemOn(stack, state, level, pos, player, hand, hit);
+    }
+    *///? }
+
     protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hitResult) {
         if (level.getBlockEntity(pos) instanceof CircuitBlockEntity blockEntity) {
+            //? if >=1.21.1 {
             if (blockEntity.isFake()) return super.useWithoutItem(state, level, pos, player, hitResult);
+            //? } else
+            //if (blockEntity.isFake()) return InteractionResult.PASS;
             else {
                 player.displayClientMessage(Component.translatable("action.circuit.reload"), true);
                 CircuitBlockEntity.RuntimeReloadResult result = blockEntity.reloadRuntime();
@@ -124,19 +147,30 @@ public class CircuitBlock extends CommonCircuitBlock {
         //return InteractionResult.sidedSuccess(level.isClientSide);
     }
 
-    @Override
     //? if >=1.21.4 {
+    @Override
     protected InteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult result) {
         if (stack.is(Items.POKING_STICK.get()) || stack.is(Items.LABELLING_STICK.get())) return InteractionResult.PASS; // handled by item
-    //? } else {
-    /*protected ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult result) {
+    //? } elif >=1.21.1 {
+    /*@Override
+    protected ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult result) {
         if (stack.is(Items.POKING_STICK.get()) || stack.is(Items.LABELLING_STICK.get())) return ItemInteractionResult.SKIP_DEFAULT_BLOCK_INTERACTION; // handled by item
+    *///? } else {
+    /*protected InteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult result) {
+        if (stack.is(Items.POKING_STICK.get()) || stack.is(Items.LABELLING_STICK.get())) return InteractionResult.PASS; // handled by item
     *///? }
         else if ((stack.is(Items.CIRCUIT.get()) || stack.is(Items.INTEGRATED_CIRCUIT.get())) && !player.isCrouching() && !player.isShiftKeyDown() && level.getBlockEntity(pos) instanceof CircuitBlockEntity blockEntity && blockEntity.isValid()) {
             ItemStack newStack = new ItemStack(Items.CIRCUIT.get(), stack.getCount());
+            //? if >=1.21.1 {
             newStack.applyComponents(stack.getComponents());
             newStack.set(DataComponents.UUID.get(), new UUIDDataComponent(blockEntity.getUuid()));
             newStack.set(DataComponents.SHORT.get(), state.getValue(COLOR).shortValue());
+            //? } else {
+            /*if (stack.hasTag()) newStack.setTag(stack.getTag());
+            CompoundTag tag = newStack.getOrCreateTag();
+            tag.putUUID("uuid", blockEntity.getUuid());
+            tag.putShort("color", level.getBlockState(pos).getValue(CommonCircuitBlock.COLOR).shortValue());
+            *///? }
             //? if >=1.21.4 {
             newStack.set(net.minecraft.core.component.DataComponents.ITEM_MODEL, ShortCircuitCommon.rl("circuit"));
             //? }
@@ -144,24 +178,32 @@ public class CircuitBlock extends CommonCircuitBlock {
             player.playSound(SoundEvents.BEACON_ACTIVATE, 0.5f, 1);
             //? if >=1.21.4 {
             return InteractionResult.SUCCESS.heldItemTransformedTo(newStack);
-            //? } else
-            //return ItemInteractionResult.SUCCESS;
+            //? } elif >=1.21.1 {
+            /*return ItemInteractionResult.SUCCESS;
+            *///? } else
+            //return InteractionResult.SUCCESS;
         }
+        //? if >=1.21.1 {
         return super.useItemOn(stack, state, level, pos, player, hand, result);
+        //? } else
+        //return this.useWithoutItem(state, level, pos, player, result);
     }
 
     @Override
+    //~ if <=1.20.1 'protected' -> 'public'
     protected boolean isSignalSource(BlockState pState) {
         return true;
     }
 
     @Override
+    //~ if <=1.20.1 'protected' -> 'public'
     protected int getSignal(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
         if (!(level.getBlockEntity(pos) instanceof CircuitBlockEntity blockEntity)) return 0;
         return blockEntity.getPower(direction);
     }
 
     @Override
+    //~ if <=1.20.1 'protected' -> 'public'
     protected int getDirectSignal(BlockState pBlockState, BlockGetter pBlockAccess, BlockPos pPos, Direction pSide) {
         return pBlockState.getSignal(pBlockAccess, pPos, pSide);
     }
@@ -170,8 +212,11 @@ public class CircuitBlock extends CommonCircuitBlock {
     //? if >=1.21.4 {
     protected void neighborChanged(BlockState state, Level level, BlockPos pos, Block neighborBlock, @Nullable Orientation orientation, boolean movedByPiston) {
         super.neighborChanged(state, level, pos, neighborBlock, orientation, movedByPiston);
-    //? } else {
+    //? } elif >=1.21.1 {
     /*protected void neighborChanged(BlockState state, Level level, BlockPos pos, Block neighborBlock, BlockPos neighborPos, boolean movedByPiston) {
+        super.neighborChanged(state, level, pos, neighborBlock, neighborPos, movedByPiston);
+    *///? } else {
+    /*public void neighborChanged(BlockState state, Level level, BlockPos pos, Block neighborBlock, BlockPos neighborPos, boolean movedByPiston) {
         super.neighborChanged(state, level, pos, neighborBlock, neighborPos, movedByPiston);
     *///? }
         if (level.getBlockEntity(pos) instanceof CircuitBlockEntity blockEntity) {
@@ -196,12 +241,22 @@ public class CircuitBlock extends CommonCircuitBlock {
                     data.add(placer.getUUID());
             }
 
+            //? if >=1.21.1 {
             if (!disallowed && stack.has(DataComponents.UUID.get())) {
                 blockEntity.setUuid(stack.get(DataComponents.UUID.get()).uuid());
                 if (stack.has(net.minecraft.core.component.DataComponents.CUSTOM_NAME))
                     blockEntity.setName(stack.get(net.minecraft.core.component.DataComponents.CUSTOM_NAME).getString());
                 if (stack.has(DataComponents.SHORT.get()))
                     level.setBlock(pos, state.setValue(COLOR, stack.get(DataComponents.SHORT.get()).intValue()), Block.UPDATE_CLIENTS);
+            //? } else {
+            /*CompoundTag tag = stack.getOrCreateTag();
+            if (!disallowed && tag.hasUUID("uuid")) {
+                blockEntity.setUuid(tag.getUUID("uuid"));
+                if (stack.hasCustomHoverName())
+                    blockEntity.setName(stack.getHoverName().getString());
+                if (tag.contains("color", Tag.TAG_SHORT))
+                    level.setBlock(pos, state.setValue(COLOR, (int) tag.getShort("color")), Block.UPDATE_CLIENTS);
+            *///? }
                 if (!level.dimension().equals(Constants.CIRCUIT_BOARD_DIMENSION)) {
                     blockEntity.reloadRuntime();
                     blockEntity.updateInputs();

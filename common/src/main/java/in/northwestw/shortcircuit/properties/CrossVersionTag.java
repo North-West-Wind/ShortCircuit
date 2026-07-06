@@ -170,6 +170,10 @@ public class CrossVersionTag {
             this.output.putByte(key, value);
         }
 
+        public void putString(String key, String value) {
+            this.output.putString(key, value);
+        }
+
         public void putByteArray(String key, byte[] array) {
             int[] arr = new int[array.length];
             for (int ii = 0; ii < array.length; ii++)

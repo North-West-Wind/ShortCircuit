@@ -14,6 +14,7 @@ import net.minecraft.client.renderer.RenderPipelines;
 //? } else
 //import net.minecraft.client.renderer.RenderType;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.Style;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.AbstractContainerMenu;
@@ -21,8 +22,12 @@ import net.minecraft.world.inventory.ContainerListener;
 import net.minecraft.world.item.ItemStack;
 
 public class TruthAssignerScreen extends AbstractContainerScreen<TruthAssignerMenu> implements ContainerListener {
-    private static final Identifier BASE_BACKGROUND = Identifier.fromNamespaceAndPath(ShortCircuitCommon.MOD_ID, "textures/gui/container/truth_assigner.png");
+    private static final Identifier BASE_BACKGROUND = ShortCircuitCommon.rl("textures/gui/container/truth_assigner.png");
+    //? if >=1.21.1 {
     private static final Identifier BURN_PROGRESS_SPRITE = Identifier.withDefaultNamespace("container/furnace/burn_progress");
+    //? } else
+    //private static final Identifier BURN_PROGRESS_SPRITE = new Identifier("textures/gui/container/furnace.png");
+
     private EditBox maxDelay;
     private Button wait, start, bits;
     private StringWidget error, currentInput;
@@ -83,17 +88,26 @@ public class TruthAssignerScreen extends AbstractContainerScreen<TruthAssignerMe
             // if we are working, color the arrow
             graphics.blitSprite(RenderType::guiTextured, BURN_PROGRESS_SPRITE, 24, 16, 0, 0, this.leftPos + 37, this.topPos + 34, 24, 16);
         }
-        *///? } else {
+        *///? } elif >=1.21.1 {
         /*graphics.blit(BASE_BACKGROUND, this.leftPos, this.topPos, 0, 0, this.imageWidth, this.imageHeight, 256, 256);
         if (this.menu.isWorking()) {
             // if we are working, color the arrow
             graphics.blitSprite(BURN_PROGRESS_SPRITE, 24, 16, 0, 0, this.leftPos + 37, this.topPos + 34, 24, 16);
+        }
+        *///? } else {
+        /*graphics.blit(BASE_BACKGROUND, this.leftPos, this.topPos, 0, 0, this.imageWidth, this.imageHeight, 256, 256);
+        if (this.menu.isWorking()) {
+            // if we are working, color the arrow
+            graphics.blit(BURN_PROGRESS_SPRITE, this.leftPos + 37, this.topPos + 34, 176, 14, 25, 16);
         }
         *///? }
     }
 
     @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
+        //? if <=1.20.1 {
+        /*this.renderBackground(graphics);
+        *///? }
         super.render(graphics, mouseX, mouseY, partialTick);
         this.renderTooltip(graphics, mouseX, mouseY);
     }
@@ -187,7 +201,12 @@ public class TruthAssignerScreen extends AbstractContainerScreen<TruthAssignerMe
     private void updateError() {
         int errorCode = this.menu.getError();
         if (errorCode == 0) this.error.setMessage(Component.empty());
-        else this.error.setMessage(Component.translatable("container.short_circuit.truth_assigner.error." + errorCode).withColor(0xff0000));
+        else {
+            //? if >=1.21.1 {
+            this.error.setMessage(Component.translatable("container.short_circuit.truth_assigner.error." + errorCode).withColor(0xff0000));
+            //? } else
+            //this.error.setMessage(Component.translatable("container.short_circuit.truth_assigner.error." + errorCode).withStyle(Style.EMPTY.withColor(0xff0000)));
+        }
     }
 
     private void updateCurrentInput() {

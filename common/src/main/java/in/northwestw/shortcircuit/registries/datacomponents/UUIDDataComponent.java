@@ -1,5 +1,6 @@
 package in.northwestw.shortcircuit.registries.datacomponents;
 
+//? if >=1.21.1 {
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.netty.buffer.ByteBuf;
@@ -37,3 +38,5 @@ public record UUIDDataComponent(UUID uuid) {
         return this.uuid.getLeastSignificantBits();
     }
 }
+//? } else
+//public record UUIDDataComponent() {}

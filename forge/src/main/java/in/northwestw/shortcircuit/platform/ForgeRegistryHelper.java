@@ -1,12 +1,9 @@
 package in.northwestw.shortcircuit.platform;
 
-import com.mojang.serialization.MapCodec;
 import in.northwestw.shortcircuit.ShortCircuitCommon;
 import in.northwestw.shortcircuit.platform.services.IRegistryHelper;
-import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.flag.FeatureFlagSet;
@@ -22,17 +19,25 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraftforge.registries.DeferredRegister;
 
+//? if >=1.21.1 {
+import com.mojang.serialization.MapCodec;
+import net.minecraft.core.component.DataComponentType;
+import net.minecraft.resources.ResourceKey;
+import java.util.function.UnaryOperator;
+//? }
+
 import java.util.Arrays;
 import java.util.function.Function;
 import java.util.function.Supplier;
-import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 
 public class ForgeRegistryHelper implements IRegistryHelper {
     public static final DeferredRegister<BlockEntityType<?>> BLOCK_ENTITIES = DeferredRegister.create(Registries.BLOCK_ENTITY_TYPE, ShortCircuitCommon.MOD_ID);
     public static final DeferredRegister<Block> BLOCKS = DeferredRegister.create(Registries.BLOCK, ShortCircuitCommon.MOD_ID);
+    //? if >=1.21.1 {
     public static final DeferredRegister<MapCodec<? extends Block>> CODECS = DeferredRegister.create(Registries.BLOCK_TYPE, ShortCircuitCommon.MOD_ID);
     public static final DeferredRegister<DataComponentType<?>> DATA_COMPONENTS = DeferredRegister.create(Registries.DATA_COMPONENT_TYPE, ShortCircuitCommon.MOD_ID);
+    //? }
     public static final DeferredRegister<Item> ITEMS = DeferredRegister.create(Registries.ITEM, ShortCircuitCommon.MOD_ID);
     public static final DeferredRegister<MenuType<?>> MENUS = DeferredRegister.create(Registries.MENU, ShortCircuitCommon.MOD_ID);
     public static final DeferredRegister<SoundEvent> SOUND_EVENTS = DeferredRegister.create(Registries.SOUND_EVENT, ShortCircuitCommon.MOD_ID);
@@ -54,6 +59,7 @@ public class ForgeRegistryHelper implements IRegistryHelper {
         return BLOCKS.register(name, () -> factory.apply(properties));
     }
 
+    //? if >=1.21.1 {
     @Override
     public <T extends Block> Supplier<MapCodec<T>> registerCodec(String name, Supplier<MapCodec<T>> supplier) {
         return CODECS.register(name, supplier);
@@ -63,6 +69,7 @@ public class ForgeRegistryHelper implements IRegistryHelper {
     public <T> Supplier<DataComponentType<T>> registerDataComponent(String name, UnaryOperator<DataComponentType.Builder<T>> builder) {
         return DATA_COMPONENTS.register(name, () -> builder.apply(DataComponentType.builder()).build());
     }
+    //? }
 
     @Override
     public <T extends Item> Supplier<T> registerItem(String name, Function<Item.Properties, T> function, Item.Properties properties) {

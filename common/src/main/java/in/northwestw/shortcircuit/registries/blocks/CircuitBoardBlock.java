@@ -49,10 +49,12 @@ public class CircuitBoardBlock extends Block implements EntityBlock {
         );
     }
 
+    //? if >=1.21.1 {
     @Override
     protected MapCodec<? extends Block> codec() {
         return Codecs.CIRCUIT_BOARD.get();
     }
+    //? }
 
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
@@ -60,16 +62,19 @@ public class CircuitBoardBlock extends Block implements EntityBlock {
     }
 
     @Override
+    //~ if <=1.20.1 'protected' -> 'public'
     protected boolean isSignalSource(BlockState state) {
         return state.getValue(MODE) != Mode.NONE;
     }
 
     @Override
+    //~ if <=1.20.1 'protected' -> 'public'
     protected int getSignal(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
         return state.getValue(MODE) == Mode.INPUT && direction == DirectionHelper.circuitBoardFixedDirection(state.getValue(DIRECTION)) ? state.getValue(POWER) : 0;
     }
 
     @Override
+    //~ if <=1.20.1 'protected' -> 'public'
     protected int getDirectSignal(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
         return this.getSignal(state, level, pos, direction);
     }
@@ -78,8 +83,11 @@ public class CircuitBoardBlock extends Block implements EntityBlock {
     //? if >=1.21.4 {
     protected void neighborChanged(BlockState state, Level level, BlockPos pos, Block neighborBlock, @Nullable Orientation orientation, boolean movedByPiston) {
         super.neighborChanged(state, level, pos, neighborBlock, orientation, movedByPiston);
-    //? } else {
+    //? } elif >=1.21.1 {
     /*protected void neighborChanged(BlockState state, Level level, BlockPos pos, Block neighborBlock, BlockPos _neighborPos, boolean movedByPiston) {
+        super.neighborChanged(state, level, pos, neighborBlock, _neighborPos, movedByPiston);
+    *///? } else {
+    /*public void neighborChanged(BlockState state, Level level, BlockPos pos, Block neighborBlock, BlockPos _neighborPos, boolean movedByPiston) {
         super.neighborChanged(state, level, pos, neighborBlock, _neighborPos, movedByPiston);
     *///? }
         if (state.getValue(MODE) != Mode.OUTPUT || neighborBlock == Blocks.CIRCUIT_BOARD.get()) return;

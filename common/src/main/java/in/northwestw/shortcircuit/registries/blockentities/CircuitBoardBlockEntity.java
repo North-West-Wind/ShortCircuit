@@ -3,7 +3,7 @@ package in.northwestw.shortcircuit.registries.blockentities;
 import in.northwestw.shortcircuit.properties.CrossVersionTag;
 import in.northwestw.shortcircuit.properties.DirectionHelper;
 import in.northwestw.shortcircuit.properties.RelativeDirection;
-import in.northwestw.shortcircuit.registries.BlockEntities;
+import in.northwestw.shortcircuit.registries.BlockEntityTypes;
 import in.northwestw.shortcircuit.registries.Blocks;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -35,18 +35,24 @@ public class CircuitBoardBlockEntity extends BlockEntity {
     private UUID runtimeUuid;
 
     public CircuitBoardBlockEntity(BlockPos pos, BlockState state) {
-        super(BlockEntities.CIRCUIT_BOARD.get(), pos, state);
+        super(BlockEntityTypes.CIRCUIT_BOARD.get(), pos, state);
     }
 
     @Override
     //? if >=1.21.11 {
     protected void loadAdditional(ValueInput input) {
-    //? } else {
+    //? } elif >=1.21.1 {
     /*protected void loadAdditional(CompoundTag input, HolderLookup.Provider provider) {
         super.loadAdditional(input, provider);
+    *///? } else {
+    /*public void load(CompoundTag input) {
+        super.load(input);
     *///? }
         CrossVersionTag.Reader reader = new CrossVersionTag.Reader(input);
+        //? if >=1.21.1 {
         reader.getString("dim").ifPresent(dim -> this.dimension = ResourceKey.create(Registries.DIMENSION, Identifier.parse(dim)));
+        //? } else
+        //reader.getString("dim").ifPresent(dim -> this.dimension = ResourceKey.create(Registries.DIMENSION, new Identifier(dim)));
         reader.getBlockPos("pos").ifPresent(pos -> this.pos = pos);
         reader.getUUID("uuid").ifPresent(uuid -> this.runtimeUuid = uuid);
     }
@@ -56,9 +62,13 @@ public class CircuitBoardBlockEntity extends BlockEntity {
     protected void saveAdditional(ValueOutput output) {
         super.saveAdditional(output);
         if (this.dimension != null) output.putString("dim", this.dimension.identifier().toString());
-    //? } else {
+    //? } elif >=1.21.1 {
     /*protected void saveAdditional(CompoundTag output, HolderLookup.Provider provider) {
         super.saveAdditional(output, provider);
+        if (this.dimension != null) output.putString("dim", this.dimension.location().toString());
+    *///? } else {
+    /*protected void saveAdditional(CompoundTag output) {
+        super.saveAdditional(output);
         if (this.dimension != null) output.putString("dim", this.dimension.location().toString());
     *///? }
         if (this.pos != null) output.putIntArray("pos", new int[] { this.pos.getX(), this.pos.getY(), this.pos.getZ() });

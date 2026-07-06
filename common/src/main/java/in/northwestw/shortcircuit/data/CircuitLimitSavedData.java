@@ -69,11 +69,13 @@ public class CircuitLimitSavedData extends SavedData {
         DimensionDataStorage storage = runtimeLevel.getDataStorage();
         //? if >=1.21.11 {
         return storage.computeIfAbsent(TYPE);
-        //? } else
-        //return storage.computeIfAbsent(new SavedData.Factory<>(CircuitLimitSavedData::new, CircuitLimitSavedData::load, null), "circuit_limit");
+        //? } elif >=1.21.1 {
+        /*return storage.computeIfAbsent(new SavedData.Factory<>(CircuitLimitSavedData::new, CircuitLimitSavedData::load, null), "circuit_limit");
+        *///? } else
+        //return storage.computeIfAbsent(CircuitLimitSavedData::load, CircuitLimitSavedData::new, "circuit_limit");
     }
 
-    //? if <=1.21.4 {
+    //? if <=1.21.4 && >=1.21.1 {
     /*public static CircuitLimitSavedData load(CompoundTag tag, HolderLookup.Provider lookupProvider) {
         return CODEC.parse(NbtOps.INSTANCE, tag).resultOrPartial().orElse(new CircuitLimitSavedData());
     }
@@ -81,6 +83,15 @@ public class CircuitLimitSavedData extends SavedData {
     @Override
     public CompoundTag save(CompoundTag tag, HolderLookup.Provider provider) {
         return (CompoundTag) CODEC.encodeStart(NbtOps.INSTANCE, this).getOrThrow();
+    }
+    *///? } elif <=1.20.1 {
+    /*public static CircuitLimitSavedData load(CompoundTag tag) {
+        return CODEC.parse(NbtOps.INSTANCE, tag).result().orElse(new CircuitLimitSavedData());
+    }
+
+    @Override
+    public CompoundTag save(CompoundTag tag) {
+        return (CompoundTag) CODEC.encodeStart(NbtOps.INSTANCE, this).result().get();
     }
     *///? }
 }

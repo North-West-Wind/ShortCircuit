@@ -120,8 +120,10 @@ public class CircuitSavedData extends SavedData {
         DimensionDataStorage storage = circuitBoardLevel.getDataStorage();
         //? if >=1.21.11 {
         return storage.computeIfAbsent(TYPE);
-        //? } else
-        //return storage.computeIfAbsent(new SavedData.Factory<>(CircuitSavedData::new, CircuitSavedData::load, null), "circuit_pos");
+        //? } elif >=1.21.1 {
+        /*return storage.computeIfAbsent(new SavedData.Factory<>(CircuitSavedData::new, CircuitSavedData::load, null), "circuit_pos");
+        *///? } else
+        //return storage.computeIfAbsent(CircuitSavedData::load, CircuitSavedData::new, "circuit_pos");
     }
 
     public static CircuitSavedData getRuntimeData(ServerLevel level) {
@@ -129,11 +131,13 @@ public class CircuitSavedData extends SavedData {
         DimensionDataStorage storage = runtimeLevel.getDataStorage();
         //? if >=1.21.11 {
         return storage.computeIfAbsent(TYPE);
-        //? } else
-        //return storage.computeIfAbsent(new SavedData.Factory<>(CircuitSavedData::new, CircuitSavedData::load, null), "circuit_pos");
+        //? } elif >=1.21.1 {
+        /*return storage.computeIfAbsent(new SavedData.Factory<>(CircuitSavedData::new, CircuitSavedData::load, null), "circuit_pos");
+        *///? } else
+        //return storage.computeIfAbsent(CircuitSavedData::load, CircuitSavedData::new, "circuit_pos");
     }
 
-    //? if <=1.21.4 {
+    //? if <=1.21.4 && >=1.21.1 {
     /*public static CircuitSavedData load(CompoundTag tag, HolderLookup.Provider lookupProvider) {
         return CODEC.parse(NbtOps.INSTANCE, tag).resultOrPartial().orElse(new CircuitSavedData());
     }
@@ -141,6 +145,15 @@ public class CircuitSavedData extends SavedData {
     @Override
     public CompoundTag save(CompoundTag tag, HolderLookup.Provider registries) {
         return (CompoundTag) CODEC.encodeStart(NbtOps.INSTANCE, this).getOrThrow();
+    }
+    *///? } elif <=1.20.1 {
+    /*public static CircuitSavedData load(CompoundTag tag) {
+        return CODEC.parse(NbtOps.INSTANCE, tag).result().orElse(new CircuitSavedData());
+    }
+
+    @Override
+    public CompoundTag save(CompoundTag tag) {
+        return (CompoundTag) CODEC.encodeStart(NbtOps.INSTANCE, this).result().get();
     }
     *///? }
 }

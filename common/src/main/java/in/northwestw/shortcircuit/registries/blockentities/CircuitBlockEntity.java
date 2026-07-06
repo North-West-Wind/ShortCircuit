@@ -3,17 +3,15 @@ package in.northwestw.shortcircuit.registries.blockentities;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
-import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.logging.LogUtils;
 import in.northwestw.shortcircuit.Constants;
-import in.northwestw.shortcircuit.ShortCircuitCommon;
 import in.northwestw.shortcircuit.config.Config;
 import in.northwestw.shortcircuit.data.CircuitSavedData;
 import in.northwestw.shortcircuit.data.Octolet;
 import in.northwestw.shortcircuit.properties.DirectionHelper;
 import in.northwestw.shortcircuit.properties.RelativeDirection;
 import in.northwestw.shortcircuit.properties.CrossVersionTag;
-import in.northwestw.shortcircuit.registries.BlockEntities;
+import in.northwestw.shortcircuit.registries.BlockEntityTypes;
 import in.northwestw.shortcircuit.registries.Blocks;
 import in.northwestw.shortcircuit.registries.blockentities.common.CommonCircuitBlockEntity;
 import in.northwestw.shortcircuit.registries.blocks.CircuitBoardBlock;
@@ -21,7 +19,6 @@ import in.northwestw.shortcircuit.registries.blocks.common.CommonCircuitBlock;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
-import net.minecraft.core.UUIDUtil;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.*;
 import net.minecraft.server.MinecraftServer;
@@ -56,7 +53,7 @@ public class CircuitBlockEntity extends CommonCircuitBlockEntity {
     private boolean chunked;
 
     public CircuitBlockEntity(BlockPos pos, BlockState state) {
-        super(BlockEntities.CIRCUIT.get(), pos, state);
+        super(BlockEntityTypes.CIRCUIT.get(), pos, state);
         this.blocks = Maps.newTreeMap();
         this.runtimeUuid = UUID.randomUUID();
         this.powers = new byte[6];
@@ -157,15 +154,20 @@ public class CircuitBlockEntity extends CommonCircuitBlockEntity {
                     runtimeLevel.setBlock(newPos, oldState, Block.UPDATE_KNOWN_SHAPE | Block.UPDATE_CLIENTS); // no neighbor update to prevent things from breaking
                     BlockEntity oldBlockEntity = circuitBoardLevel.getBlockEntity(oldPos);
                     if (oldBlockEntity != null) {
+                        //? if >=1.21.1 {
                         CompoundTag save = oldBlockEntity.saveCustomOnly(circuitBoardLevel.registryAccess());
+                        //? } else
+                        //CompoundTag save = oldBlockEntity.saveWithoutMetadata();
                         BlockEntity be = runtimeLevel.getBlockEntity(newPos);
                         //? if >=1.21.11 {
                         try (ProblemReporter.ScopedCollector problemreporter$scopedcollector = new ProblemReporter.ScopedCollector(this.problemPath(), LogUtils.getLogger())) {
                             ValueInput input = TagValueInput.create(problemreporter$scopedcollector, runtimeLevel.registryAccess(), save);
                             be.loadCustomOnly(input);
                         }
-                        //? } else
-                        //be.loadCustomOnly(save, runtimeLevel.registryAccess());
+                        //? } elif >=1.21.1 {
+                        /*be.loadCustomOnly(save, runtimeLevel.registryAccess());
+                        *///? } else
+                        //be.load(save);
                         if (be instanceof CircuitBoardBlockEntity blockEntity) {
                             RelativeDirection dir = oldState.getValue(CircuitBoardBlock.DIRECTION);
                             CircuitBoardBlock.Mode mode = oldState.getValue(CircuitBoardBlock.MODE);
@@ -289,9 +291,12 @@ public class CircuitBlockEntity extends CommonCircuitBlockEntity {
     //? if >=1.21.11 {
     protected void loadAdditional(ValueInput input) {
         super.loadAdditional(input);
-    //? } else {
+    //? } elif >=1.21.1 {
     /*protected void loadAdditional(CompoundTag input, HolderLookup.Provider provider) {
         super.loadAdditional(input, provider);
+    *///? } else {
+    /*public void load(CompoundTag input) {
+        super.load(input);
     *///? }
         CrossVersionTag.Reader reader = new CrossVersionTag.Reader(input);
         reader.getUUID("runtimeUuid").ifPresent(uuid -> this.runtimeUuid = uuid);
@@ -316,9 +321,12 @@ public class CircuitBlockEntity extends CommonCircuitBlockEntity {
     //? if >=1.21.11 {
     protected void saveAdditional(ValueOutput output) {
         super.saveAdditional(output);
-    //? } else {
+    //? } elif >=1.21.1 {
     /*protected void saveAdditional(CompoundTag output, HolderLookup.Provider provider) {
         super.saveAdditional(output, provider);
+    *///? } else {
+    /*protected void saveAdditional(CompoundTag output) {
+        super.saveAdditional(output);
     *///? }
         CrossVersionTag.Writer writer = new CrossVersionTag.Writer(output);
         writer.putUUID("runtimeUuid", this.runtimeUuid);
@@ -349,8 +357,13 @@ public class CircuitBlockEntity extends CommonCircuitBlockEntity {
 
 
     @Override
+    //? if >=1.21.1 {
     public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
         CompoundTag tag = super.getUpdateTag(registries);
+    //? } else {
+    /*public CompoundTag getUpdateTag() {
+        CompoundTag tag = super.getUpdateTag();
+    *///? }
         if (this.hidden) return tag;
         ListTag list = new ListTag(), testList = new ListTag();
         long size = tag.sizeInBytes() + (48 + 28 + 2 * 6 + 36) + (48 + 28 + 2 * 7 + 36 + 9);

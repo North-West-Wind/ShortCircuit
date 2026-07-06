@@ -2,6 +2,7 @@ package in.northwestw.shortcircuit.registries.blockentities.common;
 
 import com.mojang.logging.LogUtils;
 import in.northwestw.shortcircuit.config.Config;
+import in.northwestw.shortcircuit.properties.CrossVersionTag;
 import in.northwestw.shortcircuit.properties.RelativeDirection;
 import in.northwestw.shortcircuit.registries.DataComponents;
 import in.northwestw.shortcircuit.registries.blocks.common.CommonCircuitBlock;
@@ -9,8 +10,6 @@ import in.northwestw.shortcircuit.registries.datacomponents.UUIDDataComponent;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.UUIDUtil;
-import net.minecraft.core.component.DataComponentMap;
-import net.minecraft.core.component.DataComponentType;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.Packet;
@@ -31,6 +30,15 @@ import net.minecraft.world.level.storage.ValueOutput;
 /*import net.minecraft.nbt.Tag;
 *///? }
 
+//? if >=1.21.1 {
+import net.minecraft.core.component.DataComponentMap;
+import net.minecraft.core.component.DataComponentType;
+//? } else {
+/*import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.chat.contents.LiteralContents;
+import net.minecraft.world.item.ItemStack;
+*///? }
+
 import java.util.Arrays;
 import java.util.UUID;
 
@@ -49,53 +57,54 @@ public class CommonCircuitBlockEntity extends BlockEntity {
         this.color = 16;
     }
 
-    //? if >=1.21.11 {
     @Override
+    //? if >=1.21.11 {
     protected void loadAdditional(ValueInput input) {
         super.loadAdditional(input);
-        this.hidden = input.getBooleanOr("hidden", false);
-        input.getIntArray("uuid").ifPresentOrElse(arr -> this.uuid = UUIDUtil.uuidFromIntArray(arr), () -> this.uuid = null);
-        input.getString("customName").ifPresentOrElse(name -> this.name = name, () -> this.name = null);
-        byte color = input.getByteOr("color", (byte) -1);
-        // backwards compatible with before v1.0.9
+    //? } elif >=1.21.1 {
+    /*protected void loadAdditional(CompoundTag input, HolderLookup.Provider provider) {
+        super.loadAdditional(input, provider);
+    *///? } else {
+    /*public void load(CompoundTag input) {
+        super.load(input);
+    *///? }
+        CrossVersionTag.Reader reader = new CrossVersionTag.Reader(input);
+        this.hidden = reader.getBoolean("hidden");
+        reader.getUUID("uuid").ifPresent(uuid -> this.uuid = uuid);
+        this.name = reader.getString("customName").orElse(null);
+        byte color = reader.getByte("color", (byte) -1);
         if (color != -1) this.color = color;
         else this.savedColor = true;
     }
 
     @Override
+    //? if >=1.21.11 {
     protected void saveAdditional(ValueOutput output) {
         super.saveAdditional(output);
-        output.putBoolean("hidden", this.hidden);
-        if (this.uuid != null) output.putIntArray("uuid", UUIDUtil.uuidToIntArray(this.uuid));
-        if (this.name != null) output.putString("name", this.name);
-        if (!this.savedColor) output.putByte("color", this.color);
-    }
-    //? } else {
-    /*@Override
-    protected void loadAdditional(CompoundTag input, HolderLookup.Provider provider) {
-        super.loadAdditional(input, provider);
-        this.hidden = input.getBoolean("hidden");
-        if (input.hasUUID("uuid")) this.uuid = input.getUUID("uuid");
-        if (input.contains("customName", Tag.TAG_STRING)) this.name = input.getString("customName");
-        else this.name = null;
-        if (input.contains("color", Tag.TAG_BYTE)) this.color = input.getByte("color");
-        else this.savedColor = true;
-    }
-
-    @Override
-    protected void saveAdditional(CompoundTag output, HolderLookup.Provider provider) {
+    //? } elif >=1.21.1 {
+    /*protected void saveAdditional(CompoundTag output, HolderLookup.Provider provider) {
         super.saveAdditional(output, provider);
-        output.putBoolean("hidden", this.hidden);
-        if (this.uuid != null) output.putIntArray("uuid", UUIDUtil.uuidToIntArray(this.uuid));
-        if (this.name != null) output.putString("name", this.name);
-        if (!this.savedColor) output.putByte("color", this.color);
-    }
+    *///? } else {
+    /*protected void saveAdditional(CompoundTag output) {
+        super.saveAdditional(output);
     *///? }
+        CrossVersionTag.Writer writer = new CrossVersionTag.Writer(output);
+        writer.putBoolean("hidden", this.hidden);
+        if (this.uuid != null) writer.putUUID("uuid", this.uuid);
+        if (this.name != null) writer.putString("name", this.name);
+        if (!this.savedColor) writer.putByte("color", this.color);
+    }
 
     @Override
+    //? if >=1.21.1 {
     public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
         return this.saveWithoutMetadata(registries);
     }
+    //? } else {
+    /*public CompoundTag getUpdateTag() {
+        return this.saveWithoutMetadata();
+    }
+    *///? }
 
     @Override
     public @Nullable Packet<ClientGamePacketListener> getUpdatePacket() {
@@ -115,7 +124,7 @@ public class CommonCircuitBlockEntity extends BlockEntity {
         T t = componentGetter.get(component);
         return t != null && this.applyImplicitComponent(component, t);
     }
-    //? } else {
+    //? } elif >=1.21.1 {
     /*@Override
     protected void applyImplicitComponents(DataComponentInput components) {
         super.applyImplicitComponents(components);
@@ -130,6 +139,7 @@ public class CommonCircuitBlockEntity extends BlockEntity {
     }
     *///? }
 
+    //? if >=1.21.1 {
     protected <T> boolean applyImplicitComponent(DataComponentType<T> component, T value) {
         if (component == net.minecraft.core.component.DataComponents.CUSTOM_NAME) {
             this.name = ((Component) value).getString();
@@ -153,6 +163,17 @@ public class CommonCircuitBlockEntity extends BlockEntity {
         components.set(DataComponents.SHORT.get(), this.getBlockState().getValue(CommonCircuitBlock.COLOR).shortValue());
         if (this.name != null) components.set(net.minecraft.core.component.DataComponents.CUSTOM_NAME, Component.literal(this.name));
     }
+    //? } else {
+    /*@Override
+    public void saveToItem(ItemStack stack) {
+        super.saveToItem(stack);
+        CompoundTag tag = stack.getOrCreateTag();
+        tag.putUUID("uuid", this.uuid);
+        tag.putShort("color", this.getBlockState().getValue(CommonCircuitBlock.COLOR).shortValue());
+        stack.setTag(tag);
+        if (this.name != null) stack.setHoverName(MutableComponent.create(new LiteralContents(this.name)));
+    }
+    *///? }
 
     public boolean isValid() {
         return this.uuid != null;

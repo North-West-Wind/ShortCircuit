@@ -2,7 +2,7 @@ package in.northwestw.shortcircuit;
 
 import in.northwestw.shortcircuit.client.TruthAssignerScreen;
 import in.northwestw.shortcircuit.platform.FabricRegistryHelper;
-import in.northwestw.shortcircuit.registries.BlockEntities;
+import in.northwestw.shortcircuit.registries.BlockEntityTypes;
 import in.northwestw.shortcircuit.registries.Blocks;
 import in.northwestw.shortcircuit.registries.Menus;
 import in.northwestw.shortcircuit.registries.blockentityrenderers.CircuitBlockEntityRenderer;
@@ -43,7 +43,7 @@ public class ShortCircuitFabric implements ModInitializer, ClientModInitializer 
 
     @Override
     public void onInitializeClient() {
-        BlockEntityRenderers.register(BlockEntities.CIRCUIT.get(), CircuitBlockEntityRenderer::new);
+        BlockEntityRenderers.register(BlockEntityTypes.CIRCUIT.get(), CircuitBlockEntityRenderer::new);
         MenuScreens.register(Menus.TRUTH_ASSIGNER.get(), TruthAssignerScreen::new);
         //? if >=1.21.11 {
         BlockRenderLayerMap.putBlock(Blocks.CIRCUIT.get(), ChunkSectionLayer.TRANSLUCENT);
@@ -52,7 +52,10 @@ public class ShortCircuitFabric implements ModInitializer, ClientModInitializer 
         /*BlockRenderLayerMap.INSTANCE.putBlock(Blocks.CIRCUIT.get(), RenderType.translucent());
         BlockRenderLayerMap.INSTANCE.putBlock(Blocks.INTEGRATED_CIRCUIT.get(), RenderType.translucent());
         *///? }
+        //? if >=1.21.1 {
         ItemTooltipCallback.EVENT.register(((itemStack, tooltipContext, tooltipFlag, list) -> {
+        //? } else
+        //ItemTooltipCallback.EVENT.register(((itemStack, tooltipFlag, list) -> {
             if (itemStack.getItem() instanceof BlockItem item && item.getBlock() instanceof CommonCircuitBlock block)
                 list.addAll(block.extraTooltip(itemStack));
         }));

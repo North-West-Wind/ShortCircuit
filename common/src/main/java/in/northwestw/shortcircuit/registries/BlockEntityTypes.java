@@ -9,7 +9,7 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 
 import java.util.function.Supplier;
 
-public class BlockEntities {
+public class BlockEntityTypes {
     public static final Supplier<BlockEntityType<CircuitBlockEntity>> CIRCUIT = Services.REGISTRY.registerBlockEntityType("circuit", CircuitBlockEntity::new, Blocks.CIRCUIT);
     public static final Supplier<BlockEntityType<CircuitBoardBlockEntity>> CIRCUIT_BOARD = Services.REGISTRY.registerBlockEntityType("circuit_board", CircuitBoardBlockEntity::new, Blocks.CIRCUIT_BOARD);
     public static final Supplier<BlockEntityType<TruthAssignerBlockEntity>> TRUTH_ASSIGNER = Services.REGISTRY.registerBlockEntityType("truth_assigner", TruthAssignerBlockEntity::new, Blocks.TRUTH_ASSIGNER);

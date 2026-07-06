@@ -2,7 +2,7 @@ package in.northwestw.shortcircuit;
 
 import in.northwestw.shortcircuit.client.TruthAssignerScreen;
 import in.northwestw.shortcircuit.platform.ForgeRegistryHelper;
-import in.northwestw.shortcircuit.registries.BlockEntities;
+import in.northwestw.shortcircuit.registries.BlockEntityTypes;
 import in.northwestw.shortcircuit.registries.Blocks;
 import in.northwestw.shortcircuit.registries.Menus;
 import in.northwestw.shortcircuit.registries.blockentityrenderers.CircuitBlockEntityRenderer;
@@ -33,11 +33,16 @@ public class ShortCircuitForge {
         ShortCircuitCommon.init();
 
         // register
-        IEventBus bus = context.getModEventBus();
+        //? if >=1.21.11 {
+        BusGroup bus = context.getModBusGroup();
+        //? } else
+        //IEventBus bus = context.getModEventBus();
         ForgeRegistryHelper.BLOCK_ENTITIES.register(bus);
         ForgeRegistryHelper.BLOCKS.register(bus);
+        //? if >=1.21.1 {
         ForgeRegistryHelper.CODECS.register(bus);
         ForgeRegistryHelper.DATA_COMPONENTS.register(bus);
+        //? }
         ForgeRegistryHelper.ITEMS.register(bus);
         ForgeRegistryHelper.MENUS.register(bus);
         ForgeRegistryHelper.SOUND_EVENTS.register(bus);
@@ -64,7 +69,7 @@ public class ShortCircuitForge {
     public static class Game {
         @SubscribeEvent
         public static void registerEntityRenderers(EntityRenderersEvent.RegisterRenderers event) {
-            event.registerBlockEntityRenderer(BlockEntities.CIRCUIT.get(), CircuitBlockEntityRenderer::new);
+            event.registerBlockEntityRenderer(BlockEntityTypes.CIRCUIT.get(), CircuitBlockEntityRenderer::new);
         }
         
         @SubscribeEvent

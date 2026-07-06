@@ -8,13 +8,11 @@ import in.northwestw.shortcircuit.data.TruthTableSavedData;
 import in.northwestw.shortcircuit.properties.CrossVersionTag;
 import in.northwestw.shortcircuit.properties.DirectionHelper;
 import in.northwestw.shortcircuit.properties.RelativeDirection;
-import in.northwestw.shortcircuit.registries.BlockEntities;
+import in.northwestw.shortcircuit.registries.BlockEntityTypes;
 import in.northwestw.shortcircuit.registries.blockentities.common.CommonCircuitBlockEntity;
 import in.northwestw.shortcircuit.registries.blocks.common.CommonCircuitBlock;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.HolderLookup;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.block.Block;
@@ -29,8 +27,9 @@ import org.slf4j.Logger;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
 //? } else {
-
-//? }
+/*import net.minecraft.core.HolderLookup;
+import net.minecraft.nbt.CompoundTag;
+*///? }
 
 import java.util.Arrays;
 import java.util.List;
@@ -47,7 +46,7 @@ public class IntegratedCircuitBlockEntity extends CommonCircuitBlockEntity {
     public final List<BlockState> blocks;
 
     public IntegratedCircuitBlockEntity(BlockPos pos, BlockState state) {
-        super(BlockEntities.INTEGRATED_CIRCUIT.get(), pos, state);
+        super(BlockEntityTypes.INTEGRATED_CIRCUIT.get(), pos, state);
         this.inputs = Maps.newHashMap();
         this.outputs = Maps.newHashMap();
         this.changed = new boolean[6];
@@ -72,9 +71,12 @@ public class IntegratedCircuitBlockEntity extends CommonCircuitBlockEntity {
     //? if >=1.21.11 {
     protected void loadAdditional(ValueInput input) {
     super.loadAdditional(input);
-    //? } else {
+    //? } elif >=1.21.1 {
     /*protected void loadAdditional(CompoundTag input, HolderLookup.Provider provider) {
         super.loadAdditional(input, provider);
+    *///? } else {
+    /*public void load(CompoundTag input) {
+        super.load(input);
     *///? }
         UUID oldUuid = this.uuid;
         CrossVersionTag.Reader reader = new CrossVersionTag.Reader(input);
@@ -98,9 +100,12 @@ public class IntegratedCircuitBlockEntity extends CommonCircuitBlockEntity {
     //? if >=1.21.11 {
     protected void saveAdditional(ValueOutput output) {
         super.saveAdditional(output);
-    //? } else {
+    //? } elif >=1.21.1 {
     /*protected void saveAdditional(CompoundTag output, HolderLookup.Provider provider) {
         super.saveAdditional(output, provider);
+    *///? } else {
+    /*protected void saveAdditional(CompoundTag output) {
+        super.saveAdditional(output);
     *///? }
         CrossVersionTag.Writer writer = new CrossVersionTag.Writer(output);
         this.saveSignalMap(writer, "inputs", this.inputs);

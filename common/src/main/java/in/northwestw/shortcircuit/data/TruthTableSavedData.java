@@ -49,7 +49,8 @@ public class TruthTableSavedData extends SavedData {
         if (!this.truthTables.containsKey(uuid)) return signals;
         TruthTable table = this.truthTables.get(uuid);
         int input = 0;
-        for (RelativeDirection dir : table.inputs.reversed()) {
+        for (int ii = table.inputs.size() - 1; ii >= 0; ii--) {
+            RelativeDirection dir = table.inputs.get(ii);
             input <<= table.bits;
             // merge 4-bit into amount specified by table.bits
             // i haven't had time to look into the mathematical relationships yet
@@ -59,7 +60,8 @@ public class TruthTableSavedData extends SavedData {
             else input |= val > 0 ? 1 : 0;
         }
         int output = table.signals.getOrDefault(input, table.defaultValue);
-        for (RelativeDirection dir: table.outputs.reversed()) {
+        for (int ii = table.outputs.size() - 1; ii >= 0; ii--) {
+            RelativeDirection dir = table.outputs.get(ii);
             signals.put(dir, output & 0xF);
             output >>= 4;
         }
@@ -94,11 +96,13 @@ public class TruthTableSavedData extends SavedData {
         DimensionDataStorage storage = circuitBoardLevel.getDataStorage();
         //? if >=1.21.11 {
         return storage.computeIfAbsent(TYPE);
-        //? } else
-        //return storage.computeIfAbsent(new SavedData.Factory<>(TruthTableSavedData::new, TruthTableSavedData::load, null), "truth_table");
+        //? } elif >=1.21.1 {
+        /*return storage.computeIfAbsent(new SavedData.Factory<>(TruthTableSavedData::new, TruthTableSavedData::load, null), "truth_table");
+        *///? } else
+        //return storage.computeIfAbsent(TruthTableSavedData::load, TruthTableSavedData::new, "truth_table");
     }
 
-    //? if <=1.21.4 {
+    //? if <=1.21.4 && >=1.21.1 {
     /*public static TruthTableSavedData load(CompoundTag tag, HolderLookup.Provider lookupProvider) {
         return CODEC.parse(NbtOps.INSTANCE, tag).resultOrPartial().orElse(new TruthTableSavedData());
     }
@@ -106,6 +110,15 @@ public class TruthTableSavedData extends SavedData {
     @Override
     public CompoundTag save(CompoundTag tag, HolderLookup.Provider registries) {
         return (CompoundTag) CODEC.encodeStart(NbtOps.INSTANCE, this).getOrThrow();
+    }
+    *///? } elif <=1.20.1 {
+    /*public static TruthTableSavedData load(CompoundTag tag) {
+        return CODEC.parse(NbtOps.INSTANCE, tag).result().orElse(new TruthTableSavedData());
+    }
+
+    @Override
+    public CompoundTag save(CompoundTag tag) {
+        return (CompoundTag) CODEC.encodeStart(NbtOps.INSTANCE, this).result().get();
     }
     *///? }
 }

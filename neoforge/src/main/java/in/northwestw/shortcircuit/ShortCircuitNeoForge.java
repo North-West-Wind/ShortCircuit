@@ -3,7 +3,7 @@ package in.northwestw.shortcircuit;
 
 import in.northwestw.shortcircuit.client.TruthAssignerScreen;
 import in.northwestw.shortcircuit.platform.NeoForgeRegistryHelper;
-import in.northwestw.shortcircuit.registries.BlockEntities;
+import in.northwestw.shortcircuit.registries.BlockEntityTypes;
 import in.northwestw.shortcircuit.registries.Blocks;
 import in.northwestw.shortcircuit.registries.Menus;
 import in.northwestw.shortcircuit.registries.blockentityrenderers.CircuitBlockEntityRenderer;
@@ -43,7 +43,7 @@ public class ShortCircuitNeoForge {
     public static class EventHandler {
         @SubscribeEvent
         public static void registerEntityRenderers(EntityRenderersEvent.RegisterRenderers event) {
-            event.registerBlockEntityRenderer(BlockEntities.CIRCUIT.get(), CircuitBlockEntityRenderer::new);
+            event.registerBlockEntityRenderer(BlockEntityTypes.CIRCUIT.get(), CircuitBlockEntityRenderer::new);
         }
 
         @SubscribeEvent

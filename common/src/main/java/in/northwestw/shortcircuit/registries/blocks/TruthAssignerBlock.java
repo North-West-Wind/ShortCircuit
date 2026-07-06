@@ -1,7 +1,7 @@
 package in.northwestw.shortcircuit.registries.blocks;
 
 import com.mojang.serialization.MapCodec;
-import in.northwestw.shortcircuit.registries.BlockEntities;
+import in.northwestw.shortcircuit.registries.BlockEntityTypes;
 import in.northwestw.shortcircuit.registries.Blocks;
 import in.northwestw.shortcircuit.registries.Codecs;
 import in.northwestw.shortcircuit.registries.blockentities.TruthAssignerBlockEntity;
@@ -10,6 +10,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.player.Player;
@@ -43,10 +44,12 @@ public class TruthAssignerBlock extends HorizontalDirectionalBlock implements En
         );
     }
 
+    //? if >=1.21.1 {
     @Override
     protected MapCodec<TruthAssignerBlock> codec() {
         return Codecs.TRUTH_ASSIGNER.get();
     }
+    //? }
 
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
@@ -65,17 +68,21 @@ public class TruthAssignerBlock extends HorizontalDirectionalBlock implements En
 
     @Override
     public @Nullable <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
-        return type == BlockEntities.TRUTH_ASSIGNER.get() ? (pLevel, pPos, pState, blockEntity) -> ((TruthAssignerBlockEntity) blockEntity).tick() : null;
+        return type == BlockEntityTypes.TRUTH_ASSIGNER.get() ? (pLevel, pPos, pState, blockEntity) -> ((TruthAssignerBlockEntity) blockEntity).tick() : null;
     }
 
     @Override
+    //~ if <=1.20.1 'protected' -> 'public'
     protected @Nullable MenuProvider getMenuProvider(BlockState state, Level level, BlockPos pos) {
         if (level.getBlockEntity(pos) instanceof TruthAssignerBlockEntity blockEntity) return blockEntity;
         else return null;
     }
 
-    @Override
+    // @Override omitted
+    //? if >=1.21.1 {
     protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult result) {
+    //? } else
+    //public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
         if (!level.isClientSide() && player instanceof ServerPlayer serverPlayer)
             serverPlayer.openMenu(state.getMenuProvider(level, pos));
         //? if >=1.21.4 {
@@ -117,8 +124,11 @@ public class TruthAssignerBlock extends HorizontalDirectionalBlock implements En
     //? if >=1.21.4 {
     protected void neighborChanged(BlockState state, Level level, BlockPos pos, Block neighborBlock, @Nullable Orientation orientation, boolean movedByPiston) {
         super.neighborChanged(state, level, pos, neighborBlock, orientation, movedByPiston);
-    //? } else {
+    //? } elif >=1.21.1 {
     /*protected void neighborChanged(BlockState state, Level level, BlockPos pos, Block neighborBlock, BlockPos neighborPos, boolean movedByPiston) {
+        super.neighborChanged(state, level, pos, neighborBlock, neighborPos, movedByPiston);
+    *///? } else {
+    /*public void neighborChanged(BlockState state, Level level, BlockPos pos, Block neighborBlock, BlockPos neighborPos, boolean movedByPiston) {
         super.neighborChanged(state, level, pos, neighborBlock, neighborPos, movedByPiston);
     *///? }
         BlockPos above = pos.above();

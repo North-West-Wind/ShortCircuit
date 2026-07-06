@@ -210,7 +210,7 @@ public class CommonCircuitBlockEntity extends BlockEntity {
             // couldn't finish update last tick due to limit, so we try again
             this.updateInputs();
         }
-        if (!this.savedColor) {
+        if (!this.savedColor && this.level != null) {
             this.level.setBlock(this.getBlockPos(), this.getBlockState().setValue(CommonCircuitBlock.COLOR, (int) this.color), Block.UPDATE_CLIENTS);
             this.savedColor = true;
         }

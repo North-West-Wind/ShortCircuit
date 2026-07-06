@@ -3,7 +3,7 @@ name: Build
 on:
   push:
     branches:
-      - multiloader-stonecutter
+      - multiloader/stonecutter
   pull_request:
   workflow_call:
 

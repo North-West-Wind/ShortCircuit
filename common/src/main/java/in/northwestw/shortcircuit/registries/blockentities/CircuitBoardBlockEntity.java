@@ -23,6 +23,10 @@ import net.minecraft.world.level.storage.ValueOutput;
 /*import net.minecraft.nbt.CompoundTag;
 *///? }
 
+//? if >=1.20.1 {
+import net.minecraft.core.registries.Registries;
+//? }
+
 import java.util.UUID;
 
 public class CircuitBoardBlockEntity extends BlockEntity {

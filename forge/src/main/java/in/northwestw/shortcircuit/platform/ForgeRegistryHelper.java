@@ -2,15 +2,12 @@ package in.northwestw.shortcircuit.platform;
 
 import in.northwestw.shortcircuit.ShortCircuitCommon;
 import in.northwestw.shortcircuit.platform.services.IRegistryHelper;
-import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvent;
-import net.minecraft.world.flag.FeatureFlagSet;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.item.CreativeModeTab;
-import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
@@ -26,22 +23,38 @@ import net.minecraft.resources.ResourceKey;
 import java.util.function.UnaryOperator;
 //? }
 
+//? if >=1.20.1 {
+import net.minecraft.core.registries.Registries;
+import net.minecraft.world.flag.FeatureFlags;
+import net.minecraft.world.item.CreativeModeTabs;
+//? } else {
+/*import net.minecraft.core.NonNullList;
+import net.minecraftforge.registries.ForgeRegistries;
+*///? }
+
 import java.util.Arrays;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 public class ForgeRegistryHelper implements IRegistryHelper {
+    //~ if <=1.19.2 'Registries.BLOCK_ENTITY_TYPE' -> 'ForgeRegistries.BLOCK_ENTITY_TYPES'
     public static final DeferredRegister<BlockEntityType<?>> BLOCK_ENTITIES = DeferredRegister.create(Registries.BLOCK_ENTITY_TYPE, ShortCircuitCommon.MOD_ID);
+    //~ if <=1.19.2 'Registries.BLOCK' -> 'ForgeRegistries.BLOCKS'
     public static final DeferredRegister<Block> BLOCKS = DeferredRegister.create(Registries.BLOCK, ShortCircuitCommon.MOD_ID);
     //? if >=1.21.1 {
     public static final DeferredRegister<MapCodec<? extends Block>> CODECS = DeferredRegister.create(Registries.BLOCK_TYPE, ShortCircuitCommon.MOD_ID);
     public static final DeferredRegister<DataComponentType<?>> DATA_COMPONENTS = DeferredRegister.create(Registries.DATA_COMPONENT_TYPE, ShortCircuitCommon.MOD_ID);
     //? }
+    //~ if <=1.19.2 'Registries.ITEM' -> 'ForgeRegistries.ITEMS'
     public static final DeferredRegister<Item> ITEMS = DeferredRegister.create(Registries.ITEM, ShortCircuitCommon.MOD_ID);
+    //~ if <=1.19.2 'Registries.MENU' -> 'ForgeRegistries.MENU_TYPES'
     public static final DeferredRegister<MenuType<?>> MENUS = DeferredRegister.create(Registries.MENU, ShortCircuitCommon.MOD_ID);
+    //~ if <=1.19.2 'Registries.SOUND_EVENT' -> 'ForgeRegistries.SOUND_EVENTS'
     public static final DeferredRegister<SoundEvent> SOUND_EVENTS = DeferredRegister.create(Registries.SOUND_EVENT, ShortCircuitCommon.MOD_ID);
+    //? if >=1.20.1 {
     public static final DeferredRegister<CreativeModeTab> CREATIVE_MODE_TABS = DeferredRegister.create(Registries.CREATIVE_MODE_TAB, ShortCircuitCommon.MOD_ID);
+    //? }
 
     @Override
     public <T extends BlockEntity> Supplier<BlockEntityType<T>> registerBlockEntityType(String name, BlockEntitySupplier<T> factory, Supplier<Block> ...blocks) {
@@ -80,20 +93,46 @@ public class ForgeRegistryHelper implements IRegistryHelper {
     }
 
     @Override
-    public <T extends AbstractContainerMenu> Supplier<MenuType<T>> registerMenu(String name, MenuSupplier<T> constructor, FeatureFlagSet requiredFeatures) {
-        return MENUS.register(name, () -> new MenuType<>(constructor::create, requiredFeatures));
+    public <T extends AbstractContainerMenu> Supplier<MenuType<T>> registerMenu(String name, MenuSupplier<T> constructor) {
+        //? if >=1.20.1 {
+        return MENUS.register(name, () -> new MenuType<>(constructor::create, FeatureFlags.DEFAULT_FLAGS));
+        //? } else
+        //return MENUS.register(name, () -> new MenuType<>(constructor::create));
     }
 
     @Override
     public Supplier<SoundEvent> registerSound(String name) {
-        return SOUND_EVENTS.register(name, () -> SoundEvent.createVariableRangeEvent(Identifier.fromNamespaceAndPath(ShortCircuitCommon.MOD_ID, name)));
+        //~ if <=1.19.2 'SoundEvent.createVariableRangeEvent' -> 'new SoundEvent'
+        return SOUND_EVENTS.register(name, () -> SoundEvent.createVariableRangeEvent(ShortCircuitCommon.rl(name)));
     }
 
     @Override
     public Supplier<CreativeModeTab> registerCreativeModeTab(String name, Component title, Supplier<ItemStack> icon, Supplier<? extends Item>... items) {
+        //? if >=1.20.1 {
         return CREATIVE_MODE_TABS.register(name, () -> CreativeModeTab.builder().withTabsBefore(CreativeModeTabs.COMBAT).title(title).icon(icon).displayItems((params, output) -> {
             for (Supplier<? extends Item> item : items)
                 output.accept(item.get());
         }).build());
+        //? } else {
+        /*CreativeModeTab tab = new CreativeModeTab(name) {
+            @Override
+            public ItemStack makeIcon() {
+                return icon.get();
+            }
+
+            @Override
+            public Component getDisplayName() {
+                return title;
+            }
+
+            @Override
+            public void fillItemList(NonNullList<ItemStack> list) {
+                for (Supplier<? extends Item> supplier : items) {
+                    list.add(supplier.get().getDefaultInstance());
+                }
+            }
+        };
+        return () -> tab;
+        *///? }
     }
 }

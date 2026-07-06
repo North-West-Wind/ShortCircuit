@@ -175,7 +175,12 @@ public class TruthAssignerBlockEntity extends BaseContainerBlockEntity implement
 
     @Override
     public boolean stillValid(Player player) {
+        //? if >=1.20.1 {
         return Container.stillValidBlockEntity(this, player);
+        //? } else {
+        /^if (this.level.getBlockEntity(this.worldPosition) != this) return false;
+        else return player.distanceToSqr((double)this.worldPosition.getX() + (double)0.5F, (double)this.worldPosition.getY() + (double)0.5F, (double)this.worldPosition.getZ() + (double)0.5F) <= (double)64.0F;
+        ^///? }
     }
 
     @Override
@@ -350,6 +355,7 @@ public class TruthAssignerBlockEntity extends BaseContainerBlockEntity implement
     public void tick() {
         if (!this.working) return;
         if (this.level != null && this.level.random.nextDouble() < 0.1)
+            //~ if <=1.19.2 'this.getBlockPos()' -> 'this.worldPosition.getX(), this.worldPosition.getY(), this.worldPosition.getZ()'
             this.level.playLocalSound(this.getBlockPos(), SoundEvents.LEVER_CLICK, SoundSource.BLOCKS, 0.2f, this.level.random.nextFloat() * 0.4f + 0.8f, false);
         if (!(this.level.getBlockEntity(this.getBlockPos().above()) instanceof CircuitBlockEntity blockEntity)) {
             this.stop(false);

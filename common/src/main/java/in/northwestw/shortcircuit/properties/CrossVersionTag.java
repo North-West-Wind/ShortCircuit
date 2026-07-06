@@ -1,22 +1,25 @@
 package in.northwestw.shortcircuit.properties;
 
 import com.google.common.collect.Lists;
-import com.mojang.serialization.Codec;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.HolderGetter;
-import net.minecraft.core.UUIDUtil;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.NbtUtils;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 
 //? if >=1.21.11 {
+import com.mojang.serialization.Codec;
+import net.minecraft.core.UUIDUtil;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
 //? } else {
 /*import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 *///? }
+
+//? if >=1.20.1 {
+import net.minecraft.core.HolderGetter;
+//? }
 
 import java.util.Arrays;
 import java.util.List;
@@ -118,13 +121,19 @@ public class CrossVersionTag {
             return Optional.of(pos);
         }
 
+        //? if >=1.20.1 {
         public Optional<BlockState> getBlockState(String key, HolderGetter<Block> blockGetter) {
+        //? } else
+        //public Optional<BlockState> getBlockState(String key) {
             try {
                 //? if >=1.21.11 {
                 return Optional.of(NbtUtils.readBlockState(blockGetter, NbtUtils.snbtToStructure(this.input.getString(key).orElseThrow())));
-                //? } else {
+                //? } elif >=1.20.1 {
                 /*if (!this.input.contains(key, Tag.TAG_STRING)) return Optional.empty();
                 return Optional.of(NbtUtils.readBlockState(blockGetter, NbtUtils.snbtToStructure(this.input.getString(key))));
+                *///? } else {
+                /*if (!this.input.contains(key, Tag.TAG_STRING)) return Optional.empty();
+                return Optional.of(NbtUtils.readBlockState(NbtUtils.snbtToStructure(this.input.getString(key))));
                 *///? }
             } catch (Exception e) {
                 return Optional.empty();

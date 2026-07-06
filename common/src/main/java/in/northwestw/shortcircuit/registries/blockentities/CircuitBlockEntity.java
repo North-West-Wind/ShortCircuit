@@ -3,7 +3,6 @@ package in.northwestw.shortcircuit.registries.blockentities;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
-import com.mojang.logging.LogUtils;
 import in.northwestw.shortcircuit.Constants;
 import in.northwestw.shortcircuit.config.Config;
 import in.northwestw.shortcircuit.data.CircuitSavedData;
@@ -18,8 +17,6 @@ import in.northwestw.shortcircuit.registries.blocks.CircuitBoardBlock;
 import in.northwestw.shortcircuit.registries.blocks.common.CommonCircuitBlock;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.HolderLookup;
-import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.*;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
@@ -31,12 +28,16 @@ import net.minecraft.world.level.block.state.BlockState;
 import org.apache.commons.lang3.tuple.Pair;
 
 //? if >=1.21.11 {
+import com.mojang.logging.LogUtils;
 import net.minecraft.util.ProblemReporter;
 import net.minecraft.world.level.storage.TagValueInput;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
-//? } else {
+//? }
 
+//? if >=1.20.1 {
+import net.minecraft.core.HolderLookup;
+import net.minecraft.core.registries.Registries;
 //? }
 
 import java.util.*;
@@ -349,7 +350,10 @@ public class CircuitBlockEntity extends CommonCircuitBlockEntity {
             if (opt.isEmpty()) continue;
             BlockPos pos = opt.get();
             // use string to cheese ValueInput
+            //? if >=1.20.1 {
             t.getBlockState("block", this.level.holderLookup(Registries.BLOCK)).ifPresent(state -> blocks.put(pos, state));
+            //? } else
+            //t.getBlockState("block").ifPresent(state -> blocks.put(pos, state));
         }
         if (!this.chunked) this.blocks = blocks;
         else this.blocks.putAll(blocks);
@@ -366,7 +370,10 @@ public class CircuitBlockEntity extends CommonCircuitBlockEntity {
     *///? }
         if (this.hidden) return tag;
         ListTag list = new ListTag(), testList = new ListTag();
+        //? if >=1.20.1 {
         long size = tag.sizeInBytes() + (48 + 28 + 2 * 6 + 36) + (48 + 28 + 2 * 7 + 36 + 9);
+        //? } else
+        //long size = tag.size() + (48 + 28 + 2 * 6 + 36) + (48 + 28 + 2 * 7 + 36 + 9);
         boolean broke = false, oldChunked = this.chunked;
         int ii = 0;
         for (Map.Entry<BlockPos, BlockState> entry : this.blocks.entrySet()) {
@@ -379,7 +386,10 @@ public class CircuitBlockEntity extends CommonCircuitBlockEntity {
             testList.add(tuple);
 
             this.chunkedOffset++;
+            //? if >=1.20.1 {
             if (testList.sizeInBytes() + size >= MAX_TAG_BYTE_SIZE) {
+            //? } else
+            //if (testList.size() + size >= MAX_TAG_BYTE_SIZE) {
                 this.chunked = true;
                 broke = true;
                 break;

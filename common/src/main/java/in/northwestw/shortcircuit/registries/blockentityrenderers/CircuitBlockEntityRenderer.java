@@ -78,9 +78,9 @@ public class CircuitBlockEntityRenderer implements BlockEntityRenderer<CircuitBl
         // direction handling. move to the center and rotate, then move back
         poseStack.translate(0.5, 0.5, 0.5);
         switch (blockState.getValue(HorizontalDirectionalBlock.FACING)) {
-            case SOUTH -> poseStack.mulPose(new Quaternionf(0, 0.7071068, 0, 0.7071068));
+            case SOUTH -> poseStack.mulPose(new Quaternionf(0, 0.7071068f, 0, 0.7071068f));
             case EAST -> poseStack.mulPose(new Quaternionf(0, 1, 0, 0));
-            case NORTH -> poseStack.mulPose(new Quaternionf(0, 0.7071068, 0, -0.7071068));
+            case NORTH -> poseStack.mulPose(new Quaternionf(0, 0.7071068f, 0, -0.7071068f));
         }
         poseStack.translate(-0.5, -0.5, -0.5);
         poseStack.translate(0, 0.0625, 0);

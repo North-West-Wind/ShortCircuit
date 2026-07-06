@@ -3,16 +3,8 @@ package in.northwestw.shortcircuit.client;
 import in.northwestw.shortcircuit.ShortCircuitCommon;
 import in.northwestw.shortcircuit.registries.Items;
 import in.northwestw.shortcircuit.registries.menus.TruthAssignerMenu;
-import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
-import net.minecraft.client.gui.components.EditBox;
-import net.minecraft.client.gui.components.StringWidget;
-import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
-//? if >=1.21.11 {
-import net.minecraft.client.renderer.RenderPipelines;
-//? } else
-//import net.minecraft.client.renderer.RenderType;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.Style;
 import net.minecraft.resources.Identifier;
@@ -21,6 +13,22 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ContainerListener;
 import net.minecraft.world.item.ItemStack;
 
+//? if >=1.21.11 {
+import net.minecraft.client.renderer.RenderPipelines;
+//? } elif >=1.20.1 {
+/*import net.minecraft.client.renderer.RenderType;
+*///? }
+
+//? if >=1.20.1 {
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.StringWidget;
+import net.minecraft.client.gui.components.Tooltip;
+//? } else {
+/*import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.client.renderer.GameRenderer;
+*///? }
+
 public class TruthAssignerScreen extends AbstractContainerScreen<TruthAssignerMenu> implements ContainerListener {
     private static final Identifier BASE_BACKGROUND = ShortCircuitCommon.rl("textures/gui/container/truth_assigner.png");
     //? if >=1.21.1 {
@@ -28,9 +36,9 @@ public class TruthAssignerScreen extends AbstractContainerScreen<TruthAssignerMe
     //? } else
     //private static final Identifier BURN_PROGRESS_SPRITE = new Identifier("textures/gui/container/furnace.png");
 
-    private EditBox maxDelay;
-    private Button wait, start, bits;
-    private StringWidget error, currentInput;
+    private TooltipEditBox maxDelay;
+    private TooltipButton wait, start, bits;
+    private HoverTooltip error, currentInput;
 
     public TruthAssignerScreen(TruthAssignerMenu menu, Inventory inventory, Component title) {
         super(menu, inventory, title);
@@ -41,19 +49,20 @@ public class TruthAssignerScreen extends AbstractContainerScreen<TruthAssignerMe
         super.init();
         int i = (this.width - this.imageWidth) / 2;
         int j = (this.height - this.imageHeight) / 2;
-        this.maxDelay = new EditBox(this.font, i + 103, j + 14, 30, 16, Component.translatable("container.short_circuit.truth_assigner.max_delay"));
-        this.maxDelay.setTooltip(Tooltip.create(Component.translatable("container.short_circuit.truth_assigner.max_delay.desc")));
+        this.maxDelay = new TooltipEditBox(this.font, i + 103, j + 14, 30, 16, Component.translatable("container.short_circuit.truth_assigner.max_delay"));
+        this.maxDelay.setTooltip(Component.translatable("container.short_circuit.truth_assigner.max_delay.desc"));
         this.maxDelay.setResponder(this::onMaxDelayChange);
         this.maxDelay.setValue(Integer.toString(this.menu.getMaxDelay()));
 
-        this.bits = Button.builder(this.bitsTranslatable(), this::onBitsPress).pos(i + 133, j + 14).size(30, 16).build();
+        this.bits = new TooltipButton(i + 133, j + 14, 30, 16, this.bitsTranslatable(), this::onBitsPress);
         this.updateBits();
-        this.wait = Button.builder(this.waitTranslatable(), this::onWaitPress).pos(i + 103, j + 35).size(60, 16).build();
+        this.wait = new TooltipButton(i + 103, j + 35, 60, 16, this.waitTranslatable(), this::onWaitPress);
         this.updateWait();
-        this.start = Button.builder(Component.translatable("container.short_circuit.truth_assigner.start"), this::onStartPress).pos(i + 103, j + 56).size(60, 16).tooltip(Tooltip.create(Component.translatable("container.short_circuit.truth_assigner.start.desc"))).build();
+        this.start = new TooltipButton(i + 103, j + 56, 60, 16, Component.translatable("container.short_circuit.truth_assigner.start"), this::onStartPress);
+        this.start.setTooltip(Component.translatable("container.short_circuit.truth_assigner.start.desc"));
 
-        this.error = new StringWidget(i, j - 24, this.imageWidth, 16, Component.empty(), this.font);
-        this.currentInput = new StringWidget(i + 37, j + 34, 24, 16, Component.empty(), this.font);
+        this.error = new HoverTooltip(i, j - 24, this.imageWidth, 16, Component.empty(), this.font);
+        this.currentInput = new HoverTooltip(i + 37, j + 34, 24, 16, Component.empty(), this.font);
         this.updateCurrentInput();
 
         this.updateFields();
@@ -75,6 +84,7 @@ public class TruthAssignerScreen extends AbstractContainerScreen<TruthAssignerMe
     }
 
     @Override
+    //~ if <=1.19.2 'GuiGraphics' -> 'PoseStack'
     protected void renderBg(GuiGraphics graphics, float partialTick, int mouseX, int mouseY) {
         //? if >=1.21.11 {
         graphics.blit(RenderPipelines.GUI_TEXTURED, BASE_BACKGROUND, this.leftPos, this.topPos, 0, 0, this.imageWidth, this.imageHeight, 256, 256);
@@ -94,22 +104,39 @@ public class TruthAssignerScreen extends AbstractContainerScreen<TruthAssignerMe
             // if we are working, color the arrow
             graphics.blitSprite(BURN_PROGRESS_SPRITE, 24, 16, 0, 0, this.leftPos + 37, this.topPos + 34, 24, 16);
         }
-        *///? } else {
+        *///? } elif >=1.20.1 {
         /*graphics.blit(BASE_BACKGROUND, this.leftPos, this.topPos, 0, 0, this.imageWidth, this.imageHeight, 256, 256);
         if (this.menu.isWorking()) {
             // if we are working, color the arrow
             graphics.blit(BURN_PROGRESS_SPRITE, this.leftPos + 37, this.topPos + 34, 176, 14, 25, 16);
         }
+        *///? } else {
+        /*RenderSystem.setShader(GameRenderer::getPositionTexShader);
+        RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
+        RenderSystem.setShaderTexture(0, BASE_BACKGROUND);
+        this.blit(graphics, this.leftPos, this.topPos, 0, 0, this.imageWidth, this.imageHeight);
+        if (this.menu.isWorking()) {
+            // if we are working, color the arrow
+            RenderSystem.setShaderTexture(0, BURN_PROGRESS_SPRITE);
+            this.blit(graphics, this.leftPos + 37, this.topPos + 34, 176, 14, 25, 16);
+        }
         *///? }
     }
 
     @Override
+    //~ if <=1.19.2 'GuiGraphics' -> 'PoseStack'
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         //? if <=1.20.1 {
         /*this.renderBackground(graphics);
         *///? }
         super.render(graphics, mouseX, mouseY, partialTick);
-        this.renderTooltip(graphics, mouseX, mouseY);
+        //? if <=1.19.2 {
+        /*this.maxDelay.renderTooltipOnScreen(this, graphics, mouseX, mouseY);
+        this.wait.renderTooltipOnScreen(this, graphics, mouseX, mouseY);
+        this.start.renderTooltipOnScreen(this, graphics, mouseX, mouseY);
+        this.bits.renderTooltipOnScreen(this, graphics, mouseX, mouseY);
+        this.currentInput.renderTooltipOnScreen(this, graphics, mouseX, mouseY);
+        *///? }
     }
 
     private void onMaxDelayChange(String changed) {
@@ -190,12 +217,12 @@ public class TruthAssignerScreen extends AbstractContainerScreen<TruthAssignerMe
 
     private void updateBits() {
         this.bits.setMessage(this.bitsTranslatable());
-        this.bits.setTooltip(Tooltip.create(Component.translatable("container.short_circuit.truth_assigner.bits.desc", (int) Math.pow(2, this.menu.getBits()))));
+        this.bits.setTooltip(Component.translatable("container.short_circuit.truth_assigner.bits.desc", (int) Math.pow(2, this.menu.getBits())));
     }
 
     private void updateWait() {
         this.wait.setMessage(this.waitTranslatable());
-        this.wait.setTooltip(Tooltip.create(Component.translatable(this.waitTranslationKey() + ".desc")));
+        this.wait.setTooltip(Component.translatable(this.waitTranslationKey() + ".desc"));
     }
 
     private void updateError() {
@@ -210,7 +237,7 @@ public class TruthAssignerScreen extends AbstractContainerScreen<TruthAssignerMe
     }
 
     private void updateCurrentInput() {
-        if (!this.menu.isWorking()) this.currentInput.setTooltip(null);
-        else this.currentInput.setTooltip(Tooltip.create(Component.translatable("container.short_circuit.truth_assigner.current_input.desc", this.menu.getCurrentInput())));
+        if (!this.menu.isWorking()) this.currentInput.setTooltip((Component) null);
+        else this.currentInput.setTooltip(Component.translatable("container.short_circuit.truth_assigner.current_input.desc", this.menu.getCurrentInput()));
     }
 }

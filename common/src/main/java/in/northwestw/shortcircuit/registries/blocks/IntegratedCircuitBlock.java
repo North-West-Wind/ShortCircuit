@@ -37,11 +37,17 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.world.phys.Vec3;
 *///? }
 
+//? if <=1.19.2 {
+/*import com.mojang.math.Vector3f;
+*///? }
+
 public class IntegratedCircuitBlock extends CommonCircuitBlock {
     //? if >=1.21.4 {
     public static final DustParticleOptions PARTICLE = new DustParticleOptions(0xFFDD00, 1.0F);
-    //? } else
-    //public static final DustParticleOptions PARTICLE = new DustParticleOptions(Vec3.fromRGB24(0xFFDD00).toVector3f(), 1.0F);
+    //? } elif >=1.20.1 {
+    /*public static final DustParticleOptions PARTICLE = new DustParticleOptions(Vec3.fromRGB24(0xFFDD00).toVector3f(), 1.0F);
+    *///? } else
+    //public static final DustParticleOptions PARTICLE = new DustParticleOptions(new Vector3f(Vec3.fromRGB24(0xFFDD00)), 1.0F);
 
     public IntegratedCircuitBlock(Properties pProperties) {
         super(pProperties);

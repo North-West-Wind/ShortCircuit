@@ -12,7 +12,7 @@ import in.northwestw.shortcircuit.registries.blockentities.IntegratedCircuitBloc
 import in.northwestw.shortcircuit.registries.blocks.CircuitBoardBlock;
 import in.northwestw.shortcircuit.registries.datacomponents.LastPosDataComponent;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.registries.Registries;
+import net.minecraft.core.Registry;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
@@ -47,6 +47,10 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.Entity;
 *///? }
+
+//? if >=1.20.1 {
+import net.minecraft.core.registries.Registries;
+//? }
 
 import java.util.Collection;
 import java.util.UUID;
@@ -141,7 +145,7 @@ public class PokingStickItem extends Item {
             /*CompoundTag tag = stack.getOrCreateTag();
             if (tag.contains("lastPosDim", CompoundTag.TAG_STRING) && tag.contains("lastPos")) {
                 ServerLevel serverLevel = server.getLevel(ResourceKey.create(Registries.DIMENSION, new Identifier(tag.getString("lastPosDim"))));
-                new TeleportTransition(serverLevel, NbtUtils.readBlockPos(tag.getCompound("lastPos")).getCenter()).teleportToDimension(player);
+                new TeleportTransition(serverLevel, NbtUtils.readBlockPos(tag.getCompound("lastPos"))).teleportToDimension(player);
                 tag.remove("lastPosDim");
                 tag.remove("lastPos");
                 stack.setTag(tag);
@@ -173,7 +177,7 @@ public class PokingStickItem extends Item {
                 /*ServerLevel serverLevel = server.getLevel(serverPlayer.getRespawnDimension());
                 BlockPos respawn = serverPlayer.getRespawnPosition();
                 if (respawn == null) respawn = serverLevel.getSharedSpawnPos();
-                new TeleportTransition(serverLevel, respawn.getCenter()).teleportToDimension(player);
+                new TeleportTransition(serverLevel, respawn).teleportToDimension(player);
                 *///? }
             }
         }
@@ -233,7 +237,7 @@ public class PokingStickItem extends Item {
         //? if >=1.21.1 {
         return new TeleportTransition(circuitBoardLevel, data.getCircuitStartingPos(uuid).offset(1, 1, 1).getCenter(), Vec3.ZERO, 0, 0, TeleportTransition.DO_NOTHING);
         //? } else
-        //return new TeleportTransition(circuitBoardLevel, data.getCircuitStartingPos(uuid).offset(1, 1, 1).getCenter());
+        //return new TeleportTransition(circuitBoardLevel, data.getCircuitStartingPos(uuid).offset(1, 1, 1));
     }
 
     private TeleportTransition getNewTeleportTransition(short blockSize, Level level, CircuitBlockEntity blockEntity) {
@@ -270,7 +274,7 @@ public class PokingStickItem extends Item {
         //? if >=1.21.1 {
         return new TeleportTransition(circuitBoardLevel, startingPos.offset(1, 1, 1).getCenter(), Vec3.ZERO, 0, 0, TeleportTransition.DO_NOTHING);
         //? } else
-        //return new TeleportTransition(circuitBoardLevel, startingPos.offset(1, 1, 1).getCenter());
+        //return new TeleportTransition(circuitBoardLevel, startingPos.offset(1, 1, 1));
     }
 
     private boolean isMiddleFour(int ii, int jj, int kk, short blockSize) {
@@ -285,11 +289,17 @@ public class PokingStickItem extends Item {
     }
 
     //? if <=1.20.1 {
-    /*private record TeleportTransition(ServerLevel level, Vec3 pos) {
+    /*private record TeleportTransition(ServerLevel level, BlockPos pos) {
         private void teleportToDimension(Player player) {
             // minecraft itself has broken effects on changing dimension. this is a workaround
             Collection<MobEffectInstance> effects = player.getActiveEffects();
-            player.teleportTo(this.level, this.pos.x, this.pos.y, this.pos.z, Sets.newHashSet(), 0, 0);
+            Vec3 center = new Vec3(this.pos.getX() + 0.5, this.pos.getY() + 0.5, this.pos.getZ() + 0.5);
+            //? if >=1.20.1 {
+            player.teleportTo(this.level, center.x, center.y, center.z, Sets.newHashSet(), 0, 0);
+            //? } else {
+            /^player.changeDimension(this.level);
+            player.teleportTo(center.x, center.y, center.z);
+            ^///? }
             Entity entity = this.level.getEntity(player.getUUID());
             if (entity instanceof Player newPlayer)
                 effects.forEach(effect -> newPlayer.forceAddEffect(effect, null));

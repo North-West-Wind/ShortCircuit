@@ -16,6 +16,12 @@ stonecutter {
         replacements.string(current.parsed < "1.21.4") {
             replace("TeleportTransition", "DimensionTransition")
         }
+
+        replacements.string(current.parsed < "1.20.1") {
+            replace("Quaternionf", "Quaternion")
+            replace("org.joml.Quaternionf", "com.mojang.math.Quaternion")
+            replace("Registries.DIMENSION", "Registry.DIMENSION_REGISTRY")
+        }
     }
 }
 

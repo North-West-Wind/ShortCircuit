@@ -10,13 +10,9 @@ import in.northwestw.shortcircuit.registries.blocks.common.CommonCircuitBlock;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.client.item.v1.ItemTooltipCallback;
-import net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents;
 import net.minecraft.client.gui.screens.MenuScreens;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderers;
-import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.item.BlockItem;
-import net.minecraft.world.item.CreativeModeTab;
-import net.minecraft.world.item.Item;
 
 //? if >=1.21.11 {
 import net.fabricmc.fabric.api.client.rendering.v1.BlockRenderLayerMap;
@@ -26,6 +22,13 @@ import net.minecraft.client.renderer.chunk.ChunkSectionLayer;
 import net.minecraft.client.renderer.RenderType;
 *///? }
 
+//? if >=1.20.1 {
+import net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.world.item.CreativeModeTab;
+import net.minecraft.world.item.Item;
+//? }
+
 import java.util.List;
 import java.util.Map;
 
@@ -33,12 +36,14 @@ public class ShortCircuitFabric implements ModInitializer, ClientModInitializer 
     @Override
     public void onInitialize() {
         ShortCircuitCommon.init();
+        //? if >=1.20.1 {
         for (Map.Entry<ResourceKey<CreativeModeTab>, List<Item>> entry : FabricRegistryHelper.CREATIVE_MODE_TAB_ITEMS.entrySet())
             ItemGroupEvents.modifyEntriesEvent(entry.getKey()).register(group ->
                     group.addAfter((stack) -> true,
                             entry.getValue().stream().map(Item::getDefaultInstance).toList(),
                             CreativeModeTab.TabVisibility.PARENT_AND_SEARCH_TABS)
             );
+        //? }
     }
 
     @Override
